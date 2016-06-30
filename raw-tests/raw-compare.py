@@ -7,15 +7,26 @@ import sys
 import os
 import csv
 
-h5_ext_list = ['.h5','.hdf5']
-ascii_ext_list = ['.csv','.txt','.ascii']
 NUM_ARGS = 2
 
-def ext_error(fname,h5_ext_list,ascii_ext_list):
-	print('ERROR:\tExtension of file:', str(fname))
-	print('\tis not supported!')
-	print('\tAllowed hdf5-file extensions: ',list(h5_ext_list))
-	print('\tAllowed csv-file extensions: ',list(ascii_ext_list))
+def read_file(fname):
+	h5_ext_list = ['.h5','.hdf5']
+	ascii_ext_list = ['.csv','.txt','.ascii']
+	fpath, fext = os.path.splitext(fname)
+
+	print('Reading', fname)
+	if any(fext == s for s in h5_ext_list):
+		raw = H5RAW3D(fname)
+	elif any(fext == s for s in ascii_ext_list):
+		raw = CSVRAW3D(fname)
+	else:
+		print('ERROR:\tExtension of file:', str(fname))
+		print('\tis not supported!')
+		print('\tAllowed hdf5-file extensions: ',list(h5_ext_list))
+		print('\tAllowed csv-file extensions: ',list(ascii_ext_list))
+		sys.exit()
+	print('Reading complete.')
+	return raw
 
 class H5RAW3D:
   def __init__(self, h5file):
@@ -91,47 +102,18 @@ if len(sys.argv) != (NUM_ARGS+1):
 	sys.exit()
 
 # File 1 (Iteration not needed, since always exactly 2 files)
-fname1 = sys.argv[1]
-fpath1, fext1 = os.path.splitext(fname1)
-
-print('Reading', fname1)
-if any(fext1 == s for s in h5_ext_list):
-	raw1 = H5RAW3D(fname1)
-elif any(fext1 == s for s in ascii_ext_list):
-	raw1 = CSVRAW3D(fname1)
-else:
-	ext_error(fname1, h5_ext_list, ascii_ext_list)
-	sys.exit()
-print('Reading complete.') 
-
+raw1=read_file(sys.argv[1])
 # File 2
-fname2 = sys.argv[2]
-fpath2, fext2 = os.path.splitext(fname2)
+raw2=read_file(sys.argv[2])
 
-print('Reading', fname2)
-if any(fext2 == s for s in h5_ext_list):
-	raw2 = H5RAW3D(fname2)
-elif any(fext2 == s for s in ascii_ext_list):
-	raw2 = CSVRAW3D(fname2)
-else:
-	ext_error(fname2, h5_ext_list, ascii_ext_list)
-	sys.exit()
-print('Reading complete.')   
-
-
-print('Before sorting:')  
-print('raw1.x1=',list(raw1.x1))
-print('raw1.part_tag=',list(raw1.part_tag()))
 raw1.sort()
-print('After sorting:')  
-print('raw1.x1=',list(raw1.x1))
-print('raw1.part_tag=',list(raw1.part_tag()))
+raw2.sort()
 
-# Sorting arrays first after proc_tag then after part_tag
-#ind1 = np.lexsort((raw1.proc_tag(),raw1.part_tag()))
+print( 'Max. x1-diff: %.15f' % max(abs(np.subtract(raw1.x1, raw2.x1))) )
+print( 'Max. x2-diff: %.15f' % max(abs(np.subtract(raw1.x2, raw2.x2))) )
+print( 'Max. x3-diff: %.15f' % max(abs(np.subtract(raw1.x3, raw2.x3))) )
+print( 'Max. p1-diff: %.15f' % max(abs(np.subtract(raw1.p1, raw2.p1))) )
+print( 'Max. p2-diff: %.15f' % max(abs(np.subtract(raw1.p2, raw2.p2))) )
+print( 'Max. p3-diff: %.15f' % max(abs(np.subtract(raw1.p3, raw2.p3))) )
+print( 'Max. q-diff: %.15f' % max(abs(np.subtract(raw1.q, raw2.q))) )
 
-#new_x1 = [raw1.x1[i] for i in ind1]
-
-#print('tag =',list(raw1.part_tag()))
-#print('x_new =',list(new_x1))
-#print('x_old =',list(raw1.x1))
