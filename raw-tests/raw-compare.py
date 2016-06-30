@@ -74,8 +74,7 @@ class CSVRAW3D:
   		self.p2 = self.data[:,4]
   		self.p3 = self.data[:,5]
   		self.q = self.data[:,6]
-  		self.tag = self.data[:,7:]
-  		#self.tag = [int(tag) for tag in row for row in self.data[:,7:]]
+  		self.tag  = np.array(self.data[:,7:]).astype(int)
   		self.filename = csvfile
   		cf.close()
   def proc_tag(self):
@@ -108,6 +107,11 @@ raw2=read_file(sys.argv[2])
 
 raw1.sort()
 raw2.sort()
+
+print('raw1.part_tag():',list(raw1.part_tag()))
+print('raw2.part_tag():',list(raw2.part_tag()))
+
+print( 'Max. tag-diff: %.15f' % max(abs(np.subtract(raw1.part_tag(), raw2.part_tag()))) )
 
 print( 'Max. x1-diff: %.15f' % max(abs(np.subtract(raw1.x1, raw2.x1))) )
 print( 'Max. x2-diff: %.15f' % max(abs(np.subtract(raw1.x2, raw2.x2))) )
