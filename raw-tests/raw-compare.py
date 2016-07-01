@@ -49,8 +49,12 @@ class RAW3D:
   	elif any(fext == s for s in ascii_ext_list):
   		self.dattype = 'csv'
   		with open(file, 'rt') as cf:
-  			csvstrdata = csv.reader(cf, delimiter='\t', quoting=csv.QUOTE_NONNUMERIC)
-  			self.data = np.array(list(csvstrdata)).astype('float')
+  			# Need to enable multiple delimiters here:
+  			reader = csv.reader(cf, delimiter='\t', quoting=csv.QUOTE_NONNUMERIC)
+  			self.data = np.array(list(reader)).astype('float')
+  			# Need to detect number of columns for tag etc.
+  			ncols = len(reader.next())
+  			print('ncols=',ncols)
   			cf.close()
   		self.x1 = self.data[:,0]
   		self.x2 = self.data[:,1]
