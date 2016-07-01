@@ -84,9 +84,9 @@ class RAW3D:
   def conv_to_si(self, n0):
   	k_p = math.sqrt(n0 * constants.e**2/(constants.epsilon_0 * constants.m_e))\
   	/constants.c
-  	self.x1 = self.x1*k_p
-  	self.x2 = self.x2*k_p
-  	self.x3 = self.x3*k_p
+  	self.x1 = self.x1/k_p
+  	self.x2 = self.x2/k_p
+  	self.x3 = self.x3/k_p
 
 def main():
 	NUM_ARGS = 2
@@ -123,7 +123,6 @@ def main():
 		print( 'Tags correspond.')
 	else:
 		print( 'Tags do NOT correspond!')
-
 	print( 'Max. x1-diff: %.15f' % max(abs(np.subtract(raw1.x1, raw2.x1))) )
 	print( 'Max. x2-diff: %.15f' % max(abs(np.subtract(raw1.x2, raw2.x2))) )
 	print( 'Max. x3-diff: %.15f' % max(abs(np.subtract(raw1.x3, raw2.x3))) )
