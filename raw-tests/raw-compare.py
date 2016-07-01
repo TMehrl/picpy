@@ -12,12 +12,6 @@ import math
 # Global
 h5_ext_list = ['.h5','.hdf5']
 ascii_ext_list = ['.csv','.txt','.ascii']
-#c_light = 299792458 # m/s
-#q_electron = 1.602e-19 # C
-#m_electron = 9.109e-31 # kg
-#epsilon_0 = 8.854187817e-12 # As/(Vm)
-
-# omega_p=(n_e*q_electron^2/(epsilon_0*m_electron))^(1/2);
 
 def read_file(fname):
 
@@ -107,7 +101,7 @@ def main():
 	if len(args) != 2:
 		parser.error("This script requires two arguments!")	
 
-	# File 1 (Iteration not needed, since always exactly 2 files)
+	# File 1
 	raw1=read_file(args[0])
 	# File 2
 	raw2=read_file(args[1])
