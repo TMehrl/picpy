@@ -4,19 +4,28 @@ import h5py
 import numpy as np
 import sys
 from optparse import OptionParser
+from scipy import constants
 import os
 import csv
+import math
+
+# Global
+h5_ext_list = ['.h5','.hdf5']
+ascii_ext_list = ['.csv','.txt','.ascii']
+#c_light = 299792458 # m/s
+#q_electron = 1.602e-19 # C
+#m_electron = 9.109e-31 # kg
+#epsilon_0 = 8.854187817e-12 # As/(Vm)
+
+# omega_p=(n_e*q_electron^2/(epsilon_0*m_electron))^(1/2);
 
 def read_file(fname):
-	h5_ext_list = ['.h5','.hdf5']
-	ascii_ext_list = ['.csv','.txt','.ascii']
+
 	fpath, fext = os.path.splitext(fname)
 
 	print('Reading', fname)
-	if any(fext == s for s in h5_ext_list):
-		raw = H5RAW3D(fname)
-	elif any(fext == s for s in ascii_ext_list):
-		raw = CSVRAW3D(fname)
+	if any(fext == s for s in h5_ext_list) or any(fext == s for s in ascii_ext_list):
+		raw = RAW3D(fname)
 	else:
 		print('ERROR:\tExtension of file "%s" is not supported!' %fname)
 		print('\tAllowed hdf5-file extensions: ',list(h5_ext_list))
@@ -28,12 +37,12 @@ def read_file(fname):
 
 class RAW3D:
   def __init__(self, file):
-  	fpath, fext = os.path.splitext(fname)
+  	fpath, fext = os.path.splitext(file)
+  	self.filename = file
   	if any(fext == s for s in h5_ext_list):
   		self.dattype = 'hdf5'
-  		with h5py.File(h5file,'r') as hf:
+  		with h5py.File(file,'r') as hf:
   			self.hdf5keys = list(hf.keys())
-  			self.filename = h5file
   			self.x1 = np.array(hf.get('x1'))
   			self.x2 = np.array(hf.get('x2'))
   			self.x3 = np.array(hf.get('x3'))
@@ -45,7 +54,7 @@ class RAW3D:
   			hf.close()
   	elif any(fext == s for s in ascii_ext_list):
   		self.dattype = 'csv'
-  		with open(csvfile, 'rt') as cf:
+  		with open(file, 'rt') as cf:
   			csvstrdata = csv.reader(cf, delimiter='\t', quoting=csv.QUOTE_NONNUMERIC)
   			self.data = np.array(list(csvstrdata)).astype('float')
   			cf.close()
@@ -56,8 +65,10 @@ class RAW3D:
   		self.p2 = self.data[:,4]
   		self.p3 = self.data[:,5]
   		self.q = self.data[:,6]
-  		self.tag  = np.array(self.data[:,7:]).astype(int)
-  		self.filename = csvfile
+  		self.tag  = np.zeros((len(self.data[:,7]),2))
+  		self.tag[:,0]  = np.ones(len(self.data[:,7]))
+  		self.tag[:,1] = np.array(self.data[:,7]).astype(int)
+  					
   def proc_tag(self):
   	return self.tag[:,0]  	
   def part_tag(self):
@@ -71,77 +82,13 @@ class RAW3D:
   	self.p2 = self.p2[ind]
   	self.p3 = self.p3[ind]
   	self.q = self.q[ind]
-  	self.tag = self.tag[ind,:]	
-
-
-class H5RAW3D:
-  def __init__(self, h5file):
-  	self.dattype = 'hdf5'
-  	with h5py.File(h5file,'r') as hf:
-  		self.hdf5keys = list(hf.keys())
-  		self.filename = h5file
-  		self.x1 = np.array(hf.get('x1'))
-  		self.x2 = np.array(hf.get('x2'))
-  		self.x3 = np.array(hf.get('x3'))
-  		self.p1 = np.array(hf.get('p1'))
-  		self.p2 = np.array(hf.get('p2'))
-  		self.p3 = np.array(hf.get('p3'))
-  		self.q  = np.array(hf.get('q'))
-  		self.tag  = np.array(hf.get('tag'))
-  		hf.close()
-  def proc_tag(self):
-  	return self.tag[:,0]  	
-  def part_tag(self):
-  	return self.tag[:,1]			  
-  def printhdf5keys(self):
-  	print('List of arrays in this file: \n', self.hdf5keys)
-  def sort(self):
-  	ind = np.lexsort((self.proc_tag(),self.part_tag()))
-  	self.x1 = self.x1[ind]
-  	self.x2 = self.x2[ind]
-  	self.x3 = self.x3[ind]
-  	self.p1 = self.p1[ind]
-  	self.p2 = self.p2[ind]
-  	self.p3 = self.p3[ind]
-  	self.q = self.q[ind]
-  	self.tag = self.tag[ind,:]	
-  	
-  	
-class CSVRAW3D:
-  def __init__(self, csvfile):
-  	self.dattype = 'csv'
-  	with open(csvfile, 'rt') as cf:
-  		csvstrdata = csv.reader(cf, delimiter='\t', quoting=csv.QUOTE_NONNUMERIC)
-  		self.data = np.array(list(csvstrdata)).astype('float')
-  		cf.close()
-  	self.x1 = self.data[:,0]
-  	self.x2 = self.data[:,1]
-  	self.x3 = self.data[:,2]
-  	self.p1 = self.data[:,3]
-  	self.p2 = self.data[:,4]
-  	self.p3 = self.data[:,5]
-  	self.q = self.data[:,6]
-  	self.tag  = np.array(self.data[:,7:]).astype(int)
-  	self.filename = csvfile
-
-  def proc_tag(self):
-  	return np.ones(len(self.tag[:,0]))
-  def part_tag(self):
-  	return self.tag[:,0]	
-  def sort(self):
-  	ind = np.lexsort((self.proc_tag(),self.part_tag()))
-  	self.x1 = self.x1[ind]
-  	self.x2 = self.x2[ind]
-  	self.x3 = self.x3[ind]
-  	self.p1 = self.p1[ind]
-  	self.p2 = self.p2[ind]
-  	self.p3 = self.p3[ind]
-  	self.q = self.q[ind]
-  	self.tag = self.tag[ind,:]	
-
-#def convert_x(raw, n0):
-	
-
+  	self.tag = self.tag[ind,:]
+  def conv_to_si(self, n0):
+  	k_p = math.sqrt(n0 * constants.e**2/(constants.epsilon_0 * constants.m_e))\
+  	/constants.c
+  	self.x1 = self.x1*k_p
+  	self.x2 = self.x2*k_p
+  	self.x3 = self.x3*k_p
 
 def main():
 	NUM_ARGS = 2
@@ -151,7 +98,7 @@ def main():
 	parser = OptionParser(usage=usage)
 	parser.add_option("-n", "--plasma-density", dest="n0",
 					  metavar="DENSITY", default=PLASMA_DEN_DEFAULT_STR,
-					  help="Plasma density n0 in cm^-3. "
+					  help="Plasma density n0 in m^-3. "
 					  "If set, original beam-file is assumed in Si units. "
 					  "Write exponentiation as 'XeY'!")
 
@@ -167,7 +114,9 @@ def main():
 
 	if not options.n0 == PLASMA_DEN_DEFAULT_STR:
 		n0 = float(options.n0)
-		#raw1.convert_to_si()
+		print('raw2.x1=',raw2.x1,)
+		raw2.conv_to_si(n0)
+		print('raw2.x1=',raw2.x1,)
 
 	raw1.sort()
 	raw2.sort()
