@@ -53,8 +53,8 @@ class RAW3D:
   			reader = csv.reader(cf, delimiter='\t', quoting=csv.QUOTE_NONNUMERIC)
   			self.data = np.array(list(reader)).astype('float')
   			# Need to detect number of columns for tag etc.
-  			ncols = len(reader.next())
-  			print('ncols=',ncols)
+  			# ncols = len(reader.next())
+  			# print('ncols=',ncols)
   			cf.close()
   		self.x1 = self.data[:,0]
   		self.x2 = self.data[:,1]
@@ -89,6 +89,7 @@ class RAW3D:
   	self.x3 = self.x3/k_p
 
 def main():
+	
 	NUM_ARGS = 2
 	PLASMA_DEN_DEFAULT_STR = "0.0"
 
@@ -120,9 +121,9 @@ def main():
 	raw2.sort()
 
 	if (max(abs(np.subtract(raw1.part_tag(), raw2.part_tag())))==0):
-		print( 'Tags correspond.')
+		print( 'Tags agree.')
 	else:
-		print( 'Tags do NOT correspond!')
+		print( 'Tags do NOT agree!')
 	print( 'Max. x1-diff: %.15f' % max(abs(np.subtract(raw1.x1, raw2.x1))) )
 	print( 'Max. x2-diff: %.15f' % max(abs(np.subtract(raw1.x2, raw2.x2))) )
 	print( 'Max. x3-diff: %.15f' % max(abs(np.subtract(raw1.x3, raw2.x3))) )
