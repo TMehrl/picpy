@@ -16,6 +16,9 @@ h5_ext_list = ['.h5','.hdf5']
 ascii_ext_list = ['.csv','.txt','.ascii']
 xlim_attr_str = ['XMIN','XMAX']
 
+#class PICDEFS:
+  
+
 class PIC_CODE(Enum):
   NONE = 0
   HIPACE = 1
@@ -24,10 +27,9 @@ class PIC_CODE(Enum):
 
 class GRID3D:
   def __init__(self, file):
-    fpath, fext = os.path.splitext(file)
     self.filename = file
     with h5py.File(file,'r') as hf:
-      self.attrs = hf.attrs
+      # Reading dataset
       self.h5keys = list(hf.keys())
       if len(self.h5keys) == 0:
         print('ERROR:\tHDF5 file "%s" does not contain any dataset!' %file)
@@ -37,8 +39,20 @@ class GRID3D:
       else:
         print('ERROR:\tHDF5 file "%s" contains more than one dataset!' %file)
         sys.exit()
-      for item in self.attrs.keys():
-        print(item + ":", self.attrs[item])
+       # Reading attributes 
+      self.attrkeys = list(hf.attrs.keys())
+      self.attrvals = list(hf.attrs.values())
+      self.attrvals = list(hf.attrs.items())
+      
+      for item in self.attrkeys:
+        print(item + ":", hf.attrs[item])
+      self.xmin = hf.attrs['XMIN']
+      self.xmax = hf.attrs['XMAX']
+      self.time = hf.attrs['TIME']
+      self.dt = hf.attrs['DT']
+      self.type = hf.attrs['TYPE']
+      self.name = hf.attrs['NAME']
+      
       hf.close()
 #  def get_x_arr(self,dim):
 
@@ -79,6 +93,7 @@ def main():
   
 #  if xlim_attr_str[0] in g3d.attrs.keys():
 #    print('Found: %s',xlim_attr_str[0])
+
 
   plt.figure()
   plt.pcolormesh(g3d.data[:,:,64])
