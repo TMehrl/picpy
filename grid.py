@@ -48,8 +48,10 @@ class Grid3d:
       self.xmax = hf.attrs[ picdefs.hipace.h5attrkeys.xmax ]
       self.time = hf.attrs[ picdefs.hipace.h5attrkeys.time ]
       self.dt = hf.attrs[   picdefs.hipace.h5attrkeys.dt ]
-      self.type = hf.attrs[ picdefs.hipace.h5attrkeys.type ]
-      self.name = hf.attrs[ picdefs.hipace.h5attrkeys.name ]
+      type_bytes = hf.attrs[ picdefs.hipace.h5attrkeys.type ]
+      name_bytes = hf.attrs[ picdefs.hipace.h5attrkeys.name ]
+      self.type = type_bytes[0].decode('UTF-8')
+      self.name = name_bytes[0].decode('UTF-8')
       
   def print_attributes(self, file):
     with h5py.File(self.file,'r') as hf:

@@ -11,6 +11,24 @@ import matplotlib.colors as colors
 import picdefs
 from grid import Grid3d
 
+
+# Parse defaults/definitions
+class parsedefs:
+  class plane:
+    zx = 'zx'
+    zy = 'zy'
+  class file_format:
+    png = 'png'
+    eps = 'eps'
+    pdf = 'pdf'
+  class zax:
+    zeta  = 'zeta'
+    z     = 'z'
+    xi    = 'xi'
+  class save_prefix:
+    name = 'g3d_name'
+
+
 def ps_parseopts():
 
   usg = "Usage: %prog [options] <file or path>"
@@ -34,11 +52,10 @@ def ps_parseopts():
                       help = """Path to which generated files will be saved.
                             (Default: './')""")
   parser.add_option(  "-n", "--name-prefix", 
-                      dest="save_name_prefix",
+                      dest="save_prefix",
                       metavar="NAME",
-                      default='g3d_slice',
-                      help = """Prefix of output filename.
-                            (Default: 'g3d_slice')""")  
+                      default=parsedefs.save_prefix.name,
+                      help = """Define customized prefix of output filename.""")  
   parser.add_option(  "-c", "--code", 
                       type='choice',
                       action='store',
@@ -62,25 +79,29 @@ def ps_parseopts():
                       action='store',
                       dest="file_format",
                       metavar="FORMAT",
-                      choices=['png', 'pdf', 'eps',],
-                      default='png',
+                      choices=[ parsedefs.file_format.png, 
+                                parsedefs.file_format.pdf, 
+                                parsedefs.file_format.eps,],
+                      default=parsedefs.file_format.png,
                       help= """Format of output file (Default: png).""")
   parser.add_option(  "-p", "--plane", 
                       type='choice',
                       action='store',
                       dest="plane",
                       metavar="PLANE",
-                      choices=['z-x', 'z-y', 'both'],
-                      default='z-x',
+                      choices=[ parsedefs.plane.zx, parsedefs.plane.zy,],
+                      default=parsedefs.plane.zx,
                       help= """Plane to be plotted (Default: z-x).""")
   parser.add_option(  "-z", "--z-axis", 
                       type='choice',
                       action='store',
                       dest="zax",
                       metavar="ZAXIS",
-                      choices=['zeta', 'z', 'xi',],
-                      default='zeta',
-                      help= """z-axis type (Default: zeta).""")                                                           
+                      choices=[ parsedefs.zax.zeta, 
+                                parsedefs.zax.z, 
+                                parsedefs.zax.xi,],
+                      default=parsedefs.zax.zeta,
+                      help= "z-axis type (Default: " + parsedefs.zax.zeta + ").")                                                           
   parser.add_option(  "-a", "--all", 
                       action='store_true',
                       dest="process_all",
@@ -112,40 +133,44 @@ def plotfile(file, opts):
   
   if opts.verbose == True: g3d.print_attributes(file)
     
-  if opts.zax == 'zeta':
+  if opts.zax == parsedefs.zax.zeta:
     x_array = g3d.get_zeta_arr()
     xlabel = r'$k_p \zeta$'
-  elif opts.zax == 'z':
+  elif opts.zax == parsedefs.zax.z:
     x_array = g3d.get_z_arr()
     xlabel = r'$k_p z$'
-  elif opts.zax == 'xi':
+  elif opts.zax == parsedefs.zax.xi:
     x_array = g3d.get_xi_arr()
     xlabel = r'$k_p \xi$'
   else:
     print('Error: No/wrong z-axis option selected!')
     sys.exit()
   
-  if opts.plane == 'z-x':
+  if opts.plane == parsedefs.plane.zx:
     centr_index = math.floor(g3d.nx[2]/2)
     data = g3d.data[:,:,centr_index].transpose(1, 0)
     y_array = g3d.get_x_arr(1)
     ylabel = r'$k_p x$'
-  elif opts.plane == 'z-y':
+  elif opts.plane == parsedefs.plane.zy:
     centr_index = math.floor(g3d.nx[1]/2)
-    data = g3d.data[:,centr_index,:].transpose(2, 0, 1)
+    data = g3d.data[:,centr_index,:].transpose(1, 0)
     y_array = g3d.get_x_arr(2)
     ylabel = r'$k_p y$'
-  elif opts.plane == 'both':
-    print('Error: Plotting both planes is not implemented yet!')
-    sys.exit()
   else:
     print('Error: Wong plane setting!')
     sys.exit()
 
   saveformat = opts.file_format  
   filesuffix = '_%06.f' % (g3d.time)
-  savename = opts.save_name_prefix + filesuffix + '.' + saveformat 
-
+  
+  if opts.save_prefix != parsedefs.save_prefix.name:
+    fileprefix = opts.save_prefix
+  else: 
+    fileprefix = g3d.name
+  
+  
+  
+  savename = fileprefix + filesuffix + '.' + saveformat
   
   fig = plt.figure()
   plt.pcolormesh( x_array, 
