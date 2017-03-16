@@ -24,7 +24,7 @@ class Grid3d:
     if any(fext == s for s in picdefs.fexts.hdf5):
       self.read_hipace_hdf5()
     else:
-      print('ERROR:\tExtension of file "%s" is not supported!' %fname)
+      print('Error:\tExtension of file "%s" is not supported!' %fname)
       print('\tAllowed file extensions: ',list(picdefs.fexts.hdf5))
       sys.exit()
 
@@ -34,12 +34,12 @@ class Grid3d:
       # Reading dataset
       self.h5keys = list(hf.keys())
       if len(self.h5keys) == 0:
-        print('ERROR:\tHDF5 file "%s" does not contain any dataset!' %self.file)
+        print('Error:\tHDF5 file "%s" does not contain any dataset!' %self.file)
         sys.exit()
       elif len(self.h5keys) == 1:
         self.data = np.array(hf.get(self.h5keys[0]))
       else:
-        print('ERROR:\tHDF5 file "%s" contains more than one dataset!' %self.file)
+        print('Error:\tHDF5 file "%s" contains more than one dataset!' %self.file)
         sys.exit()
       
       # Reading attributes 
@@ -70,6 +70,6 @@ class Grid3d:
     return round(self.time/self.dt)
    
   def read_osiris(self):
-    print('OSIRIS Read-in not yet implemented!')
+    print('Error: OSIRIS Read-in not yet implemented!')
     sys.exit()
     
