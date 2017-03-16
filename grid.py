@@ -13,12 +13,10 @@ class Grid3d:
   
   def read(self, file):
     self.file = file
-    print('Reading: ', self.file)
     if self.piccode == picdefs.code.hipace:
       self.read_hipace()
     elif self.piccode == picdefs.code.osiris:
       self.read_osiris()
-    print('Read-in completed.')
   def read_hipace(self): 
 
     fpath, fext = os.path.splitext(self.file)
@@ -43,11 +41,6 @@ class Grid3d:
       else:
         print('ERROR:\tHDF5 file "%s" contains more than one dataset!' %self.file)
         sys.exit()
-
-      # Printing attributes
-      print('HDF5 file attributes:')
-      for item in hf.attrs.keys():
-        print('\t' + item + ":", hf.attrs[item])
       
       # Reading attributes 
       self.nx = hf.attrs[   picdefs.hipace.h5attrkeys.nx ] 
@@ -58,6 +51,13 @@ class Grid3d:
       self.type = hf.attrs[ picdefs.hipace.h5attrkeys.type ]
       self.name = hf.attrs[ picdefs.hipace.h5attrkeys.name ]
       
+  def print_attributes(self, file):
+    with h5py.File(self.file,'r') as hf:
+      # Printing attributes
+      print('HDF5 file attributes:')
+      for item in hf.attrs.keys():
+        print('\t' + item + ":", hf.attrs[item])
+        
   def get_x_arr(self,dim):
     return np.linspace(self.xmin[dim],self.xmax[dim],self.nx[dim])
   def get_z_arr(self):  
