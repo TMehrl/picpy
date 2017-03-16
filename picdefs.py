@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # picdefs.py
 
-from enum import Enum
+# from enum import Enum
+# Code-type
+#class code(Enum):
+# none = 0
+# hipace = 1
+# osiris = 2
 
 # Code-type
-class code(Enum):
- none = 0
- hipace = 1
- osiris = 2
-
-class codenames:
+class code:
   hipace = 'hipace'
   osiris = 'osiris'
 

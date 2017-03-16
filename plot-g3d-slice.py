@@ -44,10 +44,10 @@ def ps_parseopts():
                       action='store',
                       dest="piccode",
                       metavar="CODE",
-                      choices = [picdefs.codenames.hipace, picdefs.codenames.osiris,],
-                      default = picdefs.codenames.hipace,
+                      choices = [picdefs.code.hipace, picdefs.code.osiris,],
+                      default = picdefs.code.hipace,
                       help= "PIC code which was used to generate files (Default: " +
-                            picdefs.codenames.hipace + ").")
+                            picdefs.code.hipace + ").")
   parser.add_option(  "-d", "--dim", 
                       type='choice',
                       action='store',
@@ -100,24 +100,12 @@ def ps_parseopts():
   return parser
 
 
-def used_code(code_str):
-  if code_str == picdefs.codenames.hipace:
-    return picdefs.code.hipace
-  elif code_str == picdefs.codenames.osiris:
-    return picdefs.code.osiris
-    print('Warning: OSIRIS not yet implemented/tested!')
-  else:
-    print('Error: No/wrong code selected!')
-    sys.exit()
-
-
 
 def plotfile(file, opts):
-  
-  code = used_code(opts.piccode)
-  
+    
   # File
-  g3d = Grid3d(code)
+  g3d = Grid3d(opts.piccode)
+  
   if opts.verbose == True:  print('Reading: ', file)
   g3d.read(file)
   if opts.verbose == True:  print('Read-in completed.')

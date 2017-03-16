@@ -34,12 +34,12 @@ class Grid3d:
       # Reading dataset
       self.h5keys = list(hf.keys())
       if len(self.h5keys) == 0:
-        print('Error:\tHDF5 file "%s" does not contain any dataset!' %self.file)
+        print('Error:\tHDF5 file "%s" does not contain any dataset!' %(self.file) )
         sys.exit()
       elif len(self.h5keys) == 1:
         self.data = np.array(hf.get(self.h5keys[0]))
       else:
-        print('Error:\tHDF5 file "%s" contains more than one dataset!' %self.file)
+        print('Error:\tHDF5 file "%s" contains more than one dataset!' %(self.file) )
         sys.exit()
       
       # Reading attributes 
