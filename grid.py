@@ -14,9 +14,9 @@ class Grid3d:
   def read(self, file):
     self.file = file
     print('Reading: ', self.file)
-    if self.piccode == picdefs.code.HIPACE:
+    if self.piccode == picdefs.code.hipace:
       self.read_hipace()
-    elif self.piccode == picdefs.code.OSIRIS:
+    elif self.piccode == picdefs.code.osiris:
       self.read_osiris()
     print('Read-in completed.')
   def read_hipace(self): 
@@ -45,8 +45,9 @@ class Grid3d:
         sys.exit()
 
       # Printing attributes
+      print('HDF5 file attributes:')
       for item in hf.attrs.keys():
-        print(item + ":", hf.attrs[item])
+        print('\t' + item + ":", hf.attrs[item])
       
       # Reading attributes 
       self.nx = hf.attrs[   picdefs.hipace.h5attrkeys.nx ] 

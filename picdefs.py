@@ -5,9 +5,13 @@ from enum import Enum
 
 # Code-type
 class code(Enum):
- NONE = 0
- HIPACE = 1
- OSIRIS = 2
+ none = 0
+ hipace = 1
+ osiris = 2
+
+class codenames:
+  hipace = 'hipace'
+  osiris = 'osiris'
 
 # HiPACE definitions   
 class hipace:
