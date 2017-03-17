@@ -9,7 +9,7 @@ import sys
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import picdefs
-from grid import Grid3d
+from h5dat import Grid3d
 
 
 # Parse defaults/definitions
@@ -131,7 +131,9 @@ def plotfile(file, opts):
   g3d.read(file)
   if opts.verbose == True:  print('Read-in completed.')
   
-  if opts.verbose == True: g3d.print_attributes(file)
+  if opts.verbose == True: 
+    g3d.print_datasets(file)
+    g3d.print_attributes(file)
     
   if opts.zax == parsedefs.zax.zeta:
     x_array = g3d.get_zeta_arr()
