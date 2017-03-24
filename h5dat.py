@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# grid3d.py
+# h5dat.py
 
 import os
 import numpy as np
@@ -64,13 +64,13 @@ class RAW:
     with h5py.File(self.file,'r') as hf:
       
       # Reading datasets
-      self.x1 = np.array(hf.get( picdefs.hipace.h5.rawkeys.x1 ))
-      self.x2 = np.array(hf.get( picdefs.hipace.h5.rawkeys.x2 ))
-      self.x3 = np.array(hf.get( picdefs.hipace.h5.rawkeys.x3 ))
-      self.q = np.array(hf.get( picdefs.hipace.h5.rawkeys.q ))
-      self.p1 = np.array(hf.get( picdefs.hipace.h5.rawkeys.p1 ))    
-      self.p2 = np.array(hf.get( picdefs.hipace.h5.rawkeys.p2 ))
-      self.p3 = np.array(hf.get( picdefs.hipace.h5.rawkeys.p3 ))
+      self.x1 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.x1 ))
+      self.x2 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.x2 ))
+      self.x3 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.x3 ))
+      self.q =  np.array(hf.get(  picdefs.hipace.h5.rawkeys.q  ))
+      self.p1 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.p1 ))    
+      self.p2 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.p2 ))
+      self.p3 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.p3 ))
             
       # Reading attributes 
       self.nx = hf.attrs[   picdefs.hipace.h5.attrkeys.nx ] 
@@ -85,8 +85,9 @@ class RAW:
     
     self.if_h5file_read = True
 
-
-
+  def read_osiris(self):
+    print('Error: OSIRIS Read-in not yet implemented!')
+    sys.exit()
 
 #### 3D-grid 
 class Grid3d:

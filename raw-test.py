@@ -11,6 +11,7 @@ import matplotlib.colors as colors
 from matplotlib.colors import LogNorm
 import picdefs
 from h5dat import RAW
+import ps_ana
 
 
 def main():
@@ -40,19 +41,17 @@ def main():
   ax = plt.gca()
   ax.set_ylabel('p1', fontsize=14)
   ax.set_xlabel('x1', fontsize=14)
-  plt.show()
+  #plt.show()
   fig.savefig(  '/Users/timon/Desktop/long_ps.png', 
                 format='png')
 
 
-#   fig = plt.figure()
-#   plt.scatter(raw.x1, raw.p1, s=1)
-#   ax = plt.gca()
-#   ax.set_ylabel('p1', fontsize=14)
-#   ax.set_xlabel('x1', fontsize=14)
-#   plt.show()
-#   fig.savefig(  '/Users/timon/Desktop/long_ps_scat.png', 
-#                 format='png')
+  moments = ps_ana.moments(raw.x1, raw.p1, raw.q, order=2, central=False)
+  print(moments)
+  
+  slices = ps_ana.SLICES(raw)
+  
+  print(slices.edges)
   
 if __name__ == "__main__":
     main()
