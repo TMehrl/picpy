@@ -50,8 +50,9 @@ def main():
   print(moments)
   
   slices = ps_ana.SLICES(raw)
+  slices.moments()
   
-  print(slices.edges)
+  #print(slices.edges)
   
 if __name__ == "__main__":
     main()
