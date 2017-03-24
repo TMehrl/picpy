@@ -21,7 +21,11 @@ class hipace:
     class g3dkeys:
       beam_charge = 'beam_charge'
     # ...  
-
+    class g3dtypes:
+      density = 'density'
+      field = 'field'
+    
+    
     # HDF5 RAW dataset keys
     class rawkeys:
       x1 = 'x1'

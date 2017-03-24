@@ -8,6 +8,7 @@ import math
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+from matplotlib import cm
 import picdefs
 from h5dat import Grid3d
 
@@ -91,7 +92,7 @@ def ps_parseopts():
                       metavar="PLANE",
                       choices=[ parsedefs.plane.zx, parsedefs.plane.zy,],
                       default=parsedefs.plane.zx,
-                      help= """Plane to be plotted (Default: z-x).""")
+                      help= """Plane to be plotted (Default: zx).""")
   parser.add_option(  "-z", "--z-axis", 
                       type='choice',
                       action='store',
@@ -149,13 +150,21 @@ def plotfile(file, opts):
     sys.exit()
   
   if opts.plane == parsedefs.plane.zx:
-    centr_index = math.floor(g3d.nx[2]/2)
-    data = g3d.data[:,:,centr_index].transpose(1, 0)
+    centr_index = math.floor(g3d.nx[2]/2) - 1
+    if g3d.nx[2]%2 == 1:
+      data = g3d.data[:,:,centr_index].transpose(1, 0)
+    else:
+      data = ( g3d.data[:,:,centr_index].transpose(1, 0)
+                + g3d.data[:,:,centr_index+1].transpose(1, 0) )/2
     y_array = g3d.get_x_arr(1)
     ylabel = r'$k_p x$'
   elif opts.plane == parsedefs.plane.zy:
-    centr_index = math.floor(g3d.nx[1]/2)
-    data = g3d.data[:,centr_index,:].transpose(1, 0)
+    centr_index = math.floor(g3d.nx[1]/2) - 1
+    if g3d.nx[1]%2 == 1:
+      data = g3d.data[:,centr_index,:].transpose(1, 0)
+    else:
+      data = ( g3d.data[:,centr_index,:].transpose(1, 0)
+                + g3d.data[:,centr_index+1,:].transpose(1, 0) )/2   
     y_array = g3d.get_x_arr(2)
     ylabel = r'$k_p y$'
   else:
@@ -163,7 +172,7 @@ def plotfile(file, opts):
     sys.exit()
 
   saveformat = opts.file_format  
-  filesuffix = '_%06.f' % (g3d.time)
+  filesuffix = '_%06.f' % (np.floor(g3d.time))
   
   if opts.save_prefix != parsedefs.save_prefix.name:
     fileprefix = opts.save_prefix
@@ -174,14 +183,28 @@ def plotfile(file, opts):
   
   savename = fileprefix + filesuffix + '.' + saveformat
   
+  if g3d.type == picdefs.hipace.h5.g3dtypes.density:
+    colormap = 'PuBu_r';
+    cbmax = np.amax(data)
+    cbmin = np.amin(data)
+  elif g3d.type == picdefs.hipace.h5.g3dtypes.field:
+    colormap = cm.coolwarm
+    cbmax = np.amax(abs(data))
+    cbmin = -cbmax
+ 
+  
   fig = plt.figure()
-  plt.pcolormesh( x_array, 
-                  y_array, 
-                  data, 
-                  cmap='PuBu_r')
+  cax = plt.pcolormesh( x_array, 
+                        y_array, 
+                        data,
+                        vmin=cbmin, vmax=cbmax,
+                        cmap=colormap)
   ax = plt.gca()
   ax.set_ylabel(ylabel, fontsize=14)
   ax.set_xlabel(xlabel, fontsize=14)
+  cbar = fig.colorbar(cax)
+  cbar.ax.set_ylabel(g3d.name)
+  
   fig.savefig(  opts.savepath + '/' + savename, 
                 format=saveformat)
   if opts.verbose == True: print('Saved "' + savename + '" at: ' + opts.savepath)    
