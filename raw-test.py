@@ -41,15 +41,19 @@ def main():
   ax.set_ylabel('p1', fontsize=14)
   ax.set_xlabel('x1', fontsize=14)
   #plt.show()
-  fig.savefig(  '/Users/timon/Desktop/long_ps.png', 
+  fig.savefig(  './long_ps.png', 
                 format='png')
 
 
-  moments = ps_ana.moments(raw.x1, raw.p1, raw.q, order=2, central=False)
+  moments = ps_ana.moments(raw.x2, raw.p2, raw.q, order=2, central=False)
   print(moments)
   
   slices = ps_ana.SLICES(raw)
-  slices.moments()
+  slices.calc_moments()
+  fig = plt.figure()  
+  plt.plot(slices.centers, np.sqrt(slices.x2p2_moms[:,0]))
+  fig.savefig(  './sigma_x.png', 
+                format='png')
   
   #print(slices.edges)
   
