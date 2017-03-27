@@ -126,10 +126,8 @@ def ps_parseopts():
 def plotfile(file, opts):
     
   # File
-  g3d = Grid3d(opts.piccode)
-  
   if opts.verbose == True:  print('Reading: ', file)
-  g3d.read(file)
+  g3d = Grid3d(file, opts.piccode)
   if opts.verbose == True:  print('Read-in completed.')
   
   if opts.verbose == True: 

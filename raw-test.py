@@ -30,10 +30,9 @@ def main():
     file = args[0]
   
   # File
-  raw = RAW(picdefs.code.hipace)
+  raw = RAW(file, picdefs.code.hipace)
   raw.print_datasets(file)
   raw.print_attributes(file)
-  raw.read(file)
   
   fig = plt.figure()
   plt.hist2d(raw.x1, raw.p1, bins=[256, 512], norm=LogNorm())

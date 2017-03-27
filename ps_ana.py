@@ -46,11 +46,7 @@ def moments(array1, array2, weights, order=2, central=True, roots=False):
 # Class for slice analysis
 class SLICES:
   def __init__(self, raw, edges=[]):
-    if raw.if_h5file_read:
-      self.raw = raw
-    else:
-      print('Error: RAW information has not yet been read in from hdf5!')
-      sys.exit()       
+    self.raw = raw  
     if edges == []:
       dx0 = (raw.xmax[0] - raw.xmin[0])/raw.nx[0]
       self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(raw.nx[0]+1))
@@ -70,7 +66,7 @@ class SLICES:
         x2_sl.append(self.raw.x2[i])
         p2_sl.append(self.raw.p2[i])
         
-      print(moments(np.asarray(x2_sl), np.asarray(p2_sl), np.asarray(q_sl)))
+      print(moments(np.asarray(x2_sl), np.asarray(p2_sl), np.asarray(q_sl), order = order))
  
  
  

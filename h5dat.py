@@ -15,14 +15,7 @@ def hdf5_check(file):
   else:
     print('Error:\tExtension of file "%s" is not supported!' %fname)
     print('\tAllowed file extensions: ',list(picdefs.fexts.hdf5))
-    sys.exit()   
-
-def check_if_h5file_is_read(if_read):
-  if if_read: 
-    pass
-  else:
-    print('Error: HDF5 file not yet read!')
-    sys.exit() 
+    sys.exit()    
 
 
 def print_datasets(file):
@@ -41,17 +34,9 @@ def print_attributes(file):
 
 
 class RAW:
-  def __init__(self, piccode):
+  def __init__(self, file, piccode=picdefs.code.hipace):
     self.piccode = piccode
-    self.if_h5file_read = False
 
-  def print_attributes(self, file):
-    print_attributes(file)
-
-  def print_datasets(self, file):
-    print_datasets(file)
-
-  def read(self, file):
     hdf5_check(file) 
     self.file = file  
     if self.piccode == picdefs.code.hipace:
@@ -82,18 +67,11 @@ class RAW:
       name_bytes = hf.attrs[ picdefs.hipace.h5.attrkeys.name ]
       self.type = type_bytes[0].decode('UTF-8')
       self.name = name_bytes[0].decode('UTF-8')
-    
-    self.if_h5file_read = True
+
 
   def read_osiris(self):
     print('Error: OSIRIS Read-in not yet implemented!')
     sys.exit()
-
-#### 3D-grid 
-class Grid3d:
-  def __init__(self, piccode):
-    self.piccode = piccode
-    self.if_h5file_read = False
 
   def print_attributes(self, file):
     print_attributes(file)
@@ -101,7 +79,11 @@ class Grid3d:
   def print_datasets(self, file):
     print_datasets(file)
 
-  def read(self, file):
+#### 3D-grid 
+class Grid3d:
+  def __init__(self, file, piccode=picdefs.code.hipace):
+    self.piccode = piccode
+
     hdf5_check(file) 
     self.file = file  
     if self.piccode == picdefs.code.hipace:
@@ -109,10 +91,15 @@ class Grid3d:
     elif self.piccode == picdefs.code.osiris:
       self.read_osiris()
 
-  
   def read_osiris(self):
     print('Error: OSIRIS Read-in not yet implemented!')
     sys.exit()
+    
+  def print_attributes(self, file):
+    print_attributes(file)
+
+  def print_datasets(self, file):
+    print_datasets(file)
       
   def read_hipace(self): 
   
@@ -139,11 +126,8 @@ class Grid3d:
       name_bytes = hf.attrs[ picdefs.hipace.h5.attrkeys.name ]
       self.type = type_bytes[0].decode('UTF-8')
       self.name = name_bytes[0].decode('UTF-8')
-    
-    self.if_h5file_read = True
         
   def get_x_arr(self,dim):
-    check_if_h5file_is_read(self.if_h5file_read)
     if self.piccode == picdefs.code.hipace:
       return np.linspace(self.xmin[dim],self.xmax[dim],self.nx[dim])
     else:
@@ -151,7 +135,6 @@ class Grid3d:
       sys.exit()
       
   def get_z_arr(self):
-    check_if_h5file_is_read(self.if_h5file_read) 
     if self.piccode == picdefs.code.hipace:
       return np.linspace(self.time+self.xmin[0],self.time+self.xmax[0],self.nx[0])
     else:
@@ -159,23 +142,20 @@ class Grid3d:
       sys.exit()  
             
   def get_zeta_arr(self):
-    check_if_h5file_is_read(self.if_h5file_read) 
     if self.piccode == picdefs.code.hipace:
       return np.linspace(self.xmin[0],self.xmax[0],self.nx[0])
     else:
       print('Error: OSIRIS part not yet implemented!')
       sys.exit()
             
-  def get_xi_arr(self):
-    check_if_h5file_is_read(self.if_h5file_read) 
+  def get_xi_arr(self): 
     if self.piccode == picdefs.code.hipace:
       return np.linspace(-self.xmin[0],-self.xmax[0],self.nx[0])
     else:
       print('Error: OSIRIS part not yet implemented!')
       sys.exit()
                   
-  def get_nt(self):
-    check_if_h5file_is_read(self.if_h5file_read)       
+  def get_nt(self):      
     if self.piccode == picdefs.code.hipace:
       return round(self.time/self.dt)
     else:
