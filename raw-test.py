@@ -6,6 +6,7 @@ from optparse import OptionParser
 from optparse import OptionGroup
 import math
 import sys
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib.colors import LogNorm
@@ -34,13 +35,15 @@ def main():
   raw.print_datasets(file)
   raw.print_attributes(file)
   
+  # Force matplotlib to not use any Xwindows backend.
+  matplotlib.use('Agg')
+  
   fig = plt.figure()
   plt.hist2d(raw.x1, raw.p1, bins=[256, 512], norm=LogNorm())
   plt.colorbar()
   ax = plt.gca()
   ax.set_ylabel('p1', fontsize=14)
   ax.set_xlabel('x1', fontsize=14)
-  #plt.show()
   fig.savefig(  './long_ps.png', 
                 format='png')
 
@@ -54,8 +57,6 @@ def main():
   plt.plot(slices.centers, np.sqrt(slices.x2p2_moms[:,0]))
   fig.savefig(  './sigma_x.png', 
                 format='png')
-  
-  #print(slices.edges)
   
 if __name__ == "__main__":
     main()
