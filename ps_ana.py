@@ -57,48 +57,46 @@ class SLICES:
     self.if_moms_calc = False
       
   def calc_moments(self, order=2):    
-    charge = [None]*self.nbins
-    x1p1_moms = []
-    x2p2_moms = []
-    x3p3_moms = []  
+    self.charge = np.zeros((self.nbins,), dtype=np.float32)
+    self.x1p1_moms = np.zeros((self.nbins, order+1, ), dtype=np.float32)
+    self.x2p2_moms = np.zeros((self.nbins, order+1, ), dtype=np.float32)
+    self.x3p3_moms = np.zeros((self.nbins, order+1, ), dtype=np.float32)  
     for ibin in range(0, self.nbins):
-      indices = [ i for i,x in enumerate(self.raw.x1) if 
-                  ( (x >= self.edges[ibin]) & (x < self.edges[ibin+1]) ) ]
+      indices = [ i for i, x1 in enumerate(self.raw.x1) if 
+                  ( (x1 >= self.edges[ibin]) & (x1 < self.edges[ibin+1]) ) ]
       npart_sl = len(indices)
-      q_sl = []
-      x1_sl = []
-      p1_sl = []
-      x2_sl = []
-      p2_sl = []
-      x3_sl = []
-      p3_sl = []
-      for i in indices:
-        q_sl.append(self.raw.q[i])
-        x1_sl.append(self.raw.x1[i])
-        p1_sl.append(self.raw.p1[i])
-        x2_sl.append(self.raw.x2[i])
-        p2_sl.append(self.raw.p2[i])
-        x3_sl.append(self.raw.x3[i])
-        p3_sl.append(self.raw.p3[i])
+      q_sl = np.zeros((npart_sl, ), dtype=np.float32)
+      x1_sl = np.zeros((npart_sl, ), dtype=np.float32)
+      p1_sl = np.zeros((npart_sl, ), dtype=np.float32)
+      x2_sl = np.zeros((npart_sl, ), dtype=np.float32)
+      p2_sl = np.zeros((npart_sl, ), dtype=np.float32)
+      x3_sl = np.zeros((npart_sl, ), dtype=np.float32)
+      p3_sl = np.zeros((npart_sl, ), dtype=np.float32)
       
-      charge[ibin] = np.sum(q_sl)
-      x1p1_moms.append( moments( np.asarray(x1_sl), 
-                                      np.asarray(p1_sl), 
-                                      np.asarray(q_sl), 
-                                      order = order) )               
-      x2p2_moms.append( moments( np.asarray(x2_sl), 
-                                      np.asarray(p2_sl), 
-                                      np.asarray(q_sl), 
-                                      order = order) )
-      x3p3_moms.append( moments( np.asarray(x3_sl), 
-                                      np.asarray(p3_sl), 
-                                      np.asarray(q_sl), 
-                                      order = order) )                                    
-    
-    self.charge = np.asarray(charge)
-    self.x1p1_moms = np.asarray(x1p1_moms)
-    self.x2p2_moms = np.asarray(x2p2_moms)
-    self.x3p3_moms = np.asarray(x3p3_moms)
+      ipart_sl = 0
+      for i in indices:
+        q_sl[ipart_sl] = self.raw.q[i]
+        x1_sl[ipart_sl] = self.raw.x1[i]
+        p1_sl[ipart_sl] = self.raw.p1[i]
+        x2_sl[ipart_sl] = self.raw.x2[i]
+        p2_sl[ipart_sl] = self.raw.p2[i]
+        x3_sl[ipart_sl] = self.raw.x3[i]
+        p3_sl[ipart_sl] = self.raw.p3[i]
+        ipart_sl += 1
+      
+      self.charge[ibin] = np.sum(q_sl)
+      self.x1p1_moms[ibin,:] = moments( x1_sl, 
+                                        p1_sl, 
+                                        q_sl, 
+                                        order = order)               
+      self.x2p2_moms[ibin,:] = moments( x2_sl, 
+                                        p2_sl, 
+                                        q_sl, 
+                                        order = order)
+      self.x3p3_moms[ibin,:] = moments( x3_sl, 
+                                        p3_sl, 
+                                        q_sl, 
+                                        order = order)                                     
     
     self.if_moms_calc = True
     
