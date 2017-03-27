@@ -7,6 +7,8 @@ from optparse import OptionGroup
 import math
 import sys
 import matplotlib
+# Force matplotlib to not use any Xwindows backend.
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib import cm
@@ -190,9 +192,6 @@ def plotfile(file, opts):
     colormap = cm.coolwarm
     cbmax = np.amax(abs(data))
     cbmin = -cbmax
- 
-  # Force matplotlib to not use any Xwindows backend.
-  matplotlib.use('Agg')
   
   fig = plt.figure()
   cax = plt.pcolormesh( x_array, 

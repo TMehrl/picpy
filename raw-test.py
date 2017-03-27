@@ -7,6 +7,8 @@ from optparse import OptionGroup
 import math
 import sys
 import matplotlib
+# Force matplotlib to not use any Xwindows backend.
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib.colors import LogNorm
@@ -35,8 +37,6 @@ def main():
   raw.print_datasets(file)
   raw.print_attributes(file)
   
-  # Force matplotlib to not use any Xwindows backend.
-  matplotlib.use('Agg')
   
   fig = plt.figure()
   plt.hist2d(raw.x1, raw.p1, bins=[256, 512], norm=LogNorm())
