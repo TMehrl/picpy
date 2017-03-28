@@ -54,7 +54,7 @@ def main():
   slices = ps_ana.SLICES(raw)
   slices.calc_moments()
   fig = plt.figure()  
-  plt.plot(slices.centers, np.sqrt(slices.x2p2_moms[:,0]))
+  plt.plot(slices.centers, np.sqrt(slices.avgx2sq))
   fig.savefig(  './sigma_x.png', 
                 format='png')
   

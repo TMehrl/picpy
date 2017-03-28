@@ -56,6 +56,8 @@ class RAW:
       self.p1 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.p1 ))    
       self.p2 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.p2 ))
       self.p3 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.p3 ))
+      
+      self.npart = len(self.q)
             
       # Reading attributes 
       self.nx = hf.attrs[   picdefs.hipace.h5.attrkeys.nx ] 
@@ -67,7 +69,6 @@ class RAW:
       name_bytes = hf.attrs[ picdefs.hipace.h5.attrkeys.name ]
       self.type = type_bytes[0].decode('UTF-8')
       self.name = name_bytes[0].decode('UTF-8')
-
 
   def read_osiris(self):
     print('Error: OSIRIS Read-in not yet implemented!')

@@ -56,48 +56,74 @@ class SLICES:
     self.centers = self.edges[0:-1] + np.diff(self.edges)/2
     self.if_moms_calc = False
       
-  def calc_moments(self, order=2):    
-    self.charge = np.zeros((self.nbins,), dtype=np.float32)
-    self.x1p1_moms = np.zeros((self.nbins, order+1, ), dtype=np.float32)
-    self.x2p2_moms = np.zeros((self.nbins, order+1, ), dtype=np.float32)
-    self.x3p3_moms = np.zeros((self.nbins, order+1, ), dtype=np.float32)  
-    for ibin in range(0, self.nbins):
-      indices = [ i for i, x1 in enumerate(self.raw.x1) if 
-                  ( (x1 >= self.edges[ibin]) & (x1 < self.edges[ibin+1]) ) ]
-      npart_sl = len(indices)
-      q_sl = np.zeros((npart_sl, ), dtype=np.float32)
-      x1_sl = np.zeros((npart_sl, ), dtype=np.float32)
-      p1_sl = np.zeros((npart_sl, ), dtype=np.float32)
-      x2_sl = np.zeros((npart_sl, ), dtype=np.float32)
-      p2_sl = np.zeros((npart_sl, ), dtype=np.float32)
-      x3_sl = np.zeros((npart_sl, ), dtype=np.float32)
-      p3_sl = np.zeros((npart_sl, ), dtype=np.float32)
-      
-      ipart_sl = 0
-      for i in indices:
-        q_sl[ipart_sl] = self.raw.q[i]
-        x1_sl[ipart_sl] = self.raw.x1[i]
-        p1_sl[ipart_sl] = self.raw.p1[i]
-        x2_sl[ipart_sl] = self.raw.x2[i]
-        p2_sl[ipart_sl] = self.raw.p2[i]
-        x3_sl[ipart_sl] = self.raw.x3[i]
-        p3_sl[ipart_sl] = self.raw.p3[i]
-        ipart_sl += 1
-      
-      self.charge[ibin] = np.sum(q_sl)
-      self.x1p1_moms[ibin,:] = moments( x1_sl, 
-                                        p1_sl, 
-                                        q_sl, 
-                                        order = order)               
-      self.x2p2_moms[ibin,:] = moments( x2_sl, 
-                                        p2_sl, 
-                                        q_sl, 
-                                        order = order)
-      self.x3p3_moms[ibin,:] = moments( x3_sl, 
-                                        p3_sl, 
-                                        q_sl, 
-                                        order = order)                                     
+  def calc_moments(self, order=2, central=True):    
     
+    partweight = np.zeros((self.raw.npart,), dtype=np.float32)
+    
+    self.charge = np.zeros((self.nbins,), dtype=np.float32)
+  
+    ibinpart = np.searchsorted(self.edges, self.raw.x1)     
+  
+    # Consider doing a searchsorted of ibinpart and accordingly sort of x and p arrays...
+
+    for i in range(0,self.raw.npart):
+      self.charge[ibinpart[i]] += self.raw.q[i]
+
+    for i in range(0,self.raw.npart):
+      partweight[i] = self.raw.q[i]/self.charge[ibinpart[i]]
+
+    if order > 0:
+      self.avgx1 = np.zeros((self.nbins, ), dtype=np.float32)
+      self.avgx2 = np.zeros((self.nbins, ), dtype=np.float32)
+      self.avgx3 = np.zeros((self.nbins, ), dtype=np.float32)
+      self.avgp1 = np.zeros((self.nbins, ), dtype=np.float32)
+      self.avgp2 = np.zeros((self.nbins, ), dtype=np.float32)
+      self.avgp3 = np.zeros((self.nbins, ), dtype=np.float32)
+          
+      for i in range(0,self.raw.npart):
+        self.avgx1[ibinpart[i]] += self.raw.x1[i] * partweight[i]   
+        self.avgx2[ibinpart[i]] += self.raw.x2[i] * partweight[i]
+        self.avgx3[ibinpart[i]] += self.raw.x3[i] * partweight[i]
+        self.avgp1[ibinpart[i]] += self.raw.p1[i] * partweight[i]   
+        self.avgp2[ibinpart[i]] += self.raw.p2[i] * partweight[i]
+        self.avgp3[ibinpart[i]] += self.raw.p3[i] * partweight[i]
+
+    if order > 1:
+      self.avgx1sq = np.zeros((self.nbins, ), dtype=np.float32)
+      self.avgx2sq = np.zeros((self.nbins, ), dtype=np.float32)
+      self.avgx3sq = np.zeros((self.nbins, ), dtype=np.float32)
+      self.avgp1sq = np.zeros((self.nbins, ), dtype=np.float32)
+      self.avgp2sq = np.zeros((self.nbins, ), dtype=np.float32)
+      self.avgp3sq = np.zeros((self.nbins, ), dtype=np.float32)
+      self.avgx1p1 = np.zeros((self.nbins, ), dtype=np.float32)
+      self.avgx2p2 = np.zeros((self.nbins, ), dtype=np.float32)
+      self.avgx3p3 = np.zeros((self.nbins, ), dtype=np.float32)   
+      
+      for i in range(0,self.raw.npart):
+        self.avgx1sq[ibinpart[i]] += self.raw.x1[i]**2 * partweight[i]   
+        self.avgx2sq[ibinpart[i]] += self.raw.x2[i]**2 * partweight[i]
+        self.avgx3sq[ibinpart[i]] += self.raw.x3[i]**2 * partweight[i]
+        self.avgp1sq[ibinpart[i]] += self.raw.p1[i]**2 * partweight[i]   
+        self.avgp2sq[ibinpart[i]] += self.raw.p2[i]**2 * partweight[i]
+        self.avgp3sq[ibinpart[i]] += self.raw.p3[i]**2 * partweight[i]
+        self.avgx1p1[ibinpart[i]] += self.raw.x1[i] * self.raw.p1[i] * partweight[i]
+        self.avgx2p2[ibinpart[i]] += self.raw.x2[i] * self.raw.p2[i] * partweight[i]
+        self.avgx3p3[ibinpart[i]] += self.raw.x3[i] * self.raw.p3[i] * partweight[i]
+
+      if central:
+        self.avgx1sq = np.subtract(self.avgx1sq, np.power(self.avgx1, 2))
+        self.avgx2sq = np.subtract(self.avgx2sq, np.power(self.avgx2, 2))
+        self.avgx3sq = np.subtract(self.avgx3sq, np.power(self.avgx3, 2))
+        self.avgp1sq = np.subtract(self.avgp1sq, np.power(self.avgp1, 2))
+        self.avgp2sq = np.subtract(self.avgp2sq, np.power(self.avgp2, 2))
+        self.avgp3sq = np.subtract(self.avgp3sq, np.power(self.avgp3, 2))
+        self.avgx1p1 = np.subtract(self.avgx1p1, np.multiply(self.avgx1, self.avgp1))
+        self.avgx2p2 = np.subtract(self.avgx2p2, np.multiply(self.avgx2, self.avgp2))
+        self.avgx3p3 = np.subtract(self.avgx3p3, np.multiply(self.avgx3, self.avgp3))
+        
+    if order > 2:
+      print('Moments with orders > 3 not yet implemented!') 
+            
     self.if_moms_calc = True
     
  
