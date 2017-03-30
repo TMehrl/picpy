@@ -64,7 +64,10 @@ class SLICES:
   def calc_moments(self, order=2, central=True):    
     self.startcm_time = time.time()    
   
-    ibinpart_raw = np.searchsorted(self.edges, self.raw.x1)     
+    ibinpart_raw = np.searchsorted(self.edges, self.raw.x1)
+    self.npart = np.bincount(ibinpart_raw)
+    self.charge = np.bincount(ibinpart_raw, self.raw.q)
+        
     self.cm_afsearchsorted_time = time.time()
     
     ibinpartsort = np.argsort(ibinpart_raw) 
@@ -94,9 +97,6 @@ class SLICES:
 
     self.cm_afsortingpart_time = time.time()
     
-    self.charge = np.zeros((self.nbins,), dtype=np.float32)  
-    for i in range(0,self.raw.npart):
-      self.charge[ibinpart[i]] += q[i]
         
     partweight = np.zeros((self.raw.npart,), dtype=np.float32)
       
