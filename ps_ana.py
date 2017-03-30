@@ -78,7 +78,9 @@ class SLICES:
       max_npart_sl = np.max(self.npart)
     
       bincount = np.zeros((self.nbins), dtype=np.uint32)
-      Q = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
+      Q = np.zeros((self.nbins, max_npart_sl-1), dtype=np.float32)
+      # Making sure that sum of weights is not zero if no particle in bin!
+      Q = np.c_[ np.ones((self.nbins, 1), dtype=np.float32), Q]
       X1 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
       X2 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
       X3 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
@@ -88,14 +90,10 @@ class SLICES:
  
       self.cm_afallocsortpart_time = time.time()
     
-      # Making sure that sum of weights is not zero if no particle in bin!
-      for ibin in range(0,self.nbins):
-        Q[ ibin, 0 ] = 1.0
-      
       for i in range(0,self.raw.npart):
         ibin = ibinpart[i]
         ipartbin = bincount[ibin]
-        Q[ ibin,  ipartbin] =  self.raw.q[i]
+        Q[ ibin,  ipartbin ] = self.raw.q[i]
         X1[ ibin, ipartbin ] = self.raw.x1[i]
         X2[ ibin, ipartbin ] = self.raw.x2[i]
         X3[ ibin, ipartbin ] = self.raw.x3[i]
@@ -146,7 +144,7 @@ class SLICES:
       print('--------- Timings --------- ')
       print('Total time:\t\t%e %s' % ((self.cm_afcalcsqavg_time-self.stinit_time) , 's')) 
       print('Init time:\t\t%e %s' % ((self.fininit_time-self.stinit_time), 's'))
-      print('Searchsorted1:\t\t%e %s' % ((self.cm_afsearchsorted_time-self.startcm_time), 's'))
+      print('Searchsorted:\t\t%e %s' % ((self.cm_afsearchsorted_time-self.startcm_time), 's'))
       print('Alloc sorted part arr:\t%e %s' % ((self.cm_afallocsortpart_time-self.cm_afsearchsorted_time), 's'))
       print('Sort part arr:\t\t%e %s' % ((self.cm_afsortingpart_time-self.cm_afallocsortpart_time), 's'))
       print('Computation of avgs:\t%e %s' % ((self.cm_afcalcavg_time-self.cm_afsortingpart_time), 's'))
