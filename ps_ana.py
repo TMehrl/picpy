@@ -94,13 +94,14 @@ class SLICES:
       
       for i in range(0,self.raw.npart):
         ibin = ibinpart[i]
-        Q[ ibin, bincount[ibin] ] =  self.raw.q[i]
-        X1[ ibin, bincount[ibin] ] = self.raw.x1[i]
-        X2[ ibin, bincount[ibin] ] = self.raw.x2[i]
-        X3[ ibin, bincount[ibin] ] = self.raw.x3[i]
-        P1[ ibin, bincount[ibin] ] = self.raw.p1[i]
-        P2[ ibin, bincount[ibin] ] = self.raw.p2[i]
-        P3[ ibin, bincount[ibin] ] = self.raw.p3[i]
+        ipartbin = bincount[ibin]
+        Q[ ibin,  ipartbin] =  self.raw.q[i]
+        X1[ ibin, ipartbin ] = self.raw.x1[i]
+        X2[ ibin, ipartbin ] = self.raw.x2[i]
+        X3[ ibin, ipartbin ] = self.raw.x3[i]
+        P1[ ibin, ipartbin ] = self.raw.p1[i]
+        P2[ ibin, ipartbin ] = self.raw.p2[i]
+        P3[ ibin, ipartbin ] = self.raw.p3[i]
         bincount[ibin] += 1
 
       self.cm_afsortingpart_time = time.time()
