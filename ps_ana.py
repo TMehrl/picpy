@@ -62,101 +62,72 @@ class SLICES:
     self.fininit_time = time.time()
       
   def calc_moments(self, order=2, central=True):    
+    
     self.startcm_time = time.time()    
   
-    ibinpart_raw = np.searchsorted(self.edges, self.raw.x1)
-    self.npart = np.bincount(ibinpart_raw)
-    self.charge = np.bincount(ibinpart_raw, self.raw.q)
+    ibinpart = np.searchsorted(self.edges, self.raw.x1)
+    self.npart = np.bincount(ibinpart)
+    self.charge = np.bincount(ibinpart, self.raw.q)
         
     self.cm_afsearchsorted_time = time.time()
     
-    ibinpartsort = np.argsort(ibinpart_raw) 
     self.cm_afargsort_time = time.time()
     
-    ibinpart = np.zeros((self.raw.npart, ), dtype=np.uint32)
-    q = np.zeros((self.raw.npart, ), dtype=np.float32)
-    x1 = np.zeros((self.raw.npart, ), dtype=np.float32)
-    x2 = np.zeros((self.raw.npart, ), dtype=np.float32)
-    x3 = np.zeros((self.raw.npart, ), dtype=np.float32)
-    p1 = np.zeros((self.raw.npart, ), dtype=np.float32)
-    p2 = np.zeros((self.raw.npart, ), dtype=np.float32)
-    p3 = np.zeros((self.raw.npart, ), dtype=np.float32)
- 
-    self.cm_afallocsortpart_time = time.time()
-    
-    for i in range(0,self.raw.npart):
-      ipart_sort = ibinpartsort[i]
-      ibinpart[ipart_sort ] = ibinpart_raw[i]
-      q[  ipart_sort ] =  self.raw.q[i]
-      x1[ ipart_sort ] = self.raw.x1[i]
-      x2[ ipart_sort ] = self.raw.x2[i]
-      x3[ ipart_sort ] = self.raw.x3[i]
-      p1[ ipart_sort ] = self.raw.p1[i]
-      p2[ ipart_sort ] = self.raw.p2[i]
-      p3[ ipart_sort ] = self.raw.p3[i]
-
-    self.cm_afsortingpart_time = time.time()
-    
-        
-    partweight = np.zeros((self.raw.npart,), dtype=np.float32)
-      
-    for i in range(0,self.raw.npart):
-      partweight[i] = q[i]/self.charge[ibinpart[i]]
-      
-    self.cm_afpartweight_time = time.time()
     if order > 0:
-      self.avgx1 = np.zeros((self.nbins, ), dtype=np.float32)
-      self.avgx2 = np.zeros((self.nbins, ), dtype=np.float32)
-      self.avgx3 = np.zeros((self.nbins, ), dtype=np.float32)
-      self.avgp1 = np.zeros((self.nbins, ), dtype=np.float32)
-      self.avgp2 = np.zeros((self.nbins, ), dtype=np.float32)
-      self.avgp3 = np.zeros((self.nbins, ), dtype=np.float32)
-      self.cm_afallocavg_time = time.time()
-          
+    
+      max_npart_sl = np.max(self.npart)
+    
+      bincount = np.zeros((self.nbins), dtype=np.uint32)
+      Q = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
+      X1 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
+      X2 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
+      X3 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
+      P1 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
+      P2 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
+      P3 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
+ 
+      self.cm_afallocsortpart_time = time.time()
+    
+      # Making sure that sum of weights is not zero if no particle in bin!
+      for ibin in range(0,self.nbins):
+        Q[ ibin, 0 ] = 1.0
+      
       for i in range(0,self.raw.npart):
         ibin = ibinpart[i]
-        self.avgx1[ibin] += x1[i] * partweight[i]   
-        self.avgx2[ibin] += x2[i] * partweight[i]
-        self.avgx3[ibin] += x3[i] * partweight[i]
-        self.avgp1[ibin] += p1[i] * partweight[i]   
-        self.avgp2[ibin] += p2[i] * partweight[i]
-        self.avgp3[ibin] += p3[i] * partweight[i]
+        Q[ ibin, bincount[ibin] ] =  self.raw.q[i]
+        X1[ ibin, bincount[ibin] ] = self.raw.x1[i]
+        X2[ ibin, bincount[ibin] ] = self.raw.x2[i]
+        X3[ ibin, bincount[ibin] ] = self.raw.x3[i]
+        P1[ ibin, bincount[ibin] ] = self.raw.p1[i]
+        P2[ ibin, bincount[ibin] ] = self.raw.p2[i]
+        P3[ ibin, bincount[ibin] ] = self.raw.p3[i]
+        bincount[ibin] += 1
+
+      self.cm_afsortingpart_time = time.time()
+          
+      self.avgx1 = np.average(X1, axis=1, weights=Q)
+      self.avgx2 = np.average(X2, axis=1, weights=Q)
+      self.avgx3 = np.average(X3, axis=1, weights=Q)
+      self.avgp1 = np.average(P1, axis=1, weights=Q)
+      self.avgp2 = np.average(P2, axis=1, weights=Q)
+      self.avgp3 = np.average(P3, axis=1, weights=Q)
+
       self.cm_afcalcavg_time = time.time()
       
     if order > 1:
-      self.avgx1sq = np.zeros((self.nbins, ), dtype=np.float32)
-      self.avgx2sq = np.zeros((self.nbins, ), dtype=np.float32)
-      self.avgx3sq = np.zeros((self.nbins, ), dtype=np.float32)
-      self.avgp1sq = np.zeros((self.nbins, ), dtype=np.float32)
-      self.avgp2sq = np.zeros((self.nbins, ), dtype=np.float32)
-      self.avgp3sq = np.zeros((self.nbins, ), dtype=np.float32)
-      self.avgx1p1 = np.zeros((self.nbins, ), dtype=np.float32)
-      self.avgx2p2 = np.zeros((self.nbins, ), dtype=np.float32)
-      self.avgx3p3 = np.zeros((self.nbins, ), dtype=np.float32)   
+
       self.cm_afallocsqavg_time = time.time()
       
-    
-      part_avgx1sq = np.multiply(np.power(x1,2 ), partweight ) 
-      part_avgx2sq = np.multiply(np.power(x2,2 ), partweight )
-      part_avgx3sq = np.multiply(np.power(x3,2 ), partweight )
-      part_avgp1sq = np.multiply(np.power(p1,2 ), partweight )
-      part_avgp2sq = np.multiply(np.power(p2,2 ), partweight )
-      part_avgp3sq = np.multiply(np.power(p3,2 ), partweight )
-      part_avgx1p1 = np.multiply(np.multiply( x1, p1 ), partweight )
-      part_avgx2p2 = np.multiply(np.multiply( x2, p2 ), partweight )
-      part_avgx3p3 = np.multiply(np.multiply( x3, p3 ), partweight )
-      
-      for i in range(0,self.raw.npart):
-        ibin = ibinpart[i]        
-        self.avgx1sq[ibin] += part_avgx1sq[i]   
-        self.avgx2sq[ibin] += part_avgx2sq[i]
-        self.avgx3sq[ibin] += part_avgx3sq[i]
-        self.avgp1sq[ibin] += part_avgp1sq[i]   
-        self.avgp2sq[ibin] += part_avgp2sq[i]
-        self.avgp3sq[ibin] += part_avgp3sq[i]
-        self.avgx1p1[ibin] += part_avgx1p1[i]
-        self.avgx2p2[ibin] += part_avgx2p2[i]
-        self.avgx3p3[ibin] += part_avgx3p3[i]
+      self.avgx1sq = np.average(np.power(X1,2), axis=1, weights=Q)
+      self.avgx2sq = np.average(np.power(X2,2), axis=1, weights=Q)
+      self.avgx3sq = np.average(np.power(X3,2), axis=1, weights=Q)
+      self.avgp1sq = np.average(np.power(P1,2), axis=1, weights=Q)   
+      self.avgp2sq = np.average(np.power(P2,2), axis=1, weights=Q)
+      self.avgp3sq = np.average(np.power(P3,2), axis=1, weights=Q) 
+      self.avgx1p1 = np.average(np.multiply(X1,P1), axis=1, weights=Q)
+      self.avgx2p2 = np.average(np.multiply(X2,P2), axis=1, weights=Q)
+      self.avgx3p3 = np.average(np.multiply(X2,P3), axis=1, weights=Q)
+       
       self.cm_afcalcsqavg_time = time.time()
       if central:
         self.avgx1sq = np.subtract(self.avgx1sq, np.power(self.avgx1, 2))
@@ -175,12 +146,9 @@ class SLICES:
       print('Total time:\t\t%e %s' % ((self.cm_afcalcsqavg_time-self.stinit_time) , 's')) 
       print('Init time:\t\t%e %s' % ((self.fininit_time-self.stinit_time), 's'))
       print('Searchsorted1:\t\t%e %s' % ((self.cm_afsearchsorted_time-self.startcm_time), 's'))
-      print('Argsort:\t\t%e %s' % ((self.cm_afargsort_time-self.cm_afsearchsorted_time), 's'))
-      print('Alloc sorted part arr:\t%e %s' % ((self.cm_afallocsortpart_time-self.cm_afargsort_time), 's'))
+      print('Alloc sorted part arr:\t%e %s' % ((self.cm_afallocsortpart_time-self.cm_afsearchsorted_time), 's'))
       print('Sort part arr:\t\t%e %s' % ((self.cm_afsortingpart_time-self.cm_afallocsortpart_time), 's'))
-      print('Calc of partweight:\t%e %s' % ((self.cm_afpartweight_time-self.cm_afsortingpart_time), 's'))
-      print('Alloc of avgs:\t\t%e %s' % ((self.cm_afallocavg_time-self.cm_afpartweight_time), 's'))
-      print('Computation of avgs:\t%e %s' % ((self.cm_afcalcavg_time-self.cm_afallocavg_time), 's'))
+      print('Computation of avgs:\t%e %s' % ((self.cm_afcalcavg_time-self.cm_afsortingpart_time), 's'))
       print('Alloc of var arrays:\t%e %s' % ((self.cm_afallocsqavg_time-self.cm_afcalcavg_time), 's'))
       print('Calc of var:\t\t%e %s' % ((self.cm_afcalcsqavg_time-self.cm_afallocsqavg_time), 's'))
       print('Calc of centr of vars:\t%e %s' % ((self.cm_afcalcsqavgcent_time-self.cm_afcalcsqavg_time), 's'))
