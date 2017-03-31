@@ -46,10 +46,6 @@ def main():
   ax.set_xlabel('x1', fontsize=14)
   fig.savefig(  './long_ps.png', 
                 format='png')
-
-
-  moments = ps_ana.moments(raw.x2, raw.p2, raw.q, order=2, central=False)
-  print(moments)
   
   slices = ps_ana.SLICES(raw)
   slices.calc_moments()
@@ -57,6 +53,11 @@ def main():
   plt.plot(slices.centers, np.sqrt(slices.avgx2sq))
   fig.savefig(  './sigma_x.png', 
                 format='png')
+                
+  fig = plt.figure()  
+  plt.plot(slices.centers, slices.charge)
+  fig.savefig(  './curr_profile.png', 
+                format='png')                
   
 if __name__ == "__main__":
     main()

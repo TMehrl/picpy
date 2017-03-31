@@ -66,8 +66,11 @@ class SLICES:
     self.startcm_time = time.time()    
   
     ibinpart = np.searchsorted(self.edges, self.raw.x1)
-    self.npart = np.bincount(ibinpart)
-    self.charge = np.bincount(ibinpart, self.raw.q)
+    self.npart = np.bincount(ibinpart, minlength=self.nbins)
+    self.charge = np.bincount(ibinpart, weights=self.raw.q, minlength=self.nbins)
+    
+    if np.size(self.npart)>self.nbins | np.size(self.charge)>self.nbins:
+      print('Warning: particles out of range!')
         
     self.cm_afsearchsorted_time = time.time()
     
