@@ -57,7 +57,12 @@ def main():
   fig = plt.figure()  
   plt.plot(slices.centers, slices.charge)
   fig.savefig(  './curr_profile.png', 
-                format='png')                
+                format='png') 
+                
+  fig = plt.figure()  
+  plt.plot(slices.centers, slices.avgx2)
+  fig.savefig(  './Xb.png', 
+                format='png')                                
   
 if __name__ == "__main__":
     main()
