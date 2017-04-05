@@ -17,6 +17,7 @@ class code:
 class hipace:
   # HDF5 definitions  
   class h5:
+    Nfname_digits = 6
     # HDF5 GRID dataset
     class g3dkeys:
       beam_charge = 'beam_charge'

@@ -76,7 +76,7 @@ def ps_parseopts():
   parser.add_option(  "-N", "--number-of-files", 
                       action='store',
                       dest="Nfiles",
-                      metavar="FORMAT",
+                      metavar="NFILES",
                       default=0,
                       help= """Number of files to analyze.""")
 #   group = OptionGroup(parser, "Options for beam-phase-space (RAW) files",
@@ -115,21 +115,25 @@ def main():
     print('Error: Nfiles cannot be smaller than the actual number of files!')
 
   t_array = np.zeros(Nfiles, dtype=np.float32)
+  AVGx1 = np.zeros((Nfiles, nbins), dtype=np.float32)
   AVGx2 = np.zeros((Nfiles, nbins), dtype=np.float32)
-  AVGx3 = np.zeros((Nfiles, nbins), dtype=np.float32)
-
-
-
-  for i in range(0,Nfiles):
+  AVGx3 = np.zeros((Nfiles, nbins), dtype=np.float32)    
+  AVGp1 = np.zeros((Nfiles, nbins), dtype=np.float32)
+  AVGp2 = np.zeros((Nfiles, nbins), dtype=np.float32)
+  AVGp3 = np.zeros((Nfiles, nbins), dtype=np.float32)
+      
+  for i in range(0, Nfiles):
+    print('Processing: %s' % dir.filepath(i))
     raw = RAW(dir.filepath(i), picdefs.code.hipace)
     t_array[i] = raw.time
-    print(dir.filepath(i))
     slices = ps_ana.SLICES(raw, nbins=nbins)
     slices.calc_moments()
-      
+    AVGx1[i,:] = slices.avgx1      
     AVGx2[i,:] = slices.avgx2
     AVGx3[i,:] = slices.avgx3
-  
+    AVGp1[i,:] = slices.avgp1      
+    AVGp2[i,:] = slices.avgp2
+    AVGp3[i,:] = slices.avgp3  
     
   fig = plt.figure()  
   plt.plot(slices.centers, slices.avgx2)

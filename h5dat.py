@@ -49,14 +49,24 @@ class DIR:
       print(dir + ' is not a directory!')
       sys.exit()
   def list_files(self, strpattern): 
-    self.flist=[]    
+    self.flist=[]
+    ftime=[]
+    flist_usort=[]
     for root, dirs, files in os.walk(self.dir):
       for name in files:
         if (strpattern in name) & if_hdf5_file(name):
-          self.flist.append(name)
-    self.nf = len(self.flist)
+          fpath, fext = os.path.splitext(name)
+          ftime.append(int(fpath[-picdefs.hipace.h5.Nfname_digits:]))
+          flist_usort.append(name)
+      idx = np.argsort(np.asarray(ftime))
+      self.nf = len(flist_usort)
+      # Sorting
+      for i in range(0,self.nf):
+        self.flist.append(flist_usort[idx[i]])
+        
   def filepath(self, i):
-    return  '%s/%s' % (self.dir, self.flist[i])
+    fstr = '%s/%s' % (self.dir, self.flist[i])
+    return fstr
     
 class RAW:
   def __init__(self, file, piccode=picdefs.code.hipace):
