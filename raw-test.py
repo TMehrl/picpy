@@ -38,6 +38,7 @@ def main():
   raw.print_attributes(file)
   
   
+  
   fig = plt.figure()
   plt.hist2d(raw.x1, raw.p1, bins=[256, 512], norm=LogNorm())
   plt.colorbar()
@@ -47,7 +48,7 @@ def main():
   fig.savefig(  './long_ps.png', 
                 format='png')
   
-  slices = ps_ana.SLICES(raw)
+  slices = ps_ana.SLICES(raw, nbins=256)
   slices.calc_moments()
   fig = plt.figure()  
   plt.plot(slices.centers, np.sqrt(slices.avgx2sq))

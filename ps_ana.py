@@ -46,16 +46,19 @@ def moments(array1, array2, weights, order=2, central=True, roots=False):
 
 # Class for slice analysis
 class SLICES:
-  def __init__(self, raw, edges=[]):
+  def __init__(self, raw, edges=[], nbins=0):
   
     self.stinit_time = time.time()
     
     self.raw = raw  
-    if edges == []:
+    if edges == [] & nbins=0:
       dx0 = (raw.xmax[0] - raw.xmin[0])/raw.nx[0]
       self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(raw.nx[0]+1))
-    else:
-      self.edges
+    elif nbins != 0
+      self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(nbins+1))
+    else
+      self.edges = edges
+      
     self.nbins = len(self.edges)-1  
     self.centers = self.edges[0:-1] + np.diff(self.edges)/2
     self.if_moms_calc = False
