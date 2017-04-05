@@ -92,7 +92,7 @@ class SLICES:
       P1 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
       P2 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
       P3 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
- 
+      
       self.cm_afallocsortpart_time = time.time()
     
       for i in range(0,self.raw.npart):

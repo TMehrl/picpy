@@ -8,6 +8,13 @@ import picdefs
 import sys
 
 
+def if_hdf5_file(file):
+  fpath, fext = os.path.splitext(file)
+  if any(fext == s for s in picdefs.fexts.hdf5):
+    return True
+  else:
+    return False
+    
 def hdf5_check(file):
   fpath, fext = os.path.splitext(file)
   if any(fext == s for s in picdefs.fexts.hdf5):
@@ -33,6 +40,24 @@ def print_attributes(file):
       print('\t' + item + ":", hf.attrs[item])
 
 
+class DIR:
+  def __init__(self, dir):
+    if os.path.isdir(dir):
+      print('Reading dir: ' + dir)
+      self.dir = dir
+    else:
+      print(dir + ' is not a directory!')
+      sys.exit()
+  def list_files(self, strpattern): 
+    self.flist=[]    
+    for root, dirs, files in os.walk(self.dir):
+      for name in files:
+        if (strpattern in name) & if_hdf5_file(name):
+          self.flist.append(name)
+    self.nf = len(self.flist)
+  def filepath(self, i):
+    return  '%s/%s' % (self.dir, self.flist[i])
+    
 class RAW:
   def __init__(self, file, piccode=picdefs.code.hipace):
     self.piccode = piccode
