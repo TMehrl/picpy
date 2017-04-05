@@ -48,7 +48,6 @@ def moments(array1, array2, weights, order=2, central=True, roots=False):
 class SLICES:
   def __init__(self, raw, edges=[], nbins=0):
   
-    self.stinit_time = time.time()
     dx0 = (raw.xmax[0] - raw.xmin[0])/raw.nx[0]
     self.raw = raw  
     if (edges==[]) & (nbins==0):
@@ -61,11 +60,10 @@ class SLICES:
     self.nbins = len(self.edges)-1  
     self.centers = self.edges[0:-1] + np.diff(self.edges)/2
     self.if_moms_calc = False
-    self.fininit_time = time.time()
       
-  def calc_moments(self, order=2, central=True):    
+  def calc_moments(self, order=2, central=True, timings=False):    
     
-    self.startcm_time = time.time()    
+    if timings: self.startcm_time = time.time()    
   
     ibinpart = np.searchsorted(self.edges, self.raw.x1)
     self.npart = np.bincount(ibinpart, minlength=self.nbins)
@@ -74,9 +72,7 @@ class SLICES:
     if np.size(self.npart)>self.nbins | np.size(self.charge)>self.nbins:
       print('Warning: particles out of range!')
         
-    self.cm_afsearchsorted_time = time.time()
-    
-    self.cm_afargsort_time = time.time()
+    if timings: self.cm_afsearchsorted_time = time.time()
     
     if order > 0:
     
@@ -93,7 +89,7 @@ class SLICES:
       P2 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
       P3 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
       
-      self.cm_afallocsortpart_time = time.time()
+      if timings: self.cm_afallocsortpart_time = time.time()
     
       for i in range(0,self.raw.npart):
         ibin = ibinpart[i]
@@ -107,7 +103,7 @@ class SLICES:
         P3[ ibin, ipartbin ] = self.raw.p3[i]
         bincount[ibin] += 1
 
-      self.cm_afsortingpart_time = time.time()
+      if timings: self.cm_afsortingpart_time = time.time()
           
       self.avgx1 = np.average(X1, axis=1, weights=Q)
       self.avgx2 = np.average(X2, axis=1, weights=Q)
@@ -116,11 +112,11 @@ class SLICES:
       self.avgp2 = np.average(P2, axis=1, weights=Q)
       self.avgp3 = np.average(P3, axis=1, weights=Q)
 
-      self.cm_afcalcavg_time = time.time()
+      if timings: self.cm_afcalcavg_time = time.time()
       
     if order > 1:
 
-      self.cm_afallocsqavg_time = time.time()
+      if timings: self.cm_afallocsqavg_time = time.time()
       
       self.avgx1sq = np.average(np.power(X1,2), axis=1, weights=Q)
       self.avgx2sq = np.average(np.power(X2,2), axis=1, weights=Q)
@@ -132,7 +128,7 @@ class SLICES:
       self.avgx2p2 = np.average(np.multiply(X2,P2), axis=1, weights=Q)
       self.avgx3p3 = np.average(np.multiply(X2,P3), axis=1, weights=Q)
        
-      self.cm_afcalcsqavg_time = time.time()
+      if timings: self.cm_afcalcsqavg_time = time.time()
       if central:
         self.avgx1sq = np.subtract(self.avgx1sq, np.power(self.avgx1, 2))
         self.avgx2sq = np.subtract(self.avgx2sq, np.power(self.avgx2, 2))
@@ -143,19 +139,19 @@ class SLICES:
         self.avgx1p1 = np.subtract(self.avgx1p1, np.multiply(self.avgx1, self.avgp1))
         self.avgx2p2 = np.subtract(self.avgx2p2, np.multiply(self.avgx2, self.avgp2))
         self.avgx3p3 = np.subtract(self.avgx3p3, np.multiply(self.avgx3, self.avgp3))
-      self.cm_afcalcsqavgcent_time = time.time() 
+      if timings: self.cm_afcalcsqavgcent_time = time.time() 
 
-      # Timing stuff      
-      print('--------- Timings --------- ')
-      print('Total time:\t\t%e %s' % ((self.cm_afcalcsqavg_time-self.stinit_time) , 's')) 
-      print('Init time:\t\t%e %s' % ((self.fininit_time-self.stinit_time), 's'))
-      print('Searchsorted:\t\t%e %s' % ((self.cm_afsearchsorted_time-self.startcm_time), 's'))
-      print('Alloc sorted part arr:\t%e %s' % ((self.cm_afallocsortpart_time-self.cm_afsearchsorted_time), 's'))
-      print('Sort part arr:\t\t%e %s' % ((self.cm_afsortingpart_time-self.cm_afallocsortpart_time), 's'))
-      print('Computation of avgs:\t%e %s' % ((self.cm_afcalcavg_time-self.cm_afsortingpart_time), 's'))
-      print('Alloc of var arrays:\t%e %s' % ((self.cm_afallocsqavg_time-self.cm_afcalcavg_time), 's'))
-      print('Calc of var:\t\t%e %s' % ((self.cm_afcalcsqavg_time-self.cm_afallocsqavg_time), 's'))
-      print('Calc of centr of vars:\t%e %s' % ((self.cm_afcalcsqavgcent_time-self.cm_afcalcsqavg_time), 's'))
+      if timings:
+        # Timing stuff      
+        print('--------- Timings --------- ')
+        print('Total time:\t\t%e %s' % ((self.cm_afcalcsqavgcent_time-self.startcm_time) , 's')) 
+        print('Searchsorted:\t\t%e %s' % ((self.cm_afsearchsorted_time-self.startcm_time), 's'))
+        print('Alloc sorted part arr:\t%e %s' % ((self.cm_afallocsortpart_time-self.cm_afsearchsorted_time), 's'))
+        print('Sort part arr:\t\t%e %s' % ((self.cm_afsortingpart_time-self.cm_afallocsortpart_time), 's'))
+        print('Computation of avgs:\t%e %s' % ((self.cm_afcalcavg_time-self.cm_afsortingpart_time), 's'))
+        print('Alloc of var arrays:\t%e %s' % ((self.cm_afallocsqavg_time-self.cm_afcalcavg_time), 's'))
+        print('Calc of var:\t\t%e %s' % ((self.cm_afcalcsqavg_time-self.cm_afallocsqavg_time), 's'))
+        print('Calc of centr of vars:\t%e %s' % ((self.cm_afcalcsqavgcent_time-self.cm_afcalcsqavg_time), 's'))
       
     if order > 2:
       print('Moments with orders > 3 not yet implemented!') 
