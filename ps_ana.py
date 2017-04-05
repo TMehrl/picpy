@@ -54,9 +54,9 @@ class SLICES:
     if edges == [] & nbins==0:
       dx0 = (raw.xmax[0] - raw.xmin[0])/raw.nx[0]
       self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(raw.nx[0]+1))
-    elif nbins != 0
+    elif nbins != 0:
       self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(nbins+1))
-    else
+    else:
       self.edges = edges
       
     self.nbins = len(self.edges)-1  
