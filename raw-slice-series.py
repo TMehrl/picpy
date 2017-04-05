@@ -73,16 +73,12 @@ def ps_parseopts():
                       default=3,
                       help= """Dimensionality of PIC simulation
                             (Default: 3).""")                                     
-  parser.add_option(  "-f", "--format", 
-                      type='choice',
+  parser.add_option(  "-N", "--number-of-files", 
                       action='store',
-                      dest="file_format",
+                      dest="Nfiles",
                       metavar="FORMAT",
-                      choices=[ parsedefs.file_format.png, 
-                                parsedefs.file_format.pdf, 
-                                parsedefs.file_format.eps,],
-                      default=parsedefs.file_format.png,
-                      help= """Format of output file (Default: png).""")
+                      default=0,
+                      help= """Number of files to analyze.""")
 #   group = OptionGroup(parser, "Options for beam-phase-space (RAW) files",
 #                       "These are options for beam-phase-space (RAW) files")
 #   group.add_option("-g", action="store_true", help="Group option.")
@@ -108,16 +104,23 @@ def main():
 
   dir = DIR(args[0])
   dir.list_files('raw_beam_phasespace_')
-  print(dir.flist[-1])
-
 
   nbins=256
 
-  t_array = np.zeros(dir.nf, dtype=np.float32)
-  AVGx2 = np.zeros((dir.nf, nbins), dtype=np.float32)
-  AVGx3 = np.zeros((dir.nf, nbins), dtype=np.float32)
+  if opts.Nfiles == 0:
+    Nfiles = dir.nf
+  elif int(opts.Nfiles) <= dir.nf:
+    Nfiles = int(opts.Nfiles)
+  else:
+    print('Error: Nfiles cannot be smaller than the actual number of files!')
 
-  for i in range(0,dir.nf):
+  t_array = np.zeros(Nfiles, dtype=np.float32)
+  AVGx2 = np.zeros((Nfiles, nbins), dtype=np.float32)
+  AVGx3 = np.zeros((Nfiles, nbins), dtype=np.float32)
+
+
+
+  for i in range(0,Nfiles):
     raw = RAW(dir.filepath(i), picdefs.code.hipace)
     t_array[i] = raw.time
     print(dir.filepath(i))
@@ -126,7 +129,6 @@ def main():
       
     AVGx2[i,:] = slices.avgx2
     AVGx3[i,:] = slices.avgx3
-  
   
     
   fig = plt.figure()  
