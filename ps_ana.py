@@ -51,7 +51,7 @@ class SLICES:
     self.stinit_time = time.time()
     
     self.raw = raw  
-    if edges == [] & nbins=0:
+    if edges == [] & nbins==0:
       dx0 = (raw.xmax[0] - raw.xmin[0])/raw.nx[0]
       self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(raw.nx[0]+1))
     elif nbins != 0
