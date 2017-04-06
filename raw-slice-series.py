@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# This script may be executed like this:
+# nohup ./raw-slice-series.py <DATA>/ 1> rss.out 2> rss.err &
 
 import numpy as np
 import os
@@ -115,7 +117,7 @@ def main():
   elif int(opts.Nfiles) <= dir.nf:
     Nfiles = int(opts.Nfiles)
   else:
-    print('Error: Nfiles cannot be smaller than the actual number of files!')
+     sys.stderr('Error: Nfiles cannot be smaller than the actual number of files!')
 
   time_array = np.zeros(Nfiles, dtype=np.float32)
   avgx1 = np.zeros((Nfiles, nbins), dtype=np.float32)
@@ -137,7 +139,9 @@ def main():
     avgx3p3 = np.zeros((Nfiles, nbins), dtype=np.float32)
          
   for i in range(0, Nfiles):
-    print('Processing: %s' % dir.filepath(i))
+    sys.stdout.write('Processing: %s\n' % dir.filepath(i))
+    sys.stdout.flush()
+    
     raw = RAW(dir.filepath(i), picdefs.code.hipace)
     time_array[i] = raw.time
     slices = ps_ana.SLICES(raw, nbins=nbins)
@@ -161,6 +165,9 @@ def main():
       avgx3p3[i,:] = slices.avgx3p3
 
   zeta_array = slices.centers
+  
+  sys.stdout.write('Saving to file: %s\n' % h5fileName)
+  sys.stdout.flush()
 
   h5f = h5py.File(h5fileName, "w")
   dset = h5f.create_dataset("zeta_array", zeta_array.shape, zeta_array.dtype)
@@ -182,16 +189,9 @@ def main():
     dset = h5f.create_dataset("avgx2p2", avgx2p2.shape, avgx2p2.dtype)
     dset = h5f.create_dataset("avgx3p3", avgx3p3.shape, avgx3p3.dtype) 
   h5f.close() 
-               
-  fig = plt.figure()  
-  plt.plot(slices.centers, slices.avgx2)
-  fig.savefig(  './Xb.png', 
-                 format='png') 
-
-  fig = plt.figure()
-  cax = plt.pcolormesh( avgx2 )
-  fig.savefig(  './Xb_evolv.png', 
-                 format='png')                               
+                                              
+  sys.stdout.write('Done!\n')
+  sys.stdout.flush()
   
 if __name__ == "__main__":
     main()
