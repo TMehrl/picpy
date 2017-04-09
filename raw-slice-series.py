@@ -112,12 +112,15 @@ def main():
   dir = DIR(args[0])
   dir.list_files(indentstr)
 
-  if opts.Nfiles == 0:
+  if (opts.Nfiles == 0) & (dir.nf > 0):
     Nfiles = dir.nf
   elif int(opts.Nfiles) <= dir.nf:
     Nfiles = int(opts.Nfiles)
+  elif dir.nf == 0:
+    sys.stderr('Error: No phase space (raw) files in directory!')
+    sys.exit() 
   else:
-     sys.stderr('Error: Nfiles cannot be smaller than the actual number of files!')
+    sys.stderr('Error: Nfiles cannot be smaller than the actual number of files!')
 
   sys.stdout.write('There are %i raw files to process...\n' % Nfiles)
   sys.stdout.flush()
