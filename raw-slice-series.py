@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # This script may be executed like this:
-# nohup ./raw-slice-series.py <DATA>/ 1> rss.out 2> rss.err &
+# nohup raw-slice-series.py <DATA> 1> rss.out 2> rss.err &
 
 import numpy as np
 import os
@@ -142,7 +142,7 @@ def main():
     avgx3p3 = np.zeros((Nfiles, nbins), dtype=np.float32)
          
   for i in range(0, Nfiles):
-    sys.stdout.write('Processing: %s\n' % dir.filepath(i))
+    sys.stdout.write('Processing: %s\t(%i/%i)\n' % (dir.filepath(i), i+1, Nfiles))
     sys.stdout.flush()
     
     raw = RAW(dir.filepath(i), picdefs.code.hipace)
