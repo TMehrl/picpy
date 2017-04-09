@@ -119,6 +119,9 @@ def main():
   else:
      sys.stderr('Error: Nfiles cannot be smaller than the actual number of files!')
 
+  sys.stdout.write('There are %i raw files to process...\n' % Nfiles)
+  sys.stdout.flush()
+
   time_array = np.zeros(Nfiles, dtype=np.float32)
   avgx1 = np.zeros((Nfiles, nbins), dtype=np.float32)
   avgx2 = np.zeros((Nfiles, nbins), dtype=np.float32)
@@ -170,24 +173,26 @@ def main():
   sys.stdout.flush()
 
   h5f = h5py.File(h5fileName, "w")
-  dset = h5f.create_dataset("zeta_array", zeta_array.shape, zeta_array.dtype)
-  dset = h5f.create_dataset("time_array", time_array.shape, time_array.dtype)
-  dset = h5f.create_dataset("avgx1", avgx1.shape, avgx1.dtype)
-  dset = h5f.create_dataset("avgx2", avgx2.shape, avgx2.dtype)
-  dset = h5f.create_dataset("avgx3", avgx3.shape, avgx3.dtype)
-  dset = h5f.create_dataset("avgp1", avgp1.shape, avgp1.dtype)
-  dset = h5f.create_dataset("avgp2", avgp2.shape, avgp2.dtype)
-  dset = h5f.create_dataset("avgp3", avgp3.shape, avgp3.dtype)
+  dset_zeta_array = h5f.create_dataset( "zeta_array", data = zeta_array )
+  dset_time_array = h5f.create_dataset( "time_array", data = time_array )
+  dset_avgx1 = h5f.create_dataset(  "avgx1", data = avgx1 )
+  dset_avgx2 = h5f.create_dataset(  "avgx2", data = avgx2 )
+  dset_avgx3 = h5f.create_dataset(  "avgx3", data = avgx3 )
+  dset_avgp1 = h5f.create_dataset(  "avgp1", data = avgp1 )
+  dset_avgp2 = h5f.create_dataset(  "avgp2", data = avgp2 )
+  dset_avgp3 = h5f.create_dataset(  "avgp3", data = avgp3 )
+
   if mom_order>1:
-    dset = h5f.create_dataset("avgx1sq", avgx1sq.shape, avgx1sq.dtype)
-    dset = h5f.create_dataset("avgx2sq", avgx2sq.shape, avgx2sq.dtype)
-    dset = h5f.create_dataset("avgx3sq", avgx3sq.shape, avgx3sq.dtype)
-    dset = h5f.create_dataset("avgp1sq", avgp1sq.shape, avgp1sq.dtype)
-    dset = h5f.create_dataset("avgp2sq", avgp2sq.shape, avgp2sq.dtype)
-    dset = h5f.create_dataset("avgp3sq", avgp3sq.shape, avgp3sq.dtype)   
-    dset = h5f.create_dataset("avgx1p1", avgx1p1.shape, avgx1p1.dtype)
-    dset = h5f.create_dataset("avgx2p2", avgx2p2.shape, avgx2p2.dtype)
-    dset = h5f.create_dataset("avgx3p3", avgx3p3.shape, avgx3p3.dtype) 
+    dset_avgx1sq = h5f.create_dataset(  "avgx1sq", data = avgx1sq )
+    dset_avgx2sq = h5f.create_dataset(  "avgx2sq", data = avgx2sq )
+    dset_avgx3sq = h5f.create_dataset(  "avgx3sq", data = avgx3sq )
+    dset_avgp1sq = h5f.create_dataset(  "avgp1sq", data = avgp1sq )
+    dset_avgp2sq = h5f.create_dataset(  "avgp2sq", data = avgp2sq )
+    dset_avgp3sq = h5f.create_dataset(  "avgp3sq", data = avgp3sq )
+    dset_avgx1p1 = h5f.create_dataset(  "avgx1p1", data = avgx1p1 )
+    dset_avgx2p2 = h5f.create_dataset(  "avgx2p2", data = avgx2p2 )
+    dset_avgx3p3 = h5f.create_dataset(  "avgx3p3", data = avgx3p3 )
+      
   h5f.close() 
                                               
   sys.stdout.write('Done!\n')

@@ -40,10 +40,33 @@ def print_attributes(file):
       print('\t' + item + ":", hf.attrs[item])
 
 
+class SLICE_MOMS:
+  def __init__(self, file):
+    hdf5_check(file) 
+    self.file = file
+    self.read()
+    
+  def read(self):        
+    with h5py.File(self.file,'r') as hf:
+      # read order of moments
+      order = 2
+      # Reading datasets
+      self.time_array = np.array(hf.get( 'time_array' ))
+      self.zeta_array = np.array(hf.get( 'zeta_array' ))
+      self.avgx1 = np.array(hf.get( 'avgx1' ))
+      self.avgx2 = np.array(hf.get( 'avgx2' ))
+      self.avgx3 = np.array(hf.get( 'avgx3' ))
+      self.avgp1 = np.array(hf.get( 'avgp1' ))
+      self.avgp2 = np.array(hf.get( 'avgp2' ))
+      self.avgp3 = np.array(hf.get( 'avgp3' ))
+      #if order > 1:
+
 class DIR:
   def __init__(self, dir):
     if os.path.isdir(dir):
-      print('Reading dir: ' + dir)
+      sys.stdout.write('Reading directory: %s\n' % dir)
+      sys.stdout.flush()
+      
       self.dir = dir
     else:
       print(dir + ' is not a directory!')
