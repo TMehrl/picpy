@@ -207,7 +207,7 @@ def plotfile(file, opts):
   
   fig.savefig(  opts.savepath + '/' + savename, 
                 format=saveformat)
-  if opts.verbose == True: print('Saved "' + savename + '" at: ' + opts.savepath)    
+  if opts.verbose: print('Saved "' + savename + '" at: ' + opts.savepath)    
 
 
 def main():
