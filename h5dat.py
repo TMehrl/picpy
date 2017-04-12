@@ -59,7 +59,17 @@ class SLICE_MOMS:
       self.avgp1 = np.array(hf.get( 'avgp1' ))
       self.avgp2 = np.array(hf.get( 'avgp2' ))
       self.avgp3 = np.array(hf.get( 'avgp3' ))
-      #if order > 1:
+      
+      if order > 1:
+        self.avgx1sq = np.array(hf.get( 'avgx1sq' ))
+        self.avgx2sq = np.array(hf.get( 'avgx2sq' ))
+        self.avgx3sq = np.array(hf.get( 'avgx3sq' ))
+        self.avgp1sq = np.array(hf.get( 'avgp1sq' ))
+        self.avgp2sq = np.array(hf.get( 'avgp2sq' ))
+        self.avgp3sq = np.array(hf.get( 'avgp3sq' ))
+        self.avgx1p1 = np.array(hf.get( 'avgx1p1' ))
+        self.avgx2p2 = np.array(hf.get( 'avgx2p2' ))
+        self.avgx3p3 = np.array(hf.get( 'avgx3p3' ))
 
 class DIR:
   def __init__(self, dir):

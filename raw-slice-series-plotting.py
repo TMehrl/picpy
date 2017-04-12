@@ -94,8 +94,6 @@ def ps_parseopts():
 
 
 
-
-
 def main():
   
   parser = ps_parseopts()
@@ -118,7 +116,6 @@ def main():
     if (slm.zeta_array[i] <= zeta_hseed): 
       Xb_norm[:,i] = np.absolute( ( slm.avgx2[:,i] - slm.avgx2[:,idx_hseed])/Xb0[i] )
 
-  
   fig1 = plt.figure()
   cax = plt.pcolormesh( slm.avgx2 )
   cbar = fig1.colorbar(cax)
@@ -126,18 +123,32 @@ def main():
   fig1.savefig(  'Xb_raw.png', 
                 format='png')
 
-
-  fig1 = plt.figure()
+  fig2 = plt.figure()
   cax = plt.pcolormesh( Xb_norm )
-  cbar = fig1.colorbar(cax)
+  cbar = fig2.colorbar(cax)
   cbar.ax.set_ylabel('$|X_b/X_{b,0}|$') 
-  fig1.savefig(  'Xb.png', 
+  fig2.savefig(  'Xb.png', 
                 format='png')
 
-  fig = plt.figure()  
+  fig3 = plt.figure()  
   plt.plot(slm.zeta_array, slm.avgx2[0,:])
-  fig.savefig(  './Xb0.png', 
+  fig3.savefig(  './Xb0.png', 
                 format='png')  
+
+
+  fig4 = plt.figure()
+  cax = plt.pcolormesh( np.sqrt( np.absolute( slm.avgx2sq ) ) )
+  cbar = fig4.colorbar( cax )
+  cbar.ax.set_ylabel('$\sigma_x$') 
+  fig4.savefig(  'sigma_x.png', 
+                format='png')
+
+
+  fig5 = plt.figure()
+  cax = plt.plot( slm.time_array, np.sqrt( np.absolute( slm.avgx2sq[:,80] )) )
+  cbar.ax.set_ylabel('$\sigma_x$') 
+  fig5.savefig(  'sigma_x_slice.png', 
+                  format='png')
 
 if __name__ == "__main__":
     main()
