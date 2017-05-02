@@ -2,7 +2,7 @@
 
 import numpy as np
 import os
-from argparse import ArgumentParser
+import argparse
 import math
 import sys
 import matplotlib
@@ -32,6 +32,13 @@ class parsedefs:
     name = 'g3d_name'
 
 
+def two_floats(value):
+    values = value.split()
+    if len(values) != 2:
+        raise argparse.ArgumentError
+    values = map(float, values)
+    return values
+
 
 def ps_parseargs():
 
@@ -39,7 +46,7 @@ def ps_parseargs():
   
   desc="""This is the picpy postprocessing tool."""
   
-  parser = ArgumentParser(description=desc)
+  parser = argparse.ArgumentParser(description=desc)
   parser.add_argument(  'path', 
                         metavar='PATH', 
                         help='Path to file.')
@@ -112,23 +119,14 @@ def ps_parseargs():
                         action='store_true',
                         dest="process_all",
                         default=False,
-                        help="Process all files in path.")
-
-#   parser.add_argument(  '--cblim', 
-#                       help = 'Colorbar axis limits',
-#                       action = 'store', 
-#                       type=two_floats,
-#                       default=[-1.0, 0.0])
+                        help="Process all files in path.")  
+  parser.add_argument(  '--cblim', 
+                        help='Colorbar axis limits',
+                        action='store', 
+                        dest="cblim",
+                        type=two_floats,
+                        default=None)
                      
-#   group = OptionGroup(parser, "Options for beam-phase-space (RAW) files",
-#                       "These are options for beam-phase-space (RAW) files")
-#   group.add_argument("-g", action="store_true", help="Group option.")
-#   parser.add_argument_group(group)
-
-#   group = OptionGroup(parser, "Options for grid files",
-#                       "These are options for grid files")
-#   group.add_argument("-g", action="store_true", help="Group option.")
-#   parser.add_argument_group(group)
   
   return parser
 
@@ -188,33 +186,30 @@ def plotfile(file, args):
   else: 
     fileprefix = g3d.name
   
-  
+  print(type(args.cblim))  
   
   savename = fileprefix + filesuffix + '.' + saveformat
   
+  cblim = [0.0, 0.0]
+  
   if g3d.type == picdefs.hipace.h5.g3dtypes.density:
     colormap = 'PuBu_r';
-    cbmax = np.amax(data)
-    cbmin = np.amin(data)
+    cblim[0] = np.amin(data)
+    cblim[1] = np.amax(data)
   elif g3d.type == picdefs.hipace.h5.g3dtypes.field:
     colormap = cm.coolwarm
-    cbmax = np.amax(abs(data))
-    cbmin = -cbmax
+    cblim[0] = -np.amax(abs(data))
+    cblim[1] = np.amax(abs(data))
 
-  cbmin = -0.001
-  cbmax = 0.001
-
-#   if args.cbmin != None:
-#     cbmin = args.cbmin
-# 
-#   if args.cbmax != None:
-#     cbmax = args.cbmax
+  if args.cblim != None:
+    cblim = list(args.cblim)
+    
 
   fig = plt.figure()
   cax = plt.pcolormesh( x_array, 
                         y_array, 
                         data,
-                        vmin=cbmin, vmax=cbmax,
+                        vmin=cblim[0], vmax=cblim[1],
                         cmap=colormap)
   ax = plt.gca()
   ax.set_ylabel(ylabel, fontsize=14)
