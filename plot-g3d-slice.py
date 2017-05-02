@@ -2,8 +2,7 @@
 
 import numpy as np
 import os
-from optparse import OptionParser
-from optparse import OptionGroup
+from argparse import ArgumentParser
 import math
 import sys
 import matplotlib
@@ -33,124 +32,133 @@ class parsedefs:
     name = 'g3d_name'
 
 
-def ps_parseopts():
+
+def ps_parseargs():
 
   usg = "Usage: %prog [options] <file or path>"
   
   desc="""This is the picpy postprocessing tool."""
   
-  parser = OptionParser(usage=usg, description=desc)
-  parser.add_option(  "-v", "--verbose",
-                      action="store_true", 
-                      dest="verbose", 
-                      default=True,
-                      help = "Print info (Default).")
-  parser.add_option(  "-q", "--quiet",
-                      action="store_false", 
-                      dest="verbose",
-                      help = "Don't print info.")
-  parser.add_option(  "-s", "--save-path", 
-                      dest="savepath",
-                      metavar="PATH",
-                      default='./',
-                      help = """Path to which generated files will be saved.
+  parser = ArgumentParser(description=desc)
+  parser.add_argument(  'path', 
+                        metavar='PATH', 
+                        help='Path to file.')
+  parser.add_argument('--sum', dest='accumulate', action='store_const',
+                      const=sum, default=max,
+                      help='sum the integers (default: find the max)')
+  parser.add_argument(  "-v", "--verbose",
+                        dest="verbose", 
+                        action="store_true", 
+                        default=True,
+                        help = "Print info (Default).")
+  parser.add_argument(  "-q", "--quiet",
+                        dest="verbose",
+                        action="store_false", 
+                        help = "Don't print info.")
+  parser.add_argument(  "-s", "--save-path", 
+                        action="store", 
+                        dest="savepath",
+                        metavar="PATH",
+                        default='./',
+                        help = """Path to which generated files will be saved.
                             (Default: './')""")
-  parser.add_option(  "-n", "--name-prefix", 
-                      dest="save_prefix",
-                      metavar="NAME",
-                      default=parsedefs.save_prefix.name,
-                      help = """Define customized prefix of output filename.""")  
-  parser.add_option(  "-c", "--code", 
-                      type='choice',
-                      action='store',
-                      dest="piccode",
-                      metavar="CODE",
-                      choices = [picdefs.code.hipace, picdefs.code.osiris,],
-                      default = picdefs.code.hipace,
-                      help= "PIC code which was used to generate files (Default: " +
-                            picdefs.code.hipace + ").")
-  parser.add_option(  "-d", "--dim", 
-                      type='choice',
-                      action='store',
-                      dest="dimensionality",
-                      metavar="DIM",
-                      choices=[1, 2, 3,],
-                      default=3,
-                      help= """Dimensionality of PIC simulation
+  parser.add_argument(  "-n", "--name-prefix", 
+                        action="store", 
+                        dest="save_prefix",
+                        metavar="NAME",
+                        default=parsedefs.save_prefix.name,
+                        help = """Define customized prefix of output filename.""")  
+  parser.add_argument(  "-c", "--code", 
+                        action="store", 
+                        dest="piccode",
+                        metavar="CODE",
+                        choices = [picdefs.code.hipace, picdefs.code.osiris,],
+                        default = picdefs.code.hipace,
+                        help="PIC code (Default: " + picdefs.code.hipace + ").")
+  parser.add_argument(  "-d", "--dim", 
+                        action='store',
+                        dest="dimensionality",
+                        metavar="DIM",
+                        choices=[1, 2, 3,],
+                        default=3,
+                        help= """Dimensionality of PIC simulation
                             (Default: 3).""")                                     
-  parser.add_option(  "-f", "--format", 
-                      type='choice',
-                      action='store',
-                      dest="file_format",
-                      metavar="FORMAT",
-                      choices=[ parsedefs.file_format.png, 
-                                parsedefs.file_format.pdf, 
-                                parsedefs.file_format.eps,],
-                      default=parsedefs.file_format.png,
-                      help= """Format of output file (Default: png).""")
-  parser.add_option(  "-p", "--plane", 
-                      type='choice',
-                      action='store',
-                      dest="plane",
-                      metavar="PLANE",
-                      choices=[ parsedefs.plane.zx, parsedefs.plane.zy,],
-                      default=parsedefs.plane.zx,
-                      help= """Plane to be plotted (Default: zx).""")
-  parser.add_option(  "-z", "--z-axis", 
-                      type='choice',
-                      action='store',
-                      dest="zax",
-                      metavar="ZAXIS",
-                      choices=[ parsedefs.zax.zeta, 
+  parser.add_argument(  "-f", "--format", 
+                        action='store',
+                        dest="file_format",
+                        metavar="FORMAT",
+                        choices=[ parsedefs.file_format.png, 
+                                  parsedefs.file_format.pdf, 
+                                  parsedefs.file_format.eps,],
+                        default=parsedefs.file_format.png,
+                        help= """Format of output file (Default: png).""")
+  parser.add_argument(  "-p", "--plane", 
+                        action='store',
+                        dest="plane",
+                        metavar="PLANE",
+                        choices=[ parsedefs.plane.zx, parsedefs.plane.zy,],
+                        default=parsedefs.plane.zx,
+                        help= """Plane to be plotted (Default: zx).""")
+  parser.add_argument(  "-z", "--z-axis", 
+                        action='store',
+                        dest="zax",
+                        metavar="ZAXIS",
+                        choices=[ parsedefs.zax.zeta, 
                                 parsedefs.zax.z, 
                                 parsedefs.zax.xi,],
-                      default=parsedefs.zax.zeta,
-                      help= "z-axis type (Default: " + parsedefs.zax.zeta + ").")                                                           
-  parser.add_option(  "-a", "--all", 
-                      action='store_true',
-                      dest="process_all",
-                      metavar="DIM",
-                      default=False,
-                      help="Process all files in path.")
+                        default=parsedefs.zax.zeta,
+                        help= "z-axis type (Default: " + parsedefs.zax.zeta + ").")                                                           
+  parser.add_argument(  "-a", "--all", 
+                        action='store_true',
+                        dest="process_all",
+                        default=False,
+                        help="Process all files in path.")
+
+#   parser.add_argument(  '--cblim', 
+#                       help = 'Colorbar axis limits',
+#                       action = 'store', 
+#                       type=two_floats,
+#                       default=[-1.0, 0.0])
+                     
 #   group = OptionGroup(parser, "Options for beam-phase-space (RAW) files",
 #                       "These are options for beam-phase-space (RAW) files")
-#   group.add_option("-g", action="store_true", help="Group option.")
-#   parser.add_option_group(group)
+#   group.add_argument("-g", action="store_true", help="Group option.")
+#   parser.add_argument_group(group)
 
 #   group = OptionGroup(parser, "Options for grid files",
 #                       "These are options for grid files")
-#   group.add_option("-g", action="store_true", help="Group option.")
-#   parser.add_option_group(group)
+#   group.add_argument("-g", action="store_true", help="Group option.")
+#   parser.add_argument_group(group)
   
   return parser
 
 
 
-def plotfile(file, opts):
+def plotfile(file, args):
     
   # File
-  if opts.verbose == True:  print('Reading: ', file)
-  g3d = Grid3d(file, opts.piccode)
-  if opts.verbose == True:  print('Read-in completed.')
+  if args.verbose == True:  print('Reading: ', file)
+  g3d = Grid3d(file, args.piccode)
+  if args.verbose == True:  print('Read-in completed.')
   
-  if opts.verbose == True: 
+  if args.verbose == True: 
     g3d.print_datasets(file)
     g3d.print_attributes(file)
     
-  if opts.zax == parsedefs.zax.zeta:
+  if args.zax == parsedefs.zax.zeta:
     x_array = g3d.get_zeta_arr()
     xlabel = r'$k_p \zeta$'
-  elif opts.zax == parsedefs.zax.z:
+  elif args.zax == parsedefs.zax.z:
     x_array = g3d.get_z_arr()
     xlabel = r'$k_p z$'
-  elif opts.zax == parsedefs.zax.xi:
+  elif args.zax == parsedefs.zax.xi:
     x_array = g3d.get_xi_arr()
     xlabel = r'$k_p \xi$'
   else:
     print('Error: No/wrong z-axis option selected!')
     sys.exit()
   
-  if opts.plane == parsedefs.plane.zx:
+  if args.plane == parsedefs.plane.zx:
     centr_index = math.floor(g3d.nx[2]/2) - 1
     if g3d.nx[2]%2 == 1:
       data = g3d.data[:,:,centr_index].transpose(1, 0)
@@ -159,7 +167,7 @@ def plotfile(file, opts):
                 + g3d.data[:,:,centr_index+1].transpose(1, 0) )/2
     y_array = g3d.get_x_arr(1)
     ylabel = r'$k_p x$'
-  elif opts.plane == parsedefs.plane.zy:
+  elif args.plane == parsedefs.plane.zy:
     centr_index = math.floor(g3d.nx[1]/2) - 1
     if g3d.nx[1]%2 == 1:
       data = g3d.data[:,centr_index,:].transpose(1, 0)
@@ -172,11 +180,11 @@ def plotfile(file, opts):
     print('Error: Wong plane setting!')
     sys.exit()
 
-  saveformat = opts.file_format  
+  saveformat = args.file_format  
   filesuffix = '_%06.f' % (np.floor(g3d.time))
   
-  if opts.save_prefix != parsedefs.save_prefix.name:
-    fileprefix = opts.save_prefix
+  if args.save_prefix != parsedefs.save_prefix.name:
+    fileprefix = args.save_prefix
   else: 
     fileprefix = g3d.name
   
@@ -192,7 +200,16 @@ def plotfile(file, opts):
     colormap = cm.coolwarm
     cbmax = np.amax(abs(data))
     cbmin = -cbmax
-  
+
+  cbmin = -0.001
+  cbmax = 0.001
+
+#   if args.cbmin != None:
+#     cbmin = args.cbmin
+# 
+#   if args.cbmax != None:
+#     cbmax = args.cbmax
+
   fig = plt.figure()
   cax = plt.pcolormesh( x_array, 
                         y_array, 
@@ -205,27 +222,27 @@ def plotfile(file, opts):
   cbar = fig.colorbar(cax)
   cbar.ax.set_ylabel(g3d.name)
   
-  fig.savefig(  opts.savepath + '/' + savename, 
+  fig.savefig(  args.savepath + '/' + savename, 
                 format=saveformat)
-  if opts.verbose: print('Saved "' + savename + '" at: ' + opts.savepath)    
+  if args.verbose: print('Saved "' + savename + '" at: ' + args.savepath)    
 
 
 def main():
   
-  parser = ps_parseopts()
+  if len(sys.argv) < 1:
+    parser.error("This script requires a file or a path as argument!")  
+  
+  parser = ps_parseargs()
 
-  (opts, args) = parser.parse_args()
+  args = parser.parse_args()
     
-  if len(args) < 1:
-    parser.error("This script requires a file or a path as argument!")
+  if os.path.isfile(args.path):
+    file = args.path
+    plotfile(file, args)
   
-  if os.path.isfile(args[0]):
-    file = args[0]
-    plotfile(file, opts)
-  
-  elif os.path.isdir(args[0]):
+  elif os.path.isdir(args.path):
     print('Path is dir...!')
-    if opts.process_all == True:
+    if args.process_all == True:
       print('Error: Not yet implemented!')
       sys.exit()
     else:
