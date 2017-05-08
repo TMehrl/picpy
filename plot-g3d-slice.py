@@ -20,6 +20,7 @@ class parsedefs:
   class plane:
     zx = 'zx'
     zy = 'zy'
+    xy = 'xy'    
   class file_format:
     png = 'png'
     eps = 'eps'
@@ -103,9 +104,17 @@ def ps_parseargs():
                         action='store',
                         dest="plane",
                         metavar="PLANE",
-                        choices=[ parsedefs.plane.zx, parsedefs.plane.zy,],
+                        choices=[ parsedefs.plane.zx, parsedefs.plane.zy,
+                                  parsedefs.plane.xy,],
                         default=parsedefs.plane.zx,
-                        help= """Plane to be plotted (Default: zx).""")
+                        help= """Plane to be plotted (Default: zx).""")  
+  parser.add_argument(  "--plane-index", 
+                        action='store',
+                        dest="plane_index",
+                        metavar="PLANE-IDX",
+                        default=None,
+                        type=int,
+                        help= """Index of plane.""")                                              
   parser.add_argument(  "-z", "--z-axis", 
                         action='store',
                         dest="zax",
@@ -114,7 +123,14 @@ def ps_parseargs():
                                 parsedefs.zax.z, 
                                 parsedefs.zax.xi,],
                         default=parsedefs.zax.zeta,
-                        help= "z-axis type (Default: " + parsedefs.zax.zeta + ").")                                                           
+                        help= "z-axis type (Default: " + parsedefs.zax.zeta + ").")
+  parser.add_argument(  "--cscale",
+                        action='store',
+                        dest="cscale",
+                        metavar="CSCALE",
+                        choices=[ "lin", "log",],
+                        default="lin",
+                        help= "z-axis type (Default: " + parsedefs.zax.zeta + ").")                                                                                  
   parser.add_argument(  "-a", "--all", 
                         action='store_true',
                         dest="process_all",
@@ -124,6 +140,7 @@ def ps_parseargs():
                         help='Colorbar axis limits',
                         action='store', 
                         dest="cblim",
+                        metavar="'CBMIN CBMAX'",                        
                         type=two_floats,
                         default=None)
                      
@@ -143,40 +160,62 @@ def plotfile(file, args):
     g3d.print_datasets(file)
     g3d.print_attributes(file)
     
-  if args.zax == parsedefs.zax.zeta:
-    x_array = g3d.get_zeta_arr()
-    xlabel = r'$k_p \zeta$'
-  elif args.zax == parsedefs.zax.z:
-    x_array = g3d.get_z_arr()
-    xlabel = r'$k_p z$'
-  elif args.zax == parsedefs.zax.xi:
-    x_array = g3d.get_xi_arr()
-    xlabel = r'$k_p \xi$'
-  else:
-    print('Error: No/wrong z-axis option selected!')
-    sys.exit()
-  
-  if args.plane == parsedefs.plane.zx:
-    centr_index = math.floor(g3d.nx[2]/2) - 1
-    if g3d.nx[2]%2 == 1:
-      data = g3d.data[:,:,centr_index].transpose(1, 0)
+
+  if (args.plane == parsedefs.plane.zx) | (args.plane == parsedefs.plane.zy):
+    
+    if args.zax == parsedefs.zax.zeta:
+      x_array = g3d.get_zeta_arr()
+      xlabel = r'$k_p \zeta$'
+    elif args.zax == parsedefs.zax.z:
+      x_array = g3d.get_z_arr()
+      xlabel = r'$k_p z$'
+    elif args.zax == parsedefs.zax.xi:
+      x_array = g3d.get_xi_arr()
+      xlabel = r'$k_p \xi$'
     else:
-      data = ( g3d.data[:,:,centr_index].transpose(1, 0)
-                + g3d.data[:,:,centr_index+1].transpose(1, 0) )/2
-    y_array = g3d.get_x_arr(1)
-    ylabel = r'$k_p x$'
-  elif args.plane == parsedefs.plane.zy:
-    centr_index = math.floor(g3d.nx[1]/2) - 1
-    if g3d.nx[1]%2 == 1:
-      data = g3d.data[:,centr_index,:].transpose(1, 0)
-    else:
-      data = ( g3d.data[:,centr_index,:].transpose(1, 0)
-                + g3d.data[:,centr_index+1,:].transpose(1, 0) )/2   
+      print('Error: No/wrong z-axis option selected!')
+      sys.exit()
+    
+    if args.plane == parsedefs.plane.zx:
+      y_array = g3d.get_x_arr(1)
+      ylabel = r'$k_p x$'
+      if args.plane_index == None:
+        index = math.floor(g3d.nx[2]/2) - 1
+        if g3d.nx[2]%2 == 1:
+          data = g3d.data[:,:,index].transpose(1, 0)
+        else:
+          data = ( g3d.data[:,:,index].transpose(1, 0)
+                    + g3d.data[:,:,index+1].transpose(1, 0) )/2
+      else:
+        data = g3d.data[:,:,args.plane_index].transpose(1, 0)
+
+    elif args.plane == parsedefs.plane.zy:
+      y_array = g3d.get_x_arr(2)
+      ylabel = r'$k_p y$'
+      if args.plane_index == None:
+        index = math.floor(g3d.nx[1]/2) - 1
+        if g3d.nx[1]%2 == 1:
+          data = g3d.data[:,index,:].transpose(1, 0)
+        else:
+          data = ( g3d.data[:,index,:].transpose(1, 0)
+                    + g3d.data[:,index+1,:].transpose(1, 0) )/2
+      else:
+        data = g3d.data[:,args.plane_index,:].transpose(1, 0)
+
+  elif args.plane == parsedefs.plane.xy:
+    x_array = g3d.get_x_arr(1)
+    xlabel = r'$k_p x$'
     y_array = g3d.get_x_arr(2)
     ylabel = r'$k_p y$'
-  else:
-    print('Error: Wong plane setting!')
-    sys.exit()
+    if args.plane_index == None:    
+      index = math.floor(g3d.nx[0]/2) - 1
+      if g3d.nx[0]%2 == 1:
+        data = g3d.data[index,:,:].transpose(1, 0)
+      else:
+        data = ( g3d.data[index,:,:].transpose(1, 0)
+                  + g3d.data[index+1,:,:].transpose(1, 0) )/2   
+    else:
+      data = g3d.data[args.plane_index,:,:].transpose(1, 0)
 
   saveformat = args.file_format  
   filesuffix = '_%06.f' % (np.floor(g3d.time))
@@ -189,7 +228,10 @@ def plotfile(file, args):
   print(type(args.cblim))  
   
   savename = fileprefix + filesuffix + '.' + saveformat
-  
+
+  if args.cscale == "log":
+    data = np.log(abs(data))
+    
   cblim = [0.0, 0.0]
   
   if g3d.type == picdefs.hipace.h5.g3dtypes.density:
@@ -250,6 +292,5 @@ def main():
 
 
    
-  
 if __name__ == "__main__":
     main()
