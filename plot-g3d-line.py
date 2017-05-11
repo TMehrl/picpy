@@ -59,15 +59,15 @@ def ps_parseargs():
                         action="store_true", 
                         default=True,
                         help = "Print info (Default).")
-  parser.add_argument(  "-q", "--quiet",
-                        dest="verbose",
-                        action="store_false", 
-                        help = "Don't print info.")
   parser.add_argument(  "--show",
                         dest="ifshow", 
                         action="store_true", 
                         default=False,
                         help = "Show figure.")
+  parser.add_argument(  "-q", "--quiet",
+                        dest="verbose",
+                        action="store_false", 
+                        help = "Don't print info.")
   parser.add_argument(  "-s", "--save-path", 
                         action="store", 
                         dest="savepath",
@@ -180,47 +180,11 @@ def plotfile(file, args):
     else:
       print('Error: No/wrong z-axis option selected!')
       sys.exit()
+
+  x1_index = math.floor(g3d.nx[1]/2) - 1
+  x2_index = math.floor(g3d.nx[2]/2) - 1
     
-    if args.plane == parsedefs.plane.zx:
-      y_array = g3d.get_x_arr(1)
-      ylabel = r'$k_p x$'
-      if args.plane_index == None:
-        index = math.floor(g3d.nx[2]/2) - 1
-        if g3d.nx[2]%2 == 1:
-          data = g3d.data[:,:,index].transpose(1, 0)
-        else:
-          data = ( g3d.data[:,:,index].transpose(1, 0)
-                    + g3d.data[:,:,index+1].transpose(1, 0) )/2
-      else:
-        data = g3d.data[:,:,args.plane_index].transpose(1, 0)
-
-    elif args.plane == parsedefs.plane.zy:
-      y_array = g3d.get_x_arr(2)
-      ylabel = r'$k_p y$'
-      if args.plane_index == None:
-        index = math.floor(g3d.nx[1]/2) - 1
-        if g3d.nx[1]%2 == 1:
-          data = g3d.data[:,index,:].transpose(1, 0)
-        else:
-          data = ( g3d.data[:,index,:].transpose(1, 0)
-                    + g3d.data[:,index+1,:].transpose(1, 0) )/2
-      else:
-        data = g3d.data[:,args.plane_index,:].transpose(1, 0)
-
-  elif args.plane == parsedefs.plane.xy:
-    x_array = g3d.get_x_arr(1)
-    xlabel = r'$k_p x$'
-    y_array = g3d.get_x_arr(2)
-    ylabel = r'$k_p y$'
-    if args.plane_index == None:    
-      index = math.floor(g3d.nx[0]/2) - 1
-      if g3d.nx[0]%2 == 1:
-        data = g3d.data[index,:,:].transpose(1, 0)
-      else:
-        data = ( g3d.data[index,:,:].transpose(1, 0)
-                  + g3d.data[index+1,:,:].transpose(1, 0) )/2   
-    else:
-      data = g3d.data[args.plane_index,:,:].transpose(1, 0)
+  data = g3d.data[:,x1_index,x2_index]
 
   saveformat = args.file_format  
   filesuffix = '_%06.f' % (np.floor(g3d.time))
@@ -237,32 +201,13 @@ def plotfile(file, args):
   if args.cscale == "log":
     data = np.log(abs(data))
     
-  cblim = [0.0, 0.0]
-  
-  if g3d.type == picdefs.hipace.h5.g3dtypes.density:
-    colormap = 'PuBu_r';
-    cblim[0] = np.amin(data)
-    cblim[1] = np.amax(data)
-  elif g3d.type == picdefs.hipace.h5.g3dtypes.field:
-    colormap = cm.coolwarm
-    cblim[0] = -np.amax(abs(data))
-    cblim[1] = np.amax(abs(data))
-
-  if args.cblim != None:
-    cblim = list(args.cblim)
-    
 
   fig = plt.figure()
-  cax = plt.pcolormesh( x_array, 
-                        y_array, 
-                        data,
-                        vmin=cblim[0], vmax=cblim[1],
-                        cmap=colormap)
+  plt.plot(  x_array, 
+                  data)
   ax = plt.gca()
-  ax.set_ylabel(ylabel, fontsize=14)
+  ax.set_ylabel(g3d.name, fontsize=14)
   ax.set_xlabel(xlabel, fontsize=14)
-  cbar = fig.colorbar(cax)
-  cbar.ax.set_ylabel(g3d.name)
   
   fig.savefig(  args.savepath + '/' + savename, 
                 format=saveformat)
