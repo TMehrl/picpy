@@ -48,7 +48,8 @@ def ps_parseargs():
   desc="""This is the picpy postprocessing tool."""
   
   parser = argparse.ArgumentParser(description=desc)
-  parser.add_argument(  'path', 
+  parser.add_argument(  'path',
+                        nargs="+",
                         metavar='PATH', 
                         help='Path to file.')
   parser.add_argument('--sum', dest='accumulate', action='store_const',
@@ -154,81 +155,86 @@ def ps_parseargs():
 
 
 
-def plotfile(file, args):
-    
-  # File
-  if args.verbose == True:  print('Reading: ', file)
-  g3d = Grid3d(file, args.piccode)
-  if args.verbose == True:  print('Read-in completed.')
-  
-  if args.verbose == True: 
-    g3d.print_datasets(file)
-    g3d.print_attributes(file)
-    
+def plotfile( args ):
 
-  if (args.plane == parsedefs.plane.zx) | (args.plane == parsedefs.plane.zy):
-    
-    if args.zax == parsedefs.zax.zeta:
-      x_array = g3d.get_zeta_arr()
-      xlabel = r'$k_p \zeta$'
-    elif args.zax == parsedefs.zax.z:
-      x_array = g3d.get_z_arr()
-      xlabel = r'$k_p z$'
-    elif args.zax == parsedefs.zax.xi:
-      x_array = g3d.get_xi_arr()
-      xlabel = r'$k_p \xi$'
-    else:
-      print('Error: No/wrong z-axis option selected!')
-      sys.exit()
-
-  x1_index = math.floor(g3d.nx[1]/2) - 1
-  x2_index = math.floor(g3d.nx[2]/2) - 1
-    
-  data = g3d.data[:,x1_index,x2_index]
-
-  saveformat = args.file_format  
-  filesuffix = '_%06.f' % (np.floor(g3d.time))
-  
-  if args.save_prefix != parsedefs.save_prefix.name:
-    fileprefix = args.save_prefix
-  else: 
-    fileprefix = g3d.name
-  
-  print(type(args.cblim))  
-  
-  savename = fileprefix + filesuffix + '.' + saveformat
-
-  if args.cscale == "log":
-    data = np.log(abs(data))
-    
 
   fig = plt.figure()
-  plt.plot(  x_array, 
-                  data)
-  ax = plt.gca()
-  ax.set_ylabel(g3d.name, fontsize=14)
-  ax.set_xlabel(xlabel, fontsize=14)
+  savename = ""
   
+  for file in args.path: 
+
+    # File
+    if args.verbose == True:  print('Reading: ', file)
+    g3d = Grid3d(file, args.piccode)
+    if args.verbose == True:  print('Read-in completed.')
+  
+    if args.verbose == True: 
+      g3d.print_datasets(file)
+      g3d.print_attributes(file)
+    
+    if (args.plane == parsedefs.plane.zx) | (args.plane == parsedefs.plane.zy):
+    
+      if args.zax == parsedefs.zax.zeta:
+        x_array = g3d.get_zeta_arr()
+        xlabel = r'$k_p \zeta$'
+      elif args.zax == parsedefs.zax.z:
+        x_array = g3d.get_z_arr()
+        xlabel = r'$k_p z$'
+      elif args.zax == parsedefs.zax.xi:
+        x_array = g3d.get_xi_arr()
+        xlabel = r'$k_p \xi$'
+      else:
+        print('Error: No/wrong z-axis option selected!')
+        sys.exit()
+
+    x1_index = math.floor(g3d.nx[1]/2) - 1
+    x2_index = math.floor(g3d.nx[2]/2) - 1
+    
+    data = g3d.data[:,x1_index,x2_index]
+
+    saveformat = args.file_format  
+    filesuffix = '_%06.f' % (np.floor(g3d.time))
+  
+    if args.save_prefix != parsedefs.save_prefix.name:
+      fileprefix = args.save_prefix
+    else: 
+      fileprefix = g3d.name
+  
+    print(type(args.cblim))  
+  
+    savename += fileprefix + filesuffix + '.'
+
+    if args.cscale == "log":
+      data = np.log(abs(data))
+    
+    plt.plot( x_array, 
+              data)
+    ax = plt.gca()
+    ax.set_ylabel(g3d.name, fontsize=14)
+    ax.set_xlabel(xlabel, fontsize=14)
+  
+  savename += saveformat
+    
   fig.savefig(  args.savepath + '/' + savename, 
                 format=saveformat)
   if args.verbose: print('Saved "' + savename + '" at: ' + args.savepath)    
-  
+
   if args.ifshow: plt.show()
 
+
+
 def main():
-  
-  if len(sys.argv) < 1:
-    parser.error("This script requires a file or a path as argument!")  
   
   parser = ps_parseargs()
 
   args = parser.parse_args()
-    
-  if os.path.isfile(args.path):
-    file = args.path
-    plotfile(file, args)
   
-  elif os.path.isdir(args.path):
+  print(args.path)
+    
+  if all( os.path.isfile(str) for str in args.path ):
+    plotfile( args )
+  
+  elif ( len(args.path)==1 ) & ( os.path.isdir( args.path ) ):
     print('Path is dir...!')
     if args.process_all == True:
       print('Error: Not yet implemented!')
