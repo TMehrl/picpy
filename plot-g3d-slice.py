@@ -49,11 +49,11 @@ def ps_parseargs():
   
   parser = argparse.ArgumentParser(description=desc)
   parser.add_argument(  'path', 
-                        metavar='PATH', 
-                        help='Path to file.')
-  parser.add_argument('--sum', dest='accumulate', action='store_const',
-                      const=sum, default=max,
-                      help='sum the integers (default: find the max)')
+                        metavar='PATH',
+                        help='Path to grid file.')
+  parser.add_argument(  '--sum', dest='accumulate', action='store_const',
+                        const=sum, default=max,
+                        help='sum the integers (default: find the max)')
   parser.add_argument(  "-v", "--verbose",
                         dest="verbose", 
                         action="store_true", 
@@ -75,7 +75,7 @@ def ps_parseargs():
                         default='./',
                         help = """Path to which generated files will be saved.
                             (Default: './')""")
-  parser.add_argument(  "-n", "--name-prefix", 
+  parser.add_argument(  "--name-prefix", 
                         action="store", 
                         dest="save_prefix",
                         metavar="NAME",
@@ -247,6 +247,10 @@ def plotfile(file, args):
     colormap = cm.coolwarm
     cblim[0] = -np.amax(abs(data))
     cblim[1] = np.amax(abs(data))
+  elif g3d.type == picdefs.hipace.h5.g3dtypes.current:
+    colormap = cm.coolwarm
+    cblim[0] = -np.amax(abs(data))
+    cblim[1] = np.amax(abs(data))
 
   if args.cblim != None:
     cblim = list(args.cblim)
@@ -271,10 +275,7 @@ def plotfile(file, args):
   if args.ifshow: plt.show()
 
 def main():
-  
-  if len(sys.argv) < 1:
-    parser.error("This script requires a file or a path as argument!")  
-  
+    
   parser = ps_parseargs()
 
   args = parser.parse_args()

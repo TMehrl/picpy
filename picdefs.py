@@ -25,6 +25,7 @@ class hipace:
     class g3dtypes:
       density = 'density'
       field = 'field'
+      current = 'current'
     
     
     # HDF5 RAW dataset keys
