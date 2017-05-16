@@ -52,9 +52,6 @@ def ps_parseargs():
                         nargs="+",
                         metavar='PATH', 
                         help='Path to file.')
-  parser.add_argument('--sum', dest='accumulate', action='store_const',
-                      const=sum, default=max,
-                      help='sum the integers (default: find the max)')
   parser.add_argument(  "-v", "--verbose",
                         dest="verbose", 
                         action="store_true", 
@@ -208,11 +205,14 @@ def plotfile( args ):
       data = np.log(abs(data))
     
     plt.plot( x_array, 
-              data)
+              data,
+              label=file)
     ax = plt.gca()
     ax.set_ylabel(g3d.name, fontsize=14)
     ax.set_xlabel(xlabel, fontsize=14)
   
+  
+  plt.legend()
   savename += saveformat
     
   fig.savefig(  args.savepath + '/' + savename, 
@@ -228,8 +228,6 @@ def main():
   parser = ps_parseargs()
 
   args = parser.parse_args()
-  
-  print(args.path)
     
   if all( os.path.isfile(str) for str in args.path ):
     plotfile( args )
