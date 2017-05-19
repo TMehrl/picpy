@@ -51,9 +51,6 @@ def ps_parseargs():
   parser.add_argument(  'path', 
                         metavar='PATH',
                         help='Path to grid file.')
-  parser.add_argument(  '--sum', dest='accumulate', action='store_const',
-                        const=sum, default=max,
-                        help='sum the integers (default: find the max)')
   parser.add_argument(  "-v", "--verbose",
                         dest="verbose", 
                         action="store_true", 
@@ -267,9 +264,14 @@ def plotfile(file, args):
   ax.set_xlabel(xlabel, fontsize=14)
   cbar = fig.colorbar(cax)
   cbar.ax.set_ylabel(g3d.name)
-  
-  fig.savefig(  args.savepath + '/' + savename, 
-                format=saveformat)
+
+  if saveformat==parsedefs.file_format.png:
+    fig.savefig(  args.savepath + '/' + savename, 
+              format=saveformat,
+              dpi=600)
+  else:    
+    fig.savefig(  args.savepath + '/' + savename, 
+                  format=saveformat)
   if args.verbose: print('Saved "' + savename + '" at: ' + args.savepath)    
   
   if args.ifshow: plt.show()
