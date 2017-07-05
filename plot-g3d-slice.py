@@ -159,8 +159,8 @@ def plotfile(file, args):
   if args.verbose == True:  print('Read-in completed.')
   
   if args.verbose == True: 
-    g3d.print_datasets(file)
-    g3d.print_attributes(file)
+    g3d.print_datasets()
+    g3d.print_attributes()
     
 
   if (args.plane == parsedefs.plane.zx) | (args.plane == parsedefs.plane.zy):
@@ -298,7 +298,6 @@ def main():
   else:
     print('Error: Provided path is neither a file nor a directory!')
     sys.exit()
-
 
    
 if __name__ == "__main__":

@@ -8,6 +8,41 @@ import picdefs
 import sys
 
 
+class H5Data:
+  def __init__(self, file, piccode):
+    self.piccode = piccode
+
+    self.file = file  
+    self.hdf5_check()
+    
+    if self.piccode == picdefs.code.hipace:
+      self.read_hipace()
+    elif self.piccode == picdefs.code.osiris:
+      self.read_osiris()
+
+  def hdf5_check(self):
+    fpath, fext = os.path.splitext(self.file)
+    if any(fext == s for s in picdefs.fexts.hdf5):
+      pass
+    else:
+      print('Error:\tExtension of file "%s" is not supported!' %fname)
+      print('\tAllowed file extensions: ',list(picdefs.fexts.hdf5))
+      sys.exit()
+
+  def print_datasets(self):
+    with h5py.File(self.file,'r') as hf:
+      # Printing attributes
+      print('HDF5 file datasets:')
+      for item in hf.keys():
+        print('\t' + item + ":", hf[item])
+
+  def print_attributes(self):
+    with h5py.File(self.file,'r') as hf:
+      # Printing attributes
+      print('HDF5 file attributes:')
+      for item in hf.attrs.keys():
+        print('\t' + item + ":", hf.attrs[item])
+
 def if_hdf5_file(file):
   fpath, fext = os.path.splitext(file)
   if any(fext == s for s in picdefs.fexts.hdf5):
@@ -15,103 +50,10 @@ def if_hdf5_file(file):
   else:
     return False
     
-def hdf5_check(file):
-  fpath, fext = os.path.splitext(file)
-  if any(fext == s for s in picdefs.fexts.hdf5):
-    pass
-  else:
-    print('Error:\tExtension of file "%s" is not supported!' %fname)
-    print('\tAllowed file extensions: ',list(picdefs.fexts.hdf5))
-    sys.exit()    
-
-
-def print_datasets(file):
-  with h5py.File(file,'r') as hf:
-    # Printing attributes
-    print('HDF5 file datasets:')
-    for item in hf.keys():
-      print('\t' + item + ":", hf[item])
-
-def print_attributes(file):
-  with h5py.File(file,'r') as hf:
-    # Printing attributes
-    print('HDF5 file attributes:')
-    for item in hf.attrs.keys():
-      print('\t' + item + ":", hf.attrs[item])
-
-
-class SLICE_MOMS:
-  def __init__(self, file):
-    hdf5_check(file) 
-    self.file = file
-    self.read()
-    
-  def read(self):        
-    with h5py.File(self.file,'r') as hf:
-      # read order of moments
-      order = 2
-      # Reading datasets
-      self.time_array = np.array(hf.get( 'time_array' ))
-      self.zeta_array = np.array(hf.get( 'zeta_array' ))
-      self.avgx1 = np.array(hf.get( 'avgx1' ))
-      self.avgx2 = np.array(hf.get( 'avgx2' ))
-      self.avgx3 = np.array(hf.get( 'avgx3' ))
-      self.avgp1 = np.array(hf.get( 'avgp1' ))
-      self.avgp2 = np.array(hf.get( 'avgp2' ))
-      self.avgp3 = np.array(hf.get( 'avgp3' ))
-      
-      if order > 1:
-        self.avgx1sq = np.array(hf.get( 'avgx1sq' ))
-        self.avgx2sq = np.array(hf.get( 'avgx2sq' ))
-        self.avgx3sq = np.array(hf.get( 'avgx3sq' ))
-        self.avgp1sq = np.array(hf.get( 'avgp1sq' ))
-        self.avgp2sq = np.array(hf.get( 'avgp2sq' ))
-        self.avgp3sq = np.array(hf.get( 'avgp3sq' ))
-        self.avgx1p1 = np.array(hf.get( 'avgx1p1' ))
-        self.avgx2p2 = np.array(hf.get( 'avgx2p2' ))
-        self.avgx3p3 = np.array(hf.get( 'avgx3p3' ))
-
-class DIR:
-  def __init__(self, dir):
-    if os.path.isdir(dir):
-      sys.stdout.write('Reading directory: %s\n' % dir)
-      sys.stdout.flush()
-      
-      self.dir = dir
-    else:
-      print(dir + ' is not a directory!')
-      sys.exit()
-  def list_files(self, strpattern): 
-    self.flist=[]
-    ftime=[]
-    flist_usort=[]
-    for root, dirs, files in os.walk(self.dir):
-      for name in files:
-        if (strpattern in name) & if_hdf5_file(name):
-          fpath, fext = os.path.splitext(name)
-          ftime.append(int(fpath[-picdefs.hipace.h5.Nfname_digits:]))
-          flist_usort.append(name)
-      idx = np.argsort(np.asarray(ftime))
-      self.nf = len(flist_usort)
-      # Sorting
-      for i in range(0,self.nf):
-        self.flist.append(flist_usort[idx[i]])
-        
-  def filepath(self, i):
-    fstr = '%s/%s' % (self.dir, self.flist[i])
-    return fstr
-    
-class RAW:
+class RAW(H5Data):
   def __init__(self, file, piccode=picdefs.code.hipace):
-    self.piccode = piccode
-
-    hdf5_check(file) 
-    self.file = file  
-    if self.piccode == picdefs.code.hipace:
-      self.read_hipace()
-    elif self.piccode == picdefs.code.osiris:
-      self.read_osiris()
-
+    H5Data.__init__(self, file, piccode)
+    
   def read_hipace(self): 
   
     with h5py.File(self.file,'r') as hf:
@@ -142,33 +84,15 @@ class RAW:
     print('Error: OSIRIS Read-in not yet implemented!')
     sys.exit()
 
-  def print_attributes(self, file):
-    print_attributes(file)
-
-  def print_datasets(self, file):
-    print_datasets(file)
 
 #### 3D-grid 
-class Grid3d:
+class Grid3d(H5Data):
   def __init__(self, file, piccode=picdefs.code.hipace):
-    self.piccode = piccode
-
-    hdf5_check(file) 
-    self.file = file  
-    if self.piccode == picdefs.code.hipace:
-      self.read_hipace()
-    elif self.piccode == picdefs.code.osiris:
-      self.read_osiris()
+    H5Data.__init__(self, file, piccode)
 
   def read_osiris(self):
     print('Error: OSIRIS Read-in not yet implemented!')
     sys.exit()
-    
-  def print_attributes(self, file):
-    print_attributes(file)
-
-  def print_datasets(self, file):
-    print_datasets(file)
       
   def read_hipace(self): 
   
@@ -230,4 +154,65 @@ class Grid3d:
     else:
       print('Error: OSIRIS part not yet implemented!')
       sys.exit()
+
+class SLICE_MOMS:
+  def __init__(self, file):
+    hdf5_check(file) 
+    self.file = file
+    self.read()
+    
+  def read(self):        
+    with h5py.File(self.file,'r') as hf:
+      # read order of moments
+      order = 2
+      # Reading datasets
+      self.time_array = np.array(hf.get( 'time_array' ))
+      self.zeta_array = np.array(hf.get( 'zeta_array' ))
+      self.avgx1 = np.array(hf.get( 'avgx1' ))
+      self.avgx2 = np.array(hf.get( 'avgx2' ))
+      self.avgx3 = np.array(hf.get( 'avgx3' ))
+      self.avgp1 = np.array(hf.get( 'avgp1' ))
+      self.avgp2 = np.array(hf.get( 'avgp2' ))
+      self.avgp3 = np.array(hf.get( 'avgp3' ))
+      
+      if order > 1:
+        self.avgx1sq = np.array(hf.get( 'avgx1sq' ))
+        self.avgx2sq = np.array(hf.get( 'avgx2sq' ))
+        self.avgx3sq = np.array(hf.get( 'avgx3sq' ))
+        self.avgp1sq = np.array(hf.get( 'avgp1sq' ))
+        self.avgp2sq = np.array(hf.get( 'avgp2sq' ))
+        self.avgp3sq = np.array(hf.get( 'avgp3sq' ))
+        self.avgx1p1 = np.array(hf.get( 'avgx1p1' ))
+        self.avgx2p2 = np.array(hf.get( 'avgx2p2' ))
+        self.avgx3p3 = np.array(hf.get( 'avgx3p3' ))
+
+class DIR:
+  def __init__(self, dir):
+    if os.path.isdir(dir):
+      sys.stdout.write('Reading directory: %s\n' % dir)
+      sys.stdout.flush()
+      
+      self.dir = dir
+    else:
+      print(dir + ' is not a directory!')
+      sys.exit()
+  def list_files(self, strpattern): 
+    self.flist=[]
+    ftime=[]
+    flist_usort=[]
+    for root, dirs, files in os.walk(self.dir):
+      for name in files:
+        if (strpattern in name) & if_hdf5_file(name):
+          fpath, fext = os.path.splitext(name)
+          ftime.append(int(fpath[-picdefs.hipace.h5.Nfname_digits:]))
+          flist_usort.append(name)
+      idx = np.argsort(np.asarray(ftime))
+      self.nf = len(flist_usort)
+      # Sorting
+      for i in range(0,self.nf):
+        self.flist.append(flist_usort[idx[i]])
+        
+  def filepath(self, i):
+    fstr = '%s/%s' % (self.dir, self.flist[i])
+    return fstr
     

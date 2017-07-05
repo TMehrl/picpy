@@ -166,8 +166,8 @@ def plotfile( args ):
     if args.verbose == True:  print('Read-in completed.')
   
     if args.verbose == True: 
-      g3d.print_datasets(file)
-      g3d.print_attributes(file)
+      g3d.print_datasets()
+      g3d.print_attributes()
     
     if (args.plane == parsedefs.plane.zx) | (args.plane == parsedefs.plane.zy):
     
