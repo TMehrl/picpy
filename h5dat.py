@@ -8,26 +8,32 @@ import picdefs
 import sys
 
 
-class H5Data:
-  def __init__(self, file, piccode):
-    self.piccode = piccode
+class H5File:
+  def __init__(self, file, check=False):
 
-    self.file = file  
-    self.hdf5_check()
+    # Allowed hdf5 extensions:
+    self.__h5exts = ['.h5','.hdf5']
+
+    self.file = file
     
-    if self.piccode == picdefs.code.hipace:
-      self.read_hipace()
-    elif self.piccode == picdefs.code.osiris:
-      self.read_osiris()
+    if check:
+      self.hdf5_check()
 
   def hdf5_check(self):
     fpath, fext = os.path.splitext(self.file)
-    if any(fext == s for s in picdefs.fexts.hdf5):
+    if any(fext == s for s in self.__h5exts):
       pass
     else:
       print('Error:\tExtension of file "%s" is not supported!' %fname)
-      print('\tAllowed file extensions: ',list(picdefs.fexts.hdf5))
+      print('\tAllowed file extensions: ',list(self.__h5exts))
       sys.exit()
+
+  def if_hdf5_file(self):
+    fpath, fext = os.path.splitext(self.file)
+    if any(fext == s for s in self.__h5exts):
+      return True
+    else:
+      return False
 
   def print_datasets(self):
     with h5py.File(self.file,'r') as hf:
@@ -43,16 +49,29 @@ class H5Data:
       for item in hf.attrs.keys():
         print('\t' + item + ":", hf.attrs[item])
 
-def if_hdf5_file(file):
-  fpath, fext = os.path.splitext(file)
-  if any(fext == s for s in picdefs.fexts.hdf5):
-    return True
-  else:
-    return False
+  def get_allowed_h5exts(self):
+    return self.__h5exts
+
+
+class H5PIC(H5File):
+  def __init__(self, file, piccode):
+
+    H5File.__init__(self, file, check=True)
+
+    self.__hipace = 'hipace'
+    self.__osiris = 'osiris'
+
+    self.piccode = piccode
+
+    if self.piccode == self.__hipace:
+      self.read_hipace()
+    elif self.piccode == self.__osiris:
+      self.read_osiris()
+
     
-class RAW(H5Data):
+class RAW(H5PIC):
   def __init__(self, file, piccode=picdefs.code.hipace):
-    H5Data.__init__(self, file, piccode)
+    H5PIC.__init__(self, file, piccode)
     
   def read_hipace(self): 
   
@@ -86,9 +105,9 @@ class RAW(H5Data):
 
 
 #### 3D-grid 
-class Grid3d(H5Data):
+class Grid3d(H5PIC):
   def __init__(self, file, piccode=picdefs.code.hipace):
-    H5Data.__init__(self, file, piccode)
+    H5PIC.__init__(self, file, piccode)
 
   def read_osiris(self):
     print('Error: OSIRIS Read-in not yet implemented!')
@@ -155,10 +174,12 @@ class Grid3d(H5Data):
       print('Error: OSIRIS part not yet implemented!')
       sys.exit()
 
-class SLICE_MOMS:
-  def __init__(self, file):
-    hdf5_check(file) 
-    self.file = file
+
+class SliceMoms(H5File):
+  def __init__(self, file):    
+    
+    H5File.__init__(self, file, check=True)
+    
     self.read()
     
   def read(self):        
@@ -186,6 +207,7 @@ class SLICE_MOMS:
         self.avgx2p2 = np.array(hf.get( 'avgx2p2' ))
         self.avgx3p3 = np.array(hf.get( 'avgx3p3' ))
 
+
 class DIR:
   def __init__(self, dir):
     if os.path.isdir(dir):
@@ -196,13 +218,15 @@ class DIR:
     else:
       print(dir + ' is not a directory!')
       sys.exit()
+  
   def list_files(self, strpattern): 
     self.flist=[]
     ftime=[]
     flist_usort=[]
     for root, dirs, files in os.walk(self.dir):
       for name in files:
-        if (strpattern in name) & if_hdf5_file(name):
+        h5file = H5File(name)
+        if (strpattern in name) & h5file.if_hdf5_file():
           fpath, fext = os.path.splitext(name)
           ftime.append(int(fpath[-picdefs.hipace.h5.Nfname_digits:]))
           flist_usort.append(name)
@@ -215,4 +239,3 @@ class DIR:
   def filepath(self, i):
     fstr = '%s/%s' % (self.dir, self.flist[i])
     return fstr
-    

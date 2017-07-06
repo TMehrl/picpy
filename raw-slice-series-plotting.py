@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib.colors import LogNorm
 import picdefs
-from h5dat import SLICE_MOMS
+from h5dat import SliceMoms
 import ps_ana
 import h5py
 
@@ -100,7 +100,7 @@ def main():
 
   (opts, args) = parser.parse_args()
   
-  slm = SLICE_MOMS(args[0])
+  slm = SliceMoms(args[0])
 
   Xb0 = np.ones(slm.avgx2[0,:].shape)
   for i in range(0,len(slm.zeta_array)):
