@@ -8,6 +8,71 @@ import picdefs
 import sys
 
 
+#####################
+class Hipace:
+  def __init__(self):
+    self.__code = 'hipace'  
+
+    # HDF5 GRID dataset keys
+    self.__g3dkeys =  { 'beam_charge' : 'beam_charge',
+                        'plasma_charge' : 'plasma_charge'
+                      }
+    # HDF5 GRID dataset types 
+    self.__g3dtypes = { 'density' : 'density',
+                        'field' : 'field',
+                        'current' : 'current'
+                      }
+
+    # HDF5 RAW dataset keys
+    self.__rawkeys =  { 'x1':'x1',
+                        'x2':'x2',
+                        'x3':'x3',
+                        'q':'q',
+                        'p1':'p1',
+                        'p2':'p2',
+                        'p3':'p3'
+                      }
+
+    # HDF5 Attribute Keys
+    self.__attrkeys = { 'nx':'NX',
+                        'xmin':'XMIN',
+                        'xmax':'XMAX',
+                        'time':'TIME',
+                        'dt':'DT',                                
+                        'type':'TYPE', 
+                        'name':'NAME',                 
+                      }    
+
+  def get_g3dkey(self,key):
+    return self.__g3dkeys[key]  
+  def get_g3dkeys(self):
+    return self.__g3dkeys
+  def print_g3dkeys(self):
+    for key in self.__g3dkeys: print(key)
+    
+  def get_g3dtype(self, type):
+    return self.__g3dtypes[type]    
+  def get_g3dtypes(self):
+    return self.__g3dtypes
+  def print_g3dtypes(self):
+    for type in self.__g3dtypes: print(type)
+    
+  def get_rawkey(self,key):
+    return self.__rawkeys[key]    
+  def get_rawkeys(self):
+    return self.__rawkeys         
+  def print_rawkeys(self):
+    for key in self.__rawkeys: print(key)
+
+  def get_attrkey(self, key):
+    return self.__attrkeys[key]
+  def get_attrkeys(self):
+    return self.__attrkeys     
+  def print_attrkeys(self):
+    for key in self.__attrkeys: print(key)         
+##########################
+
+
 class H5File:
   def __init__(self, file, check=False):
 
@@ -63,12 +128,14 @@ class H5PIC(H5File):
 
     self.piccode = piccode
 
+# CHANGE THIS! Don't use instances of inheriting classes!
     if self.piccode == self.__hipace:
       self.read_hipace()
     elif self.piccode == self.__osiris:
       self.read_osiris()
 
-    
+
+   
 class RAW(H5PIC):
   def __init__(self, file, piccode=picdefs.code.hipace):
     H5PIC.__init__(self, file, piccode)
