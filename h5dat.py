@@ -13,71 +13,41 @@ piccodes = { 'hipace':'hipace',
             }
 
 
-# Keys for PIC HDF5 files
-class H5Keys:
-  def __init__(self, piccode):
+# Keys for HiPACE HDF5 files
+class HiKeys:
+  def __init__(self):
     
-    # OSIRIS
-    if piccode == piccodes['osiris']:
-      
-      # HDF5 GRID dataset keys
-      self.__g3dkeys =  { 'density' : 'density'
-                        }
+    # HDF5 GRID dataset keys
+    self.__g3dkeys =  { 'beam_charge' : 'beam_charge',
+                        'plasma_charge' : 'plasma_charge'
+                      }
+    # HDF5 GRID dataset types 
+    # Move these somewhere else...
+    self.__g3dtypes = { 'density' : 'density',
+                        'field' : 'field',
+                        'current' : 'current'
+                      }
 
-      # HDF5 RAW dataset keys
-      self.__rawkeys =  { 'x1':'x1',
-                          'x2':'x2',
-                          'x3':'x3',
-                          'q':'q',
-                          'p1':'p1',
-                          'p2':'p2',
-                          'p3':'p3'
-                        }
+    # HDF5 RAW dataset keys
+    self.__rawkeys =  { 'x1':'x1',
+                        'x2':'x2',
+                        'x3':'x3',
+                        'q':'q',
+                        'p1':'p1',
+                        'p2':'p2',
+                        'p3':'p3'
+                      }
 
-      # HDF5 Attribute Keys
-      self.__attrkeys = { 'nx':'NX',
-                          'xmin':'XMIN',
-                          'xmax':'XMAX',
-                          'time':'TIME',
-                          'dt':'DT',                                
-                          'type':'TYPE', 
-                          'name':'NAME',                 
-                        }
-    # HiPACE 
-    elif piccode == piccodes['hipace']:
-                        
-      # HDF5 GRID dataset keys
-      self.__g3dkeys =  { 'beam_charge' : 'beam_charge',
-                          'plasma_charge' : 'plasma_charge'
-                        }
-      # HDF5 GRID dataset types 
-      # Move these somewhere else...
-      self.__g3dtypes = { 'density' : 'density',
-                          'field' : 'field',
-                          'current' : 'current'
-                        }
-
-      # HDF5 RAW dataset keys
-      self.__rawkeys =  { 'x1':'x1',
-                          'x2':'x2',
-                          'x3':'x3',
-                          'q':'q',
-                          'p1':'p1',
-                          'p2':'p2',
-                          'p3':'p3'
-                        }
-
-      # HDF5 Attribute Keys
-      self.__attrkeys = { 'nx':'NX',
-                          'xmin':'XMIN',
-                          'xmax':'XMAX',
-                          'time':'TIME',
-                          'dt':'DT',                                
-                          'type':'TYPE', 
-                          'name':'NAME',                 
-                        }    
+    # HDF5 Attribute Keys
+    self.__attrkeys = { 'nx':'NX',
+                        'xmin':'XMIN',
+                        'xmax':'XMAX',
+                        'time':'TIME',
+                        'dt':'DT',                                
+                        'type':'TYPE', 
+                        'name':'NAME',                 
+                      }    
  
-
   def get_g3dkey(self,key):
     return self.__g3dkeys[key]  
   def get_g3dkeys(self):
@@ -148,9 +118,11 @@ class H5File:
     return self.__h5exts
 
 
-class HiH5File(H5Keys):
-  def __init__(self):  
-    HiH5Keys.__init__(self, 'hipace')
+class HiFile(HiKeys, H5File):
+  def __init__(self, file):  
+    HiKeys.__init__(self)
+    H5File.__init__(self, file)
+    self.file = file
   
   def read_attrs(self):
     # Reading attributes 
@@ -182,47 +154,46 @@ class HiH5File(H5Keys):
     return round(self.time/self.dt)  
     
 
-class H5PIC(H5File):
-  def __init__(self, file, piccode):
+# class H5PIC(H5File):
+#   def __init__(self, file, piccode):
+# 
+#     H5File.__init__(self, file)
+# 
+#     self.piccode = piccode
+# 
+#     if self.piccode == piccodes['hipace']:
+#       self.file = HiH5File()
+#     #elif self.piccode == piccodes['osiris']:
+#       #self.file = OsH5File()
+#     else: 
+#       print('Error:\tPIC code "%s" is not supported!' % piccode)
+#       print('\tAllowed PIC codes: ',list(piccodes.values()))
+#       sys.exit()
 
-    H5File.__init__(self, file)
 
-    self.piccode = piccode
-
-    if self.piccode == piccodes['hipace']:
-      self.file = HiH5File()
-    #elif self.piccode == piccodes['osiris']:
-      #self.file = OsH5File()
-    else: 
-      print('Error:\tPIC code "%s" is not supported!' % piccode)
-      print('\tAllowed PIC codes: ',list(piccodes.values()))
-      sys.exit()
-
-
-class RAW(H5PIC):
-  def __init__(self, file, piccode=piccodes['hipace']):
-    H5PIC.__init__(self, file, piccode)
+class HiRAW(HiFile):
+  def __init__(self, file):
+    HiFile.__init__(self, file)
     
   def read_data(self): 
   
     with h5py.File(self.file,'r') as hf:
       
       # Reading datasets
-      self.x1 = np.array(hf.get(  self.h5keys.get_rawkey('x1') ))
-      self.x2 = np.array(hf.get(  self.h5keys.get_rawkey('x2') ))
-      self.x3 = np.array(hf.get(  self.h5keys.get_rawkey('x3') ))
-      self.q =  np.array(hf.get(  self.h5keys.get_rawkey('q')  ))
-      self.p1 = np.array(hf.get(  self.h5keys.get_rawkey('p1') ))    
-      self.p2 = np.array(hf.get(  self.h5keys.get_rawkey('p2') ))
-      self.p3 = np.array(hf.get(  self.h5keys.get_rawkey('p3') ))
+      self.x1 = np.array(hf.get(  self.get_rawkey('x1') ))
+      self.x2 = np.array(hf.get(  self.get_rawkey('x2') ))
+      self.x3 = np.array(hf.get(  self.get_rawkey('x3') ))
+      self.q =  np.array(hf.get(  self.get_rawkey('q')  ))
+      self.p1 = np.array(hf.get(  self.get_rawkey('p1') ))    
+      self.p2 = np.array(hf.get(  self.get_rawkey('p2') ))
+      self.p3 = np.array(hf.get(  self.get_rawkey('p3') ))
       
       self.npart = len(self.q)
 
-
 #### 3D-grid 
-class Grid3d(H5PIC):
-  def __init__(self, file, piccode=piccodes['hipace']):
-    H5PIC.__init__(self, file, piccode)
+class Grid3d(HiFile):
+  def __init__(self, file):
+    HiFile.__init__(self, file)
   
     self.read_attrs()
       

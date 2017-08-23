@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib.colors import LogNorm
 import picdefs
-from h5dat import RAW
+from h5dat import HiRAW
 from h5dat import DIR
 import ps_ana
 import h5py
@@ -148,7 +148,10 @@ def main():
     sys.stdout.write('Processing: %s\t(%i/%i)\n' % (dir.filepath(i), i+1, Nfiles))
     sys.stdout.flush()
     
-    raw = RAW(dir.filepath(i), picdefs.code.hipace)
+    raw = HiRAW(dir.filepath(i))
+    raw.read_attrs()
+    raw.read_data()
+    
     time_array[i] = raw.time
     slices = ps_ana.SLICES(raw, nbins=nbins)
     slices.calc_moments(order = mom_order)
