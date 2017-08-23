@@ -7,41 +7,76 @@ import h5py
 import picdefs
 import sys
 
+# Dictionary for PIC codes
+piccodes = { 'hipace':'hipace',
+              'osiris':'osiris'
+            }
 
-#####################
-class Hipace:
-  def __init__(self):
-    self.__code = 'hipace'  
 
-    # HDF5 GRID dataset keys
-    self.__g3dkeys =  { 'beam_charge' : 'beam_charge',
-                        'plasma_charge' : 'plasma_charge'
-                      }
-    # HDF5 GRID dataset types 
-    self.__g3dtypes = { 'density' : 'density',
-                        'field' : 'field',
-                        'current' : 'current'
-                      }
+# Keys for PIC HDF5 files
+class H5Keys:
+  def __init__(self, piccode):
+    
+    # OSIRIS
+    if piccode == piccodes['osiris']:
+      
+      # HDF5 GRID dataset keys
+      self.__g3dkeys =  { 'density' : 'density'
+                        }
 
-    # HDF5 RAW dataset keys
-    self.__rawkeys =  { 'x1':'x1',
-                        'x2':'x2',
-                        'x3':'x3',
-                        'q':'q',
-                        'p1':'p1',
-                        'p2':'p2',
-                        'p3':'p3'
-                      }
+      # HDF5 RAW dataset keys
+      self.__rawkeys =  { 'x1':'x1',
+                          'x2':'x2',
+                          'x3':'x3',
+                          'q':'q',
+                          'p1':'p1',
+                          'p2':'p2',
+                          'p3':'p3'
+                        }
 
-    # HDF5 Attribute Keys
-    self.__attrkeys = { 'nx':'NX',
-                        'xmin':'XMIN',
-                        'xmax':'XMAX',
-                        'time':'TIME',
-                        'dt':'DT',                                
-                        'type':'TYPE', 
-                        'name':'NAME',                 
-                      }    
+      # HDF5 Attribute Keys
+      self.__attrkeys = { 'nx':'NX',
+                          'xmin':'XMIN',
+                          'xmax':'XMAX',
+                          'time':'TIME',
+                          'dt':'DT',                                
+                          'type':'TYPE', 
+                          'name':'NAME',                 
+                        }
+    # HiPACE 
+    elif piccode == piccodes['hipace']:
+                        
+      # HDF5 GRID dataset keys
+      self.__g3dkeys =  { 'beam_charge' : 'beam_charge',
+                          'plasma_charge' : 'plasma_charge'
+                        }
+      # HDF5 GRID dataset types 
+      # Move these somewhere else...
+      self.__g3dtypes = { 'density' : 'density',
+                          'field' : 'field',
+                          'current' : 'current'
+                        }
+
+      # HDF5 RAW dataset keys
+      self.__rawkeys =  { 'x1':'x1',
+                          'x2':'x2',
+                          'x3':'x3',
+                          'q':'q',
+                          'p1':'p1',
+                          'p2':'p2',
+                          'p3':'p3'
+                        }
+
+      # HDF5 Attribute Keys
+      self.__attrkeys = { 'nx':'NX',
+                          'xmin':'XMIN',
+                          'xmax':'XMAX',
+                          'time':'TIME',
+                          'dt':'DT',                                
+                          'type':'TYPE', 
+                          'name':'NAME',                 
+                        }    
+ 
 
   def get_g3dkey(self,key):
     return self.__g3dkeys[key]  
@@ -49,13 +84,6 @@ class Hipace:
     return self.__g3dkeys
   def print_g3dkeys(self):
     for key in self.__g3dkeys: print(key)
-    
-  def get_g3dtype(self, type):
-    return self.__g3dtypes[type]    
-  def get_g3dtypes(self):
-    return self.__g3dtypes
-  def print_g3dtypes(self):
-    for type in self.__g3dtypes: print(type)
     
   def get_rawkey(self,key):
     return self.__rawkeys[key]    
@@ -69,10 +97,12 @@ class Hipace:
   def get_attrkeys(self):
     return self.__attrkeys     
   def print_attrkeys(self):
-    for key in self.__attrkeys: print(key)         
-##########################
+    for key in self.__attrkeys: print(key) 
 
 
+# General HDF5 file class with routines 
+# to check whether file is an HDF5 file
+# and to print keys of attributes and datasets
 class H5File:
   def __init__(self, file, check=False):
 
@@ -118,69 +148,85 @@ class H5File:
     return self.__h5exts
 
 
+class HiH5File(H5Keys):
+  def __init__(self):  
+    HiH5Keys.__init__(self, 'hipace')
+  
+  def read_attrs(self):
+    # Reading attributes 
+    with h5py.File(self.file,'r') as hf:
+      self.nx = hf.attrs[   self.get_attrkey('nx') ] 
+      self.xmin = hf.attrs[ self.get_attrkey('xmin') ]
+      self.xmax = hf.attrs[ self.get_attrkey('xmax') ]
+      self.time = hf.attrs[ self.get_attrkey('time') ]
+      self.dt = hf.attrs[   self.get_attrkey('dt') ]
+      type_bytes = hf.attrs[ self.get_attrkey('type') ]
+      name_bytes = hf.attrs[ self.get_attrkey('name') ]
+      self.type = type_bytes[0].decode('UTF-8')
+      self.name = name_bytes[0].decode('UTF-8')
+      # Make these private and write getter functions!
+
+  def get_x_arr(self,dim):
+    return np.linspace(self.xmin[dim],self.xmax[dim],self.nx[dim])
+      
+  def get_z_arr(self):
+    return np.linspace(self.time+self.xmin[0],self.time+self.xmax[0],self.nx[0]) 
+            
+  def get_zeta_arr(self):
+    return np.linspace(self.xmin[0],self.xmax[0],self.nx[0])
+            
+  def get_xi_arr(self): 
+    return np.linspace(-self.xmin[0],-self.xmax[0],self.nx[0])
+                  
+  def get_nt(self):      
+    return round(self.time/self.dt)  
+    
+
 class H5PIC(H5File):
   def __init__(self, file, piccode):
 
-    H5File.__init__(self, file, check=True)
-
-    self.__hipace = 'hipace'
-    self.__osiris = 'osiris'
+    H5File.__init__(self, file)
 
     self.piccode = piccode
 
-# CHANGE THIS! Don't use instances of inheriting classes!
-    if self.piccode == self.__hipace:
-      self.read_hipace()
-    elif self.piccode == self.__osiris:
-      self.read_osiris()
+    if self.piccode == piccodes['hipace']:
+      self.file = HiH5File()
+    #elif self.piccode == piccodes['osiris']:
+      #self.file = OsH5File()
+    else: 
+      print('Error:\tPIC code "%s" is not supported!' % piccode)
+      print('\tAllowed PIC codes: ',list(piccodes.values()))
+      sys.exit()
 
 
-   
 class RAW(H5PIC):
-  def __init__(self, file, piccode=picdefs.code.hipace):
+  def __init__(self, file, piccode=piccodes['hipace']):
     H5PIC.__init__(self, file, piccode)
     
-  def read_hipace(self): 
+  def read_data(self): 
   
     with h5py.File(self.file,'r') as hf:
       
       # Reading datasets
-      self.x1 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.x1 ))
-      self.x2 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.x2 ))
-      self.x3 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.x3 ))
-      self.q =  np.array(hf.get(  picdefs.hipace.h5.rawkeys.q  ))
-      self.p1 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.p1 ))    
-      self.p2 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.p2 ))
-      self.p3 = np.array(hf.get(  picdefs.hipace.h5.rawkeys.p3 ))
+      self.x1 = np.array(hf.get(  self.h5keys.get_rawkey('x1') ))
+      self.x2 = np.array(hf.get(  self.h5keys.get_rawkey('x2') ))
+      self.x3 = np.array(hf.get(  self.h5keys.get_rawkey('x3') ))
+      self.q =  np.array(hf.get(  self.h5keys.get_rawkey('q')  ))
+      self.p1 = np.array(hf.get(  self.h5keys.get_rawkey('p1') ))    
+      self.p2 = np.array(hf.get(  self.h5keys.get_rawkey('p2') ))
+      self.p3 = np.array(hf.get(  self.h5keys.get_rawkey('p3') ))
       
       self.npart = len(self.q)
-            
-      # Reading attributes 
-      self.nx = hf.attrs[   picdefs.hipace.h5.attrkeys.nx ] 
-      self.xmin = hf.attrs[ picdefs.hipace.h5.attrkeys.xmin ]
-      self.xmax = hf.attrs[ picdefs.hipace.h5.attrkeys.xmax ]
-      self.time = hf.attrs[ picdefs.hipace.h5.attrkeys.time ]
-      self.dt = hf.attrs[   picdefs.hipace.h5.attrkeys.dt ]
-      type_bytes = hf.attrs[ picdefs.hipace.h5.attrkeys.type ]
-      name_bytes = hf.attrs[ picdefs.hipace.h5.attrkeys.name ]
-      self.type = type_bytes[0].decode('UTF-8')
-      self.name = name_bytes[0].decode('UTF-8')
-
-  def read_osiris(self):
-    print('Error: OSIRIS Read-in not yet implemented!')
-    sys.exit()
 
 
 #### 3D-grid 
 class Grid3d(H5PIC):
-  def __init__(self, file, piccode=picdefs.code.hipace):
+  def __init__(self, file, piccode=piccodes['hipace']):
     H5PIC.__init__(self, file, piccode)
-
-  def read_osiris(self):
-    print('Error: OSIRIS Read-in not yet implemented!')
-    sys.exit()
+  
+    self.read_attrs()
       
-  def read_hipace(self): 
+  def read_data(self): 
   
     with h5py.File(self.file,'r') as hf:
       
@@ -194,52 +240,6 @@ class Grid3d(H5PIC):
       else:
         print('Error:\tHDF5 file "%s" contains more than one dataset!' %(self.file) )
         sys.exit()
-      
-      # Reading attributes 
-      self.nx = hf.attrs[   picdefs.hipace.h5.attrkeys.nx ] 
-      self.xmin = hf.attrs[ picdefs.hipace.h5.attrkeys.xmin ]
-      self.xmax = hf.attrs[ picdefs.hipace.h5.attrkeys.xmax ]
-      self.time = hf.attrs[ picdefs.hipace.h5.attrkeys.time ]
-      self.dt = hf.attrs[   picdefs.hipace.h5.attrkeys.dt ]
-      type_bytes = hf.attrs[ picdefs.hipace.h5.attrkeys.type ]
-      name_bytes = hf.attrs[ picdefs.hipace.h5.attrkeys.name ]
-      self.type = type_bytes[0].decode('UTF-8')
-      self.name = name_bytes[0].decode('UTF-8')
-        
-  def get_x_arr(self,dim):
-    if self.piccode == picdefs.code.hipace:
-      return np.linspace(self.xmin[dim],self.xmax[dim],self.nx[dim])
-    else:
-      print('Error: OSIRIS part not yet implemented!')
-      sys.exit()
-      
-  def get_z_arr(self):
-    if self.piccode == picdefs.code.hipace:
-      return np.linspace(self.time+self.xmin[0],self.time+self.xmax[0],self.nx[0])
-    else:
-      print('Error: OSIRIS part not yet implemented!')
-      sys.exit()  
-            
-  def get_zeta_arr(self):
-    if self.piccode == picdefs.code.hipace:
-      return np.linspace(self.xmin[0],self.xmax[0],self.nx[0])
-    else:
-      print('Error: OSIRIS part not yet implemented!')
-      sys.exit()
-            
-  def get_xi_arr(self): 
-    if self.piccode == picdefs.code.hipace:
-      return np.linspace(-self.xmin[0],-self.xmax[0],self.nx[0])
-    else:
-      print('Error: OSIRIS part not yet implemented!')
-      sys.exit()
-                  
-  def get_nt(self):      
-    if self.piccode == picdefs.code.hipace:
-      return round(self.time/self.dt)
-    else:
-      print('Error: OSIRIS part not yet implemented!')
-      sys.exit()
 
 
 class SliceMoms(H5File):
