@@ -45,7 +45,7 @@ def moments(array1, array2, weights, order=2, central=True, roots=False):
     return mom
 
 # Class for slice analysis
-class SLICES:
+class Slices:
   def __init__(self, raw, edges=[], nbins=0):
   
     dx0 = (raw.xmax[0] - raw.xmin[0])/raw.nx[0]

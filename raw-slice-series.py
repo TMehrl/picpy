@@ -219,7 +219,7 @@ def main():
     raw.read_data()
     
     time_array[i] = raw.time
-    slices = ps_ana.SLICES(raw, nbins=Nbins)
+    slices = ps_ana.Slices(raw, nbins=Nbins)
     slices.calc_moments(order = mom_order, crossterms=crossterms)
     avgx1[i,:] = slices.avgx1      
     avgx2[i,:] = slices.avgx2
