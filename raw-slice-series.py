@@ -4,8 +4,8 @@
 
 import numpy as np
 import os
-from optparse import OptionParser
-from optparse import OptionGroup
+from argparse import ArgumentParser
+#from argparse import OptionGroup
 import math
 import sys
 import matplotlib
@@ -29,63 +29,67 @@ class parsedefaults:
   Nbins = 256
   Nfiles = 0
 
-def ps_parseopts():
+def ps_parseargs():
 
   usg = "Usage: %prog [options] <file or path>"
   
-  desc="""This is the picpy postprocessing tool."""
+  desc='This is the picpy postprocessing tool.'
   
-  parser = OptionParser(usage=usg, description=desc)
-  parser.add_option(  "-v", "--verbose",
-                      action="store_true", 
-                      dest="verbose", 
-                      default=True,
-                      help = "Print info (Default).")
-  parser.add_option(  "-q", "--quiet",
-                      action="store_false", 
-                      dest="verbose",
-                      help = "Don't print info.")
-  parser.add_option(  "-s", "--save-path", 
-                      dest="savepath",
-                      metavar="PATH",
-                      default=parsedefaults.savepath,
-                      help = """Path to which generated files will be saved.
-                            (Default: '%s')""" % parsedefaults.savepath)
-  parser.add_option(  "--raw-istr", 
-                      dest="raw_ident_str",
-                      metavar="RAWIdentstr",
-                      default=parsedefaults.raw_ident_str,
-                      help = """Identification string for beam raw file.
-                            (Default: '%s')""" % parsedefaults.raw_ident_str)                            
-  parser.add_option(  "-n", "--save-name", 
-                      dest="save_name",
-                      metavar="NAME",
-                      default=parsedefaults.save_name,
-                      help = """Define customized output filename.""")  
-  parser.add_option(  "-o", "--mom-order", 
-                      type='choice',
-                      action='store',
-                      dest="mom_order",
-                      metavar="MOMORDER",
-                      choices=[1, 2,],
-                      default=parsedefaults.mom_order,
-                      help= """Order of moment evaluation
-                           (Default: %i).""" % parsedefaults.mom_order)                                      
-  parser.add_option(  "--Nfiles",
-                      type="int", 
-                      action='store',
-                      dest="Nfiles",
-                      metavar="NFILES",
-                      default=parsedefaults.Nfiles,
-                      help= """Number of files to analyze.""")
-  parser.add_option(  "--Nbins",
-                      type="int",
-                      action='store',
-                      dest="Nbins",
-                      metavar="Nbins",
-                      default=parsedefaults.Nbins,
-                      help= """Number of bins. (Default: %i)""" % parsedefaults.Nbins)  
-#   parser.add_option(  "-c", "--code", 
+  parser = ArgumentParser(usage=usg, description=desc)
+  parser.add_argument(  'path', 
+                        metavar='PATH',
+                        help='Path to raw outputs.')
+  parser.add_argument(  "-v", "--verbose",
+                        action="store_true", 
+                        dest="verbose", 
+                        default=True,
+                        help = "Print info (Default).")
+  parser.add_argument(  "-q", "--quiet",
+                        action="store_false", 
+                        dest="verbose",
+                        help = "Don't print info.")
+  parser.add_argument(  "-s", "--save-path", 
+                        dest="savepath",
+                        metavar="PATH",
+                        default=parsedefaults.savepath,
+                        help = 'Path to which generated files will be saved. '
+                               '(Default: "%s")' % parsedefaults.savepath)
+  parser.add_argument(  "--raw-istr", 
+                        dest="raw_ident_str",
+                        metavar="RAWIdentstr",
+                        default=parsedefaults.raw_ident_str,
+                        help = 'Identification string for beam raw file. '
+                              '(Default: "%s")' % parsedefaults.raw_ident_str)                            
+  parser.add_argument(  "-n", "--save-name", 
+                        dest="save_name",
+                        metavar="NAME",
+                        default=parsedefaults.save_name,
+                        help = 'Define customized output filename.')  
+  parser.add_argument(  "-o", "--mom-order", 
+                        type=int,                  
+                        action='store',
+                        dest="mom_order",
+                        metavar="MOMORDER",
+                        choices=[1, 2, 3,],
+                        default=parsedefaults.mom_order,
+                        help='Order of moment evaluation (Default: 2).'
+                        ) 
+#                        '(Default: %i).' % parsedefaults.mom_order)                                      
+  parser.add_argument(  "--Nfiles",
+                        type=int, 
+                        action='store',
+                        dest="Nfiles",
+                        metavar="NFILES",
+                        default=parsedefaults.Nfiles,
+                        help='Number of files to analyze.')
+  parser.add_argument(  "--Nbins",
+                        type=int,
+                        action='store',
+                        dest="Nbins",
+                        metavar="Nbins",
+                        default=parsedefaults.Nbins,
+                        help= 'Number of bins. (Default: %i)' % parsedefaults.Nbins)  
+#   parser.add_argument(  "-c", "--code", 
 #                       type='choice',
 #                       action='store',
 #                       dest="piccode",
@@ -94,24 +98,24 @@ def ps_parseopts():
 #                       default = picdefs.code.hipace,
 #                       help= "PIC code which was used to generate files (Default: '%s')." 
 #                             % picdefs.code.hipace)
-#   parser.add_option(  "-d", "--dim", 
+#   parser.add_argument(  "-d", "--dim", 
 #                       type='choice',
 #                       action='store',
 #                       dest="dimensionality",
 #                       metavar="DIM",
 #                       choices=[1, 2, 3,],
 #                       default=3,
-#                       help= """Dimensionality of PIC simulation
-#                            (Default: 3).""")                                             
+#                       help= 'Dimensionality of PIC simulation
+#                            (Default: 3).')                                             
 #   group = OptionGroup(parser, "Options for beam-phase-space (RAW) files",
 #                       "These are options for beam-phase-space (RAW) files")
-#   group.add_option("-g", action="store_true", help="Group option.")
-#   parser.add_option_group(group)
+#   group.add_argument("-g", action="store_true", help="Group option.")
+#   parser.add_argument_group(group)
 
 #   group = OptionGroup(parser, "Options for grid files",
 #                       "These are options for grid files")
-#   group.add_option("-g", action="store_true", help="Group option.")
-#   parser.add_option_group(group)
+#   group.add_argument("-g", action="store_true", help="Group option.")
+#   parser.add_argument_group(group)
   
   return parser
 
@@ -119,27 +123,29 @@ def ps_parseopts():
 
 def main():
   
-  parser = ps_parseopts()
+  parser = ps_parseargs()
 
-  (opts, args) = parser.parse_args()
+  args = parser.parse_args()
   
-  Nbins = opts.Nbins
-  mom_order = opts.mom_order
+  
+  
+  Nbins = args.Nbins
+  mom_order = args.mom_order
 
-  dir = DIR(args[0])
-  dir.list_files(opts.raw_ident_str)
+  dir = DIR(args.path)
+  dir.list_files(args.raw_ident_str)
 
   if (dir.nf > 0):
-    if (opts.Nfiles == parsedefaults.Nfiles):
+    if (args.Nfiles == parsedefaults.Nfiles):
       Nfiles = dir.nf
-    elif int(opts.Nfiles) <= dir.nf:
-      Nfiles = int(opts.Nfiles)
+    elif int(args.Nfiles) <= dir.nf:
+      Nfiles = int(args.Nfiles)
     else:
       sys.stderr('Error: Nfiles cannot be greater than the actual number of files!')
   else :
     print(  'Error:\tNo phase space (raw) files in directory!\n' + 
-            ('\tCheck the used path (currently: "%s")\n' % opts.savepath) + 
-            ('\tCheck the used RAW identification string (currently: "%s")' % opts.raw_ident_str)
+            ('\tCheck the used path (currently: "%s")\n' % args.savepath) + 
+            ('\tCheck the used RAW identification string (currently: "%s")' % args.raw_ident_str)
           )
     sys.exit()     
 
@@ -196,7 +202,7 @@ def main():
 
   zeta_array = slices.centers
   
-  h5savepathname = opts.savepath + '/' + opts.save_name
+  h5savepathname = args.savepath + '/' + args.save_name
   
   sys.stdout.write('Saving to file: %s\n' % (h5savepathname))
   sys.stdout.flush()
