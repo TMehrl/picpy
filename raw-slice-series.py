@@ -63,7 +63,6 @@ def ps_parseopts():
                       default=parsedefaults.save_name,
                       help = """Define customized output filename.""")  
   parser.add_option(  "-o", "--mom-order", 
-                      type="int", 
                       type='choice',
                       action='store',
                       dest="mom_order",
