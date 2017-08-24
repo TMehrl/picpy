@@ -61,7 +61,7 @@ class SLICES:
     self.centers = self.edges[0:-1] + np.diff(self.edges)/2
     self.if_moms_calc = False
       
-  def calc_moments(self, order=2, central=True, timings=False):    
+  def calc_moments(self, order=2, central=True, crossterms=False, timings=False):    
     
     if timings: self.startcm_time = time.time()    
   
@@ -115,46 +115,81 @@ class SLICES:
       if timings: self.cm_afcalcavg_time = time.time()
       
     if order > 1:
+    
+      if central:
+        X1 = X1 - self.avgx1[:,None]
+        X2 = X2 - self.avgx2[:,None]
+        X3 = X3 - self.avgx3[:,None]
+        P1 = P1 - self.avgp1[:,None]
+        P2 = P2 - self.avgp2[:,None]
+        P3 = P3 - self.avgp3[:,None]
 
       if timings: self.cm_afallocsqavg_time = time.time()
       
       self.avgx1sq = np.average(np.power(X1,2), axis=1, weights=Q)
       self.avgx2sq = np.average(np.power(X2,2), axis=1, weights=Q)
       self.avgx3sq = np.average(np.power(X3,2), axis=1, weights=Q)
+
       self.avgp1sq = np.average(np.power(P1,2), axis=1, weights=Q)   
       self.avgp2sq = np.average(np.power(P2,2), axis=1, weights=Q)
       self.avgp3sq = np.average(np.power(P3,2), axis=1, weights=Q) 
+
       self.avgx1p1 = np.average(np.multiply(X1,P1), axis=1, weights=Q)
       self.avgx2p2 = np.average(np.multiply(X2,P2), axis=1, weights=Q)
       self.avgx3p3 = np.average(np.multiply(X2,P3), axis=1, weights=Q)
        
-      if timings: self.cm_afcalcsqavg_time = time.time()
-      if central:
-        self.avgx1sq = np.subtract(self.avgx1sq, np.power(self.avgx1, 2))
-        self.avgx2sq = np.subtract(self.avgx2sq, np.power(self.avgx2, 2))
-        self.avgx3sq = np.subtract(self.avgx3sq, np.power(self.avgx3, 2))
-        self.avgp1sq = np.subtract(self.avgp1sq, np.power(self.avgp1, 2))
-        self.avgp2sq = np.subtract(self.avgp2sq, np.power(self.avgp2, 2))
-        self.avgp3sq = np.subtract(self.avgp3sq, np.power(self.avgp3, 2))
-        self.avgx1p1 = np.subtract(self.avgx1p1, np.multiply(self.avgx1, self.avgp1))
-        self.avgx2p2 = np.subtract(self.avgx2p2, np.multiply(self.avgx2, self.avgp2))
-        self.avgx3p3 = np.subtract(self.avgx3p3, np.multiply(self.avgx3, self.avgp3))
-      if timings: self.cm_afcalcsqavgcent_time = time.time() 
+      if crossterms:
+        self.avgx1x2 = np.average(np.multiply(X1,P2), axis=1, weights=Q)
+        self.avgx3x1 = np.average(np.multiply(X1,P3), axis=1, weights=Q)
+        self.avgx2x3 = np.average(np.multiply(X2,P3), axis=1, weights=Q)   
+ 
+        self.avgp1p2 = np.average(np.multiply(X1,P2), axis=1, weights=Q)
+        self.avgp3p1 = np.average(np.multiply(X1,P3), axis=1, weights=Q)
+        self.avgp2p3 = np.average(np.multiply(X2,P3), axis=1, weights=Q) 
+                
+        self.avgx1p2 = np.average(np.multiply(X1,P2), axis=1, weights=Q)
+        self.avgx1p3 = np.average(np.multiply(X1,P3), axis=1, weights=Q)
 
-      if timings:
-        # Timing stuff      
-        print('--------- Timings --------- ')
-        print('Total time:\t\t%e %s' % ((self.cm_afcalcsqavgcent_time-self.startcm_time) , 's')) 
-        print('Searchsorted:\t\t%e %s' % ((self.cm_afsearchsorted_time-self.startcm_time), 's'))
-        print('Alloc sorted part arr:\t%e %s' % ((self.cm_afallocsortpart_time-self.cm_afsearchsorted_time), 's'))
-        print('Sort part arr:\t\t%e %s' % ((self.cm_afsortingpart_time-self.cm_afallocsortpart_time), 's'))
-        print('Computation of avgs:\t%e %s' % ((self.cm_afcalcavg_time-self.cm_afsortingpart_time), 's'))
-        print('Alloc of var arrays:\t%e %s' % ((self.cm_afallocsqavg_time-self.cm_afcalcavg_time), 's'))
-        print('Calc of var:\t\t%e %s' % ((self.cm_afcalcsqavg_time-self.cm_afallocsqavg_time), 's'))
-        print('Calc of centr of vars:\t%e %s' % ((self.cm_afcalcsqavgcent_time-self.cm_afcalcsqavg_time), 's'))
-      
+        self.avgx2p1 = np.average(np.multiply(X2,P1), axis=1, weights=Q) 
+        self.avgx2p3 = np.average(np.multiply(X2,P3), axis=1, weights=Q)       
+
+        self.avgx3p1 = np.average(np.multiply(X3,P1), axis=1, weights=Q)        
+        self.avgx3p2 = np.average(np.multiply(X3,P2), axis=1, weights=Q)
+        
+      if timings: self.cm_afcalcsqavg_time = time.time()
+    
     if order > 2:
-      print('Moments with orders > 3 not yet implemented!') 
+    
+      self.avgx1cube = np.average(np.power( X1 ,3), axis=1, weights=Q)
+      self.avgx2cube = np.average(np.power( X2 ,3), axis=1, weights=Q)
+      self.avgx3cube = np.average(np.power( X3 ,3), axis=1, weights=Q)
+
+      self.avgp1cube = np.average(np.power( P1 ,3), axis=1, weights=Q)   
+      self.avgp2cube = np.average(np.power( P2 ,3), axis=1, weights=Q)
+      self.avgp3cube = np.average(np.power( P3 ,3), axis=1, weights=Q) 
+
+      self.avgx1sqp1 = np.average(np.multiply(np.power(X1,2),P1), axis=1, weights=Q)
+      self.avgx2sqp2 = np.average(np.multiply(np.power(X2,2),P2), axis=1, weights=Q)
+      self.avgx3sqp3 = np.average(np.multiply(np.power(X3,2),P3), axis=1, weights=Q)
+
+      self.avgx1p1sq = np.average(np.multiply(X1,np.power(P1,2)), axis=1, weights=Q)
+      self.avgx2p2sq = np.average(np.multiply(X2,np.power(P2,2)), axis=1, weights=Q)
+      self.avgx3p3sq = np.average(np.multiply(X3,np.power(P3,2)), axis=1, weights=Q)
+
+      if crossterms:
+        print('Second order moment crossterms not implemented yet!')
+    
+    if timings:
+      # Timing stuff      
+      print('--------- Timings --------- ')
+      print('Total time:\t\t%e %s' % ((self.cm_afcalcsqavg_time-self.startcm_time) , 's')) 
+      print('Searchsorted:\t\t%e %s' % ((self.cm_afsearchsorted_time-self.startcm_time), 's'))
+      print('Alloc sorted part arr:\t%e %s' % ((self.cm_afallocsortpart_time-self.cm_afsearchsorted_time), 's'))
+      print('Sort part arr:\t\t%e %s' % ((self.cm_afsortingpart_time-self.cm_afallocsortpart_time), 's'))
+      print('Computation of avgs:\t%e %s' % ((self.cm_afcalcavg_time-self.cm_afsortingpart_time), 's'))
+      print('Alloc of var arrays:\t%e %s' % ((self.cm_afallocsqavg_time-self.cm_afcalcavg_time), 's'))
+      print('Calc of var:\t\t%e %s' % ((self.cm_afcalcsqavg_time-self.cm_afallocsqavg_time), 's'))
+      
             
     self.if_moms_calc = True
     
