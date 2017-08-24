@@ -175,9 +175,7 @@ class SLICES:
       self.avgx1p1sq = np.average(np.multiply(X1,np.power(P1,2)), axis=1, weights=Q)
       self.avgx2p2sq = np.average(np.multiply(X2,np.power(P2,2)), axis=1, weights=Q)
       self.avgx3p3sq = np.average(np.multiply(X3,np.power(P3,2)), axis=1, weights=Q)
-
-      if crossterms:
-        print('Second order moment crossterms not implemented yet!')
+      
     
     if timings:
       # Timing stuff      

@@ -28,10 +28,11 @@ class parsedefaults:
   mom_order = 2
   Nbins = 256
   Nfiles = 0
+  crossterms = False
 
 def ps_parseargs():
 
-  usg = "Usage: %prog [options] <file or path>"
+  usg = 'Usage: %prog [options] <file or path>'
   
   desc='This is the picpy postprocessing tool.'
   
@@ -39,15 +40,15 @@ def ps_parseargs():
   parser.add_argument(  'path', 
                         metavar='PATH',
                         help='Path to raw outputs.')
-  parser.add_argument(  "-v", "--verbose",
-                        action="store_true", 
-                        dest="verbose", 
+  parser.add_argument(  '-v', '--verbose',
+                        action='store_true', 
+                        dest='verbose', 
                         default=True,
-                        help = "Print info (Default).")
-  parser.add_argument(  "-q", "--quiet",
-                        action="store_false", 
-                        dest="verbose",
-                        help = "Don't print info.")
+                        help = 'Print info (Default).')
+  parser.add_argument(  '-q', '--quiet',
+                        action='store_false', 
+                        dest='verbose',
+                        help = 'Don''t print info.')
   parser.add_argument(  "-s", "--save-path", 
                         dest="savepath",
                         metavar="PATH",
@@ -88,7 +89,13 @@ def ps_parseargs():
                         dest="Nbins",
                         metavar="Nbins",
                         default=parsedefaults.Nbins,
-                        help= 'Number of bins. (Default: %i)' % parsedefaults.Nbins)  
+                        help= 'Number of bins. (Default: %i)' % parsedefaults.Nbins)
+  parser.add_argument(  "--xterms",
+                        action="store_true", 
+                        dest="crossterms", 
+                        default=parsedefaults.crossterms,
+                        help = 'Compute averages of crossterms, '
+                        'e.g. <x1p3> (Default: %s).' % parsedefaults.crossterms)                        
 #   parser.add_argument(  "-c", "--code", 
 #                       type='choice',
 #                       action='store',
@@ -127,10 +134,9 @@ def main():
 
   args = parser.parse_args()
   
-  
-  
   Nbins = args.Nbins
   mom_order = args.mom_order
+  crossterms = args.crossterms
 
   dir = DIR(args.path)
   dir.list_files(args.raw_ident_str)
@@ -170,7 +176,40 @@ def main():
     avgx1p1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
     avgx2p2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
     avgx3p3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-         
+    
+    if crossterms:
+      avgx1x2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+      avgx3x1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+      avgx2x3 = np.zeros((Nfiles, Nbins), dtype=np.float32)   
+      avgp1p2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+      avgp3p1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+      avgp2p3 = np.zeros((Nfiles, Nbins), dtype=np.float32)             
+      avgx1p2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+      avgx1p3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+      avgx2p1 = np.zeros((Nfiles, Nbins), dtype=np.float32) 
+      avgx2p3 = np.zeros((Nfiles, Nbins), dtype=np.float32)       
+      avgx3p1 = np.zeros((Nfiles, Nbins), dtype=np.float32)        
+      avgx3p2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+ 
+  if mom_order>2:
+    avgx1cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
+    avgx2cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
+    avgx3cube = np.zeros((Nfiles, Nbins), dtype=np.float32)    
+    avgp1cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
+    avgp2cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
+    avgp3cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
+    avgx1sqp1 = np.zeros((Nfiles, Nbins), dtype=np.float32)  
+    avgx2sqp2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+    avgx3sqp3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+    avgx1p1sq = np.zeros((Nfiles, Nbins), dtype=np.float32)  
+    avgx2p2sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+    avgx3p3sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+
+    
+    if crossterms:
+      print('Third order crossterms not yet implemented!') 
+
+        
   for i in range(0, Nfiles):
     sys.stdout.write('Processing: %s\t(%i/%i)\n' % (dir.filepath(i), i+1, Nfiles))
     sys.stdout.flush()
@@ -181,7 +220,7 @@ def main():
     
     time_array[i] = raw.time
     slices = ps_ana.SLICES(raw, nbins=Nbins)
-    slices.calc_moments(order = mom_order)
+    slices.calc_moments(order = mom_order, crossterms=crossterms)
     avgx1[i,:] = slices.avgx1      
     avgx2[i,:] = slices.avgx2
     avgx3[i,:] = slices.avgx3
@@ -199,7 +238,36 @@ def main():
       avgx1p1[i,:] = slices.avgx1p1    
       avgx2p2[i,:] = slices.avgx2p2
       avgx3p3[i,:] = slices.avgx3p3
-
+      
+      if crossterms:
+        avgx1x2[i,:] = slices.avgx1x2 
+        avgx3x1[i,:] = slices.avgx3x1 
+        avgx2x3[i,:] = slices.avgx2x3    
+        avgp1p2[i,:] = slices.avgp1p2 
+        avgp3p1[i,:] = slices.avgp3p1 
+        avgp2p3[i,:] = slices.avgp2p3              
+        avgx1p2[i,:] = slices.avgx1p2 
+        avgx1p3[i,:] = slices.avgx1p3 
+        avgx2p1[i,:] = slices.avgx2p1  
+        avgx2p3[i,:] = slices.avgx2p3        
+        avgx3p1[i,:] = slices.avgx3p1         
+        avgx3p2[i,:] = slices.avgx3p2       
+    
+    if mom_order>2:
+      avgx1cube[i,:] = slices.avgx1cube      
+      avgx2cube[i,:] = slices.avgx2cube
+      avgx3cube[i,:] = slices.avgx3cube
+      avgp1cube[i,:] = slices.avgp1cube    
+      avgp2cube[i,:] = slices.avgp2cube
+      avgp3cube[i,:] = slices.avgp3cube
+      avgx1sqp1[i,:] = slices.avgx1sqp1    
+      avgx2sqp2[i,:] = slices.avgx2sqp2
+      avgx3sqp3[i,:] = slices.avgx3sqp3
+      avgx1p1sq[i,:] = slices.avgx1p1sq    
+      avgx2p2sq[i,:] = slices.avgx2p2sq
+      avgx3p3sq[i,:] = slices.avgx3p3sq
+            
+    
   zeta_array = slices.centers
   
   h5savepathname = args.savepath + '/' + args.save_name
@@ -227,6 +295,34 @@ def main():
     dset_avgx1p1 = h5f.create_dataset(  "avgx1p1", data = avgx1p1 )
     dset_avgx2p2 = h5f.create_dataset(  "avgx2p2", data = avgx2p2 )
     dset_avgx3p3 = h5f.create_dataset(  "avgx3p3", data = avgx3p3 )
+
+    if crossterms:
+      dset_avgx1x2 = h5f.create_dataset(  "avgx1x2", data = avgx1x2 ) 
+      dset_avgx3x1 = h5f.create_dataset(  "avgx3x1", data = avgx3x1 )
+      dset_avgx2x3 = h5f.create_dataset(  "avgx2x3", data = avgx2x3 )   
+      dset_avgp1p2 = h5f.create_dataset(  "avgp1p2", data = avgp1p2 )
+      dset_avgp3p1 = h5f.create_dataset(  "avgp3p1", data = avgp3p1 ) 
+      dset_avgp2p3 = h5f.create_dataset(  "avgp2p3", data = avgp2p3 )              
+      dset_avgx1p2 = h5f.create_dataset(  "avgx1p2", data = avgx1p2 )
+      dset_avgx1p3 = h5f.create_dataset(  "avgx1p3", data = avgx1p3 )
+      dset_avgx2p1 = h5f.create_dataset(  "avgx2p1", data = avgx2p1 )
+      dset_avgx2p3 = h5f.create_dataset(  "avgx2p3", data = avgx2p3 )     
+      dset_avgx3p1 = h5f.create_dataset(  "avgx3p1", data = avgx3p1 )      
+      dset_avgx3p2 = h5f.create_dataset(  "avgx3p2", data = avgx3p2 )    
+
+  if mom_order>2:
+    dset_avgx1cube = h5f.create_dataset(  "avgx1cube", data = avgx1cube )
+    dset_avgx2cube = h5f.create_dataset(  "avgx2cube", data = avgx2cube )
+    dset_avgx3cube = h5f.create_dataset(  "avgx3cube", data = avgx3cube )
+    dset_avgp1cube = h5f.create_dataset(  "avgp1cube", data = avgp1cube ) 
+    dset_avgp2cube = h5f.create_dataset(  "avgp2cube", data = avgp2cube )
+    dset_avgp3cube = h5f.create_dataset(  "avgp3cube", data = avgp3cube )
+    dset_avgx1sqp1 = h5f.create_dataset(  "avgx1sqp1", data = avgx1sqp1 )  
+    dset_avgx2sqp2 = h5f.create_dataset(  "avgx2sqp2", data = avgx2sqp2 )
+    dset_avgx3sqp3 = h5f.create_dataset(  "avgx3sqp3", data = avgx3sqp3 )
+    dset_avgx1p1sq = h5f.create_dataset(  "avgx1p1sq", data = avgx1p1sq ) 
+    dset_avgx2p2sq = h5f.create_dataset(  "avgx2p2sq", data = avgx2p2sq )
+    dset_avgx3p3sq = h5f.create_dataset(  "avgx3p3sq", data = avgx3p3sq )
       
   h5f.close() 
                                               
