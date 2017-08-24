@@ -21,14 +21,13 @@ import ps_ana
 import h5py
 
 # Parse defaults/definitions
-class parsedefs:
-  class file_format:
-    png = 'png'
-    eps = 'eps'
-    pdf = 'pdf'
-  class save_prefix:
-    name = 'g3d_name'
-
+class parsedefaults:
+  save_name = 'slice-avgs.h5'
+  savepath = './'
+  raw_ident_str = 'raw_beam_'
+  mom_order = 2
+  Nbins = 256
+  Nfiles = 0
 
 def ps_parseopts():
 
@@ -49,14 +48,20 @@ def ps_parseopts():
   parser.add_option(  "-s", "--save-path", 
                       dest="savepath",
                       metavar="PATH",
-                      default='./',
+                      default=parsedefaults.savepath,
                       help = """Path to which generated files will be saved.
-                            (Default: './')""")
-  parser.add_option(  "-n", "--name-prefix", 
-                      dest="save_prefix",
+                            (Default: '%s')""" % parsedefaults.savepath)
+  parser.add_option(  "--raw-istr", 
+                      dest="raw_ident_str",
+                      metavar="RAWIdentstr",
+                      default=parsedefaults.raw_ident_str,
+                      help = """Identification string for beam raw file.
+                            (Default: '%s')""" % parsedefaults.raw_ident_str)                            
+  parser.add_option(  "-n", "--save-name", 
+                      dest="save_name",
                       metavar="NAME",
-                      default=parsedefs.save_prefix.name,
-                      help = """Define customized prefix of output filename.""")  
+                      default=parsedefaults.save_name,
+                      help = """Define customized output filename.""")  
   parser.add_option(  "-c", "--code", 
                       type='choice',
                       action='store',
@@ -64,23 +69,38 @@ def ps_parseopts():
                       metavar="CODE",
                       choices = [picdefs.code.hipace, picdefs.code.osiris,],
                       default = picdefs.code.hipace,
-                      help= "PIC code which was used to generate files (Default: " +
-                            picdefs.code.hipace + ").")
-  parser.add_option(  "-d", "--dim", 
+                      help= "PIC code which was used to generate files (Default: '%s')." 
+                            % picdefs.code.hipace)
+  parser.add_option(  "-o", "--mom-order", 
                       type='choice',
                       action='store',
-                      dest="dimensionality",
-                      metavar="DIM",
-                      choices=[1, 2, 3,],
-                      default=3,
-                      help= """Dimensionality of PIC simulation
-                            (Default: 3).""")                                     
-  parser.add_option(  "-N", "--number-of-files", 
+                      dest="mom_order",
+                      metavar="MOMORDER",
+                      choices=[1, 2,],
+                      default=parsedefaults.mom_order,
+                      help= """Order of moment evaluation
+                           (Default: %i).""" % parsedefaults.mom_order)                                      
+  parser.add_option(  "--Nfiles", 
                       action='store',
                       dest="Nfiles",
                       metavar="NFILES",
-                      default=0,
+                      default=parsedefaults.Nfiles,
                       help= """Number of files to analyze.""")
+  parser.add_option(  "--Nbins", 
+                      action='store',
+                      dest="Nbins",
+                      metavar="Nbins",
+                      default=parsedefaults.Nbins,
+                      help= """Number of bins. (Default: %i)""" % parsedefaults.Nbins)  
+#   parser.add_option(  "-d", "--dim", 
+#                       type='choice',
+#                       action='store',
+#                       dest="dimensionality",
+#                       metavar="DIM",
+#                       choices=[1, 2, 3,],
+#                       default=3,
+#                       help= """Dimensionality of PIC simulation
+#                            (Default: 3).""")                                             
 #   group = OptionGroup(parser, "Options for beam-phase-space (RAW) files",
 #                       "These are options for beam-phase-space (RAW) files")
 #   group.add_option("-g", action="store_true", help="Group option.")
@@ -95,54 +115,53 @@ def ps_parseopts():
 
 
 
-
-
 def main():
   
   parser = ps_parseopts()
 
   (opts, args) = parser.parse_args()
   
-
-  nbins = 256
-  indentstr = 'raw_driver_'
-  mom_order = 2
-  h5fileName = 'slice-avgs.h5'
+  Nbins = opts.Nbins
+  mom_order = opts.mom_order
 
   dir = DIR(args[0])
-  dir.list_files(indentstr)
+  dir.list_files(opts.raw_ident_str)
 
-  if (opts.Nfiles == 0) & (dir.nf > 0):
-    Nfiles = dir.nf
-  elif int(opts.Nfiles) <= dir.nf:
-    Nfiles = int(opts.Nfiles)
-  elif dir.nf == 0:
-    sys.stderr('Error: No phase space (raw) files in directory!')
-    sys.exit() 
-  else:
-    sys.stderr('Error: Nfiles cannot be smaller than the actual number of files!')
+  if (dir.nf > 0):
+    if (opts.Nfiles == parsedefaults.Nfiles):
+      Nfiles = dir.nf
+    elif int(opts.Nfiles) <= dir.nf:
+      Nfiles = int(opts.Nfiles)
+    else:
+      sys.stderr('Error: Nfiles cannot be greater than the actual number of files!')
+  else :
+    print(  'Error:\tNo phase space (raw) files in directory!\n' + 
+            ('\tCheck the used path (currently: "%s")\n' % opts.savepath) + 
+            ('\tCheck the used RAW identification string (currently: "%s")' % opts.raw_ident_str)
+          )
+    sys.exit()     
 
   sys.stdout.write('There are %i raw files to process...\n' % Nfiles)
   sys.stdout.flush()
 
   time_array = np.zeros(Nfiles, dtype=np.float32)
-  avgx1 = np.zeros((Nfiles, nbins), dtype=np.float32)
-  avgx2 = np.zeros((Nfiles, nbins), dtype=np.float32)
-  avgx3 = np.zeros((Nfiles, nbins), dtype=np.float32)    
-  avgp1 = np.zeros((Nfiles, nbins), dtype=np.float32)
-  avgp2 = np.zeros((Nfiles, nbins), dtype=np.float32)
-  avgp3 = np.zeros((Nfiles, nbins), dtype=np.float32)
+  avgx1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+  avgx2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+  avgx3 = np.zeros((Nfiles, Nbins), dtype=np.float32)    
+  avgp1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+  avgp2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+  avgp3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
   
   if mom_order>1:
-    avgx1sq = np.zeros((Nfiles, nbins), dtype=np.float32)
-    avgx2sq = np.zeros((Nfiles, nbins), dtype=np.float32)
-    avgx3sq = np.zeros((Nfiles, nbins), dtype=np.float32)    
-    avgp1sq = np.zeros((Nfiles, nbins), dtype=np.float32)
-    avgp2sq = np.zeros((Nfiles, nbins), dtype=np.float32)
-    avgp3sq = np.zeros((Nfiles, nbins), dtype=np.float32)  
-    avgx1p1 = np.zeros((Nfiles, nbins), dtype=np.float32)
-    avgx2p2 = np.zeros((Nfiles, nbins), dtype=np.float32)
-    avgx3p3 = np.zeros((Nfiles, nbins), dtype=np.float32)
+    avgx1sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+    avgx2sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+    avgx3sq = np.zeros((Nfiles, Nbins), dtype=np.float32)    
+    avgp1sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+    avgp2sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+    avgp3sq = np.zeros((Nfiles, Nbins), dtype=np.float32)  
+    avgx1p1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+    avgx2p2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+    avgx3p3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
          
   for i in range(0, Nfiles):
     sys.stdout.write('Processing: %s\t(%i/%i)\n' % (dir.filepath(i), i+1, Nfiles))
@@ -153,7 +172,7 @@ def main():
     raw.read_data()
     
     time_array[i] = raw.time
-    slices = ps_ana.SLICES(raw, nbins=nbins)
+    slices = ps_ana.SLICES(raw, nbins=Nbins)
     slices.calc_moments(order = mom_order)
     avgx1[i,:] = slices.avgx1      
     avgx2[i,:] = slices.avgx2
@@ -175,10 +194,12 @@ def main():
 
   zeta_array = slices.centers
   
-  sys.stdout.write('Saving to file: %s\n' % h5fileName)
+  h5savepathname = opts.savepath + '/' + opts.save_name
+  
+  sys.stdout.write('Saving to file: %s\n' % (h5savepathname))
   sys.stdout.flush()
 
-  h5f = h5py.File(h5fileName, "w")
+  h5f = h5py.File(h5savepathname, "w")
   dset_zeta_array = h5f.create_dataset( "zeta_array", data = zeta_array )
   dset_time_array = h5f.create_dataset( "time_array", data = time_array )
   dset_avgx1 = h5f.create_dataset(  "avgx1", data = avgx1 )

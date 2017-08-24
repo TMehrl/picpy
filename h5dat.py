@@ -13,63 +13,6 @@ piccodes = { 'hipace':'hipace',
             }
 
 
-# Keys for HiPACE HDF5 files
-class HiKeys:
-  def __init__(self):
-    
-    # HDF5 GRID dataset keys
-    self.__g3dkeys =  { 'beam_charge' : 'beam_charge',
-                        'plasma_charge' : 'plasma_charge'
-                      }
-    # HDF5 GRID dataset types 
-    # Move these somewhere else...
-    self.__g3dtypes = { 'density' : 'density',
-                        'field' : 'field',
-                        'current' : 'current'
-                      }
-
-    # HDF5 RAW dataset keys
-    self.__rawkeys =  { 'x1':'x1',
-                        'x2':'x2',
-                        'x3':'x3',
-                        'q':'q',
-                        'p1':'p1',
-                        'p2':'p2',
-                        'p3':'p3'
-                      }
-
-    # HDF5 Attribute Keys
-    self.__attrkeys = { 'nx':'NX',
-                        'xmin':'XMIN',
-                        'xmax':'XMAX',
-                        'time':'TIME',
-                        'dt':'DT',                                
-                        'type':'TYPE', 
-                        'name':'NAME',                 
-                      }    
- 
-  def get_g3dkey(self,key):
-    return self.__g3dkeys[key]  
-  def get_g3dkeys(self):
-    return self.__g3dkeys
-  def print_g3dkeys(self):
-    for key in self.__g3dkeys: print(key)
-    
-  def get_rawkey(self,key):
-    return self.__rawkeys[key]    
-  def get_rawkeys(self):
-    return self.__rawkeys         
-  def print_rawkeys(self):
-    for key in self.__rawkeys: print(key)
-
-  def get_attrkey(self, key):
-    return self.__attrkeys[key]
-  def get_attrkeys(self):
-    return self.__attrkeys     
-  def print_attrkeys(self):
-    for key in self.__attrkeys: print(key) 
-
-
 # General HDF5 file class with routines 
 # to check whether file is an HDF5 file
 # and to print keys of attributes and datasets
@@ -117,10 +60,98 @@ class H5File:
   def get_allowed_h5exts(self):
     return self.__h5exts
 
+# Keys for HDF5 files
+# Keys for PIC HDF5 files
+class H5Keys:
+  def __init__(self, piccode):
+    
+    # OSIRIS
+    if piccode == piccodes['osiris']:
+      
+      # HDF5 GRID dataset keys
+      self.__g3dkeys =  { 'density' : 'density'
+                        }
 
-class HiFile(HiKeys, H5File):
+      # HDF5 RAW dataset keys
+      self.__rawkeys =  { 'x1':'x1',
+                          'x2':'x2',
+                          'x3':'x3',
+                          'q':'q',
+                          'p1':'p1',
+                          'p2':'p2',
+                          'p3':'p3'
+                        }
+
+      # HDF5 Attribute Keys
+      self.__attrkeys = { 'nx':'NX',
+                          'xmin':'XMIN',
+                          'xmax':'XMAX',
+                          'time':'TIME',
+                          'dt':'DT',                                
+                          'type':'TYPE', 
+                          'name':'NAME',                 
+                        }
+    # HiPACE 
+    elif piccode == piccodes['hipace']:
+                        
+      # HDF5 GRID dataset keys
+      self.__g3dkeys =  { 'beam_charge' : 'beam_charge',
+                          'plasma_charge' : 'plasma_charge'
+                        }
+      # HDF5 GRID dataset types 
+      # Move these somewhere else...
+      self.__g3dtypes = { 'density' : 'density',
+                          'field' : 'field',
+                          'current' : 'current'
+                        }
+
+      # HDF5 RAW dataset keys
+      self.__rawkeys =  { 'x1':'x1',
+                          'x2':'x2',
+                          'x3':'x3',
+                          'q':'q',
+                          'p1':'p1',
+                          'p2':'p2',
+                          'p3':'p3'
+                        }
+
+      # HDF5 Attribute Keys
+      self.__attrkeys = { 'nx':'NX',
+                          'xmin':'XMIN',
+                          'xmax':'XMAX',
+                          'time':'TIME',
+                          'dt':'DT',                                
+                          'type':'TYPE', 
+                          'name':'NAME',                 
+                        }    
+ 
+
+  def get_g3dkey(self,key):
+    return self.__g3dkeys[key]  
+  def get_g3dkeys(self):
+    return self.__g3dkeys
+  def print_g3dkeys(self):
+    for key in self.__g3dkeys: print(key)
+    
+  def get_rawkey(self,key):
+    return self.__rawkeys[key]    
+  def get_rawkeys(self):
+    return self.__rawkeys         
+  def print_rawkeys(self):
+    for key in self.__rawkeys: print(key)
+
+  def get_attrkey(self, key):
+    return self.__attrkeys[key]
+  def get_attrkeys(self):
+    return self.__attrkeys     
+  def print_attrkeys(self):
+    for key in self.__attrkeys: print(key) 
+
+
+
+class HiFile(H5Keys, H5File):
   def __init__(self, file):  
-    HiKeys.__init__(self)
+    H5Keys.__init__(self, 'hipace')
     H5File.__init__(self, file)
     self.file = file
   
