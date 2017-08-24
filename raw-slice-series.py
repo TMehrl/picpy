@@ -62,16 +62,8 @@ def ps_parseopts():
                       metavar="NAME",
                       default=parsedefaults.save_name,
                       help = """Define customized output filename.""")  
-  parser.add_option(  "-c", "--code", 
-                      type='choice',
-                      action='store',
-                      dest="piccode",
-                      metavar="CODE",
-                      choices = [picdefs.code.hipace, picdefs.code.osiris,],
-                      default = picdefs.code.hipace,
-                      help= "PIC code which was used to generate files (Default: '%s')." 
-                            % picdefs.code.hipace)
   parser.add_option(  "-o", "--mom-order", 
+                      type="int", 
                       type='choice',
                       action='store',
                       dest="mom_order",
@@ -80,18 +72,29 @@ def ps_parseopts():
                       default=parsedefaults.mom_order,
                       help= """Order of moment evaluation
                            (Default: %i).""" % parsedefaults.mom_order)                                      
-  parser.add_option(  "--Nfiles", 
+  parser.add_option(  "--Nfiles",
+                      type="int", 
                       action='store',
                       dest="Nfiles",
                       metavar="NFILES",
                       default=parsedefaults.Nfiles,
                       help= """Number of files to analyze.""")
-  parser.add_option(  "--Nbins", 
+  parser.add_option(  "--Nbins",
+                      type="int",
                       action='store',
                       dest="Nbins",
                       metavar="Nbins",
                       default=parsedefaults.Nbins,
                       help= """Number of bins. (Default: %i)""" % parsedefaults.Nbins)  
+#   parser.add_option(  "-c", "--code", 
+#                       type='choice',
+#                       action='store',
+#                       dest="piccode",
+#                       metavar="CODE",
+#                       choices = [picdefs.code.hipace, picdefs.code.osiris,],
+#                       default = picdefs.code.hipace,
+#                       help= "PIC code which was used to generate files (Default: '%s')." 
+#                             % picdefs.code.hipace)
 #   parser.add_option(  "-d", "--dim", 
 #                       type='choice',
 #                       action='store',
