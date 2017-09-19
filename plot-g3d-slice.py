@@ -155,7 +155,8 @@ def plotfile(file, args):
     
   # File
   if args.verbose == True:  print('Reading: ', file)
-  g3d = Grid3d(file, args.piccode)
+  g3d = Grid3d(file)
+  g3d.read_data()
   if args.verbose == True:  print('Read-in completed.')
   
   if args.verbose == True: 

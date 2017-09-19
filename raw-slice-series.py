@@ -5,7 +5,6 @@
 import numpy as np
 import os
 from argparse import ArgumentParser
-#from argparse import OptionGroup
 import math
 import sys
 import matplotlib
@@ -114,15 +113,6 @@ def ps_parseargs():
 #                       default=3,
 #                       help= 'Dimensionality of PIC simulation
 #                            (Default: 3).')                                             
-#   group = OptionGroup(parser, "Options for beam-phase-space (RAW) files",
-#                       "These are options for beam-phase-space (RAW) files")
-#   group.add_argument("-g", action="store_true", help="Group option.")
-#   parser.add_argument_group(group)
-
-#   group = OptionGroup(parser, "Options for grid files",
-#                       "These are options for grid files")
-#   group.add_argument("-g", action="store_true", help="Group option.")
-#   parser.add_argument_group(group)
   
   return parser
 
