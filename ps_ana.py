@@ -93,20 +93,10 @@ class Slices:
       P3 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
       
       if timings: self.cm_afallocsortpart_time = time.time()
-
-      print('self.edges=', self.edges)
-      print('self.nbins=%i' % self.nbins)
     
       for i in range(0,self.raw.npart):
       
         ibin = ibinpart[i]
-        
-        if (ibin == self.nbins):
-          print('self.raw.x1=', self.raw.x1[i])
-        
-        #print('ibin=%i' % ibin)
-        #print('bincount.shape=', bincount.shape)
-        
         ipartbin = bincount[ibin]
         
         Q[ ibin,  ipartbin ] = self.raw.q[i]
