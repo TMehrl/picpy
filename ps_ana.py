@@ -65,7 +65,10 @@ class Slices:
     
     if timings: self.startcm_time = time.time()    
   
-    ibinpart = np.searchsorted(self.edges, self.raw.x1)
+    # Assign each particle the index of the bin it is located in
+    # ( subtract 1 in order to get index '0' 
+    # if particle is in interval [ edges[0] edges[1] ] etc. )
+    ibinpart = np.searchsorted(self.edges, self.raw.x1) - 1 
     self.npart = np.bincount(ibinpart, minlength=self.nbins)
     self.charge = np.bincount(ibinpart, weights=self.raw.q, minlength=self.nbins)
     
@@ -90,10 +93,22 @@ class Slices:
       P3 = np.zeros((self.nbins, max_npart_sl), dtype=np.float32)
       
       if timings: self.cm_afallocsortpart_time = time.time()
+
+      print('self.edges=', self.edges)
+      print('self.nbins=%i' % self.nbins)
     
       for i in range(0,self.raw.npart):
+      
         ibin = ibinpart[i]
+        
+        if (ibin == self.nbins):
+          print('self.raw.x1=', self.raw.x1[i])
+        
+        #print('ibin=%i' % ibin)
+        #print('bincount.shape=', bincount.shape)
+        
         ipartbin = bincount[ibin]
+        
         Q[ ibin,  ipartbin ] = self.raw.q[i]
         X1[ ibin, ipartbin ] = self.raw.x1[i]
         X2[ ibin, ipartbin ] = self.raw.x2[i]

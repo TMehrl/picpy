@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # This script may be executed like this:
-# nohup raw-slice-series.py <DATA> 1> rss.out 2> rss.err &
+# nohup raw-slice-series.py DATA 1> rss.out 2> rss.err &
 
 import numpy as np
 import os
