@@ -23,6 +23,7 @@ class hipace:
       beam_charge = 'beam_charge'
     # ...  
     class g3dtypes:
+      list = ['density', 'field', 'current']
       density = 'density'
       field = 'field'
       current = 'current'

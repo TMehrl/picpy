@@ -285,8 +285,7 @@ def is_h5_file(fext):
   return any(fext == h5ext for h5ext in picdefs.fexts.hdf5)  
 
 def is_mesh_hdf_file(fname):
-  mesh_quants = ['current','density','field']
-  return any((mq in fname) for mq in mesh_quants)
+  return any((mq in fname) for mq in picdefs.hipace.h5.g3dtypes.list)
 
 def is_h5mesh_file(filename):
   fname, fext = os.path.splitext(filename)
