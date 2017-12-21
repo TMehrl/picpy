@@ -33,6 +33,7 @@ class parsedefs:
     name = 'g3d_name'
 
 
+
 def two_floats(value):
     values = value.split()
     if len(values) != 2:
@@ -50,7 +51,8 @@ def ps_parseargs():
   parser = argparse.ArgumentParser(description=desc)
   parser.add_argument(  'path', 
                         metavar='PATH',
-                        help='Path to grid file.')
+                        nargs='*',
+                        help='Path to mesh file.')
   parser.add_argument(  "-v", "--verbose",
                         dest="verbose", 
                         action="store_true", 
@@ -276,29 +278,49 @@ def plotfile(file, args):
   if args.verbose: print('Saved "' + savename + '" at: ' + args.savepath)    
   
   if args.ifshow: plt.show()
+  plt.close(fig)
+
+
+def is_h5_file(fext):
+  return any(fext == h5ext for h5ext in picdefs.fexts.hdf5)  
+
+def is_mesh_hdf_file(fname):
+  mesh_quants = ['current','density','field']
+  return any((mq in fname) for mq in mesh_quants)
+
+def is_h5mesh_file(filename):
+  fname, fext = os.path.splitext(filename)
+  return is_h5_file(fext) and is_mesh_hdf_file(fname)
 
 def main():
     
   parser = ps_parseargs()
 
   args = parser.parse_args()
-    
-  if os.path.isfile(args.path):
-    file = args.path
-    plotfile(file, args)
   
-  elif os.path.isdir(args.path):
-    print('Path is dir...!')
-    if args.process_all == True:
-      print('Error: Not yet implemented!')
-      sys.exit()
+  for path in args.path:
+    if os.path.isfile(path) :
+      file = path
+      if is_h5mesh_file(file):
+        plotfile(file, args)
+    elif os.path.isdir(path):
+      print('Path is dir...!')
+      if args.process_all == True:
+        for root, dirs, files in os.walk(path):  
+          for filename in files:
+            if is_h5mesh_file(filename):
+                file = root + '/' + filename
+                plotfile(file, args)
+        sys.exit()
+      else:
+        print('Error: Use the flag "-a" to process all files in the provided directory!')
+        sys.exit() 
+    elif not os.path.exists(path):
+      print('Error: Provided path does not exist!')
+      sys.exit()    
     else:
-      print('Error: Use the flag "-a" to process all files in the provided directory!')
-      sys.exit() 
-  
-  else:
-    print('Error: Provided path is neither a file nor a directory!')
-    sys.exit()
+      print('Error: Provided path is neither a file nor a directory!')
+      sys.exit()
 
    
 if __name__ == "__main__":
