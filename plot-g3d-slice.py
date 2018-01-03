@@ -71,7 +71,7 @@ def ps_parseargs():
                         action="store", 
                         dest="savepath",
                         metavar="PATH",
-                        default='./',
+                        default='./plots/g3d-slice',
                         help = """Path to which generated files will be saved.
                             (Default: './')""")
   parser.add_argument(  "--name-prefix", 
@@ -151,6 +151,26 @@ def ps_parseargs():
   
   return parser
 
+
+
+def mkdirs_if_nexist(path):
+  folders = []
+  while 1:
+    path, folder = os.path.split(path)
+    if folder != "":
+      folders.append(folder)
+    else:
+      if path != "":
+          folders.append(path)
+      break
+  folders.reverse()
+
+  path = ""
+  for folder in folders:
+    path = path + folder + "/"
+    if not os.path.isdir(path):
+      print("Creating folder: " + path)
+      os.mkdir(path)
 
 
 def plotfile(file, args):
@@ -268,6 +288,8 @@ def plotfile(file, args):
   cbar = fig.colorbar(cax)
   cbar.ax.set_ylabel(g3d.name)
 
+  mkdirs_if_nexist(args.savepath)
+
   if saveformat==parsedefs.file_format.png:
     fig.savefig(  args.savepath + '/' + savename, 
               format=saveformat,
@@ -284,26 +306,28 @@ def plotfile(file, args):
 def is_h5_file(fext):
   return any(fext == h5ext for h5ext in picdefs.fexts.hdf5)  
 
-def is_mesh_hdf_file(fname):
+def is_g3d_hdf_file(fname):
   return any((mq in fname) for mq in picdefs.hipace.h5.g3dtypes.list)
 
 def is_h5mesh_file(filename):
   fname, fext = os.path.splitext(filename)
-  return is_h5_file(fext) and is_mesh_hdf_file(fname)
+  return is_h5_file(fext) and is_g3d_hdf_file(fname)
 
 def main():
     
   parser = ps_parseargs()
-
   args = parser.parse_args()
   
+  plot_path = './plot'
+  plot_slice_path = './plot/g3d-slice'
+
   for path in args.path:
     if os.path.isfile(path) :
       file = path
       if is_h5mesh_file(file):
         plotfile(file, args)
     elif os.path.isdir(path):
-      print('Path is dir...!')
+      print('"' + path + '"' + ' is a directory.')
       if args.process_all == True:
         for root, dirs, files in os.walk(path):  
           for filename in files:
