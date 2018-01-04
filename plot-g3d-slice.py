@@ -48,7 +48,7 @@ def ps_parseargs():
   parser.add_argument(  'path', 
                         metavar='PATH',
                         nargs='*',
-                        help='Path to mesh file.')
+                        help='Path to grid file.')
   parser.add_argument(  "-v", "--verbose",
                         dest="verbose", 
                         action="store_true", 
@@ -172,17 +172,14 @@ def mkdirs_if_nexist(path):
 def plotfile(file, args):
     
   # File
-  if args.verbose == True:  print('Reading: ', file)
+  if args.verbose == True:  print('Getting attributes of ', file)
   g3d = Grid3d(file)
-  #g3d.read_data()
-
-  if args.verbose == True:  print('Read-in completed.')
   
   if args.verbose == True: 
     g3d.print_datasets()
     g3d.print_attributes()
     
-
+  if args.verbose == True:  print('Reading data...')
   if 'z' in args.plane:
     
     if args.zax == parsedefs.zax.zeta:
@@ -241,6 +238,8 @@ def plotfile(file, args):
     else:
       g3d.read_slice(i0=args.plane_index)
       data = g3d.slice.transpose(1, 0)
+
+  if args.verbose == True:  print('Read-in completed.')
 
   saveformat = args.file_format  
   filesuffix = '_%06.f' % (np.floor(g3d.time))
@@ -320,6 +319,10 @@ def main():
   
   plot_path = './plot'
   plot_slice_path = './plot/g3d-slice'
+
+  if not args.path:
+    print('Error: No file provided!')
+    sys.exit()
 
   for path in args.path:
     if os.path.isfile(path) :
