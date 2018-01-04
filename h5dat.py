@@ -235,13 +235,42 @@ class Grid3d(HiFile):
       # Reading dataset (here not caring how dataset is called)
       self.h5keys = list(hf.keys())
       if len(self.h5keys) == 0:
-        print('Error:\tHDF5 file "%s" does not contain any dataset!' %(self.file) )
+        print('Error:\tHDF5 file "%s" does not '
+          'contain any dataset!' %(self.file) )
         sys.exit()
       elif len(self.h5keys) == 1:
-        self.data = np.array(hf.get(self.h5keys[0]))
+        self.data = hf[self.h5keys[0]][()]
       else:
-        print('Error:\tHDF5 file "%s" contains more than one dataset!' %(self.file) )
+        print('Error:\tHDF5 file "%s" contains more '
+          'than one dataset!' %(self.file) )
         sys.exit()
+
+  def read_slice(self, i0=0, i1=0, i2=0): 
+  
+    with h5py.File(self.file,'r') as hf:
+      
+      # Reading dataset (here not caring how dataset is called)
+      self.h5keys = list(hf.keys())
+      if len(self.h5keys) == 0:
+        print('Error:\tHDF5 file "%s" does '
+          'not contain any dataset!' %(self.file) )
+        sys.exit()
+      elif len(self.h5keys) == 1:
+        if i0!=0 and i1==0 and i2==0:
+          self.slice = hf[self.h5keys[0]][i0,:,:]
+        elif i0==0 and i1!=0 and i2==0:
+          self.slice = hf[self.h5keys[0]][:,i1,:]
+        elif i0==0 and i1==0 and i2!=0:
+          self.slice = hf[self.h5keys[0]][:,:,i2]
+        else:
+          print('Error:\tExactly one index must ' 
+            'be provided for HDF slice read in!')
+          sys.exit()         
+      else:
+        print('Error:\tHDF5 file "%s" contains more '
+          'than one dataset!' %(self.file) )
+        sys.exit()
+
 
 
 class SliceMoms(H5File):

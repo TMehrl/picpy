@@ -17,10 +17,6 @@ from h5dat import Grid3d
 
 # Parse defaults/definitions
 class parsedefs:
-  class plane:
-    zx = 'zx'
-    zy = 'zy'
-    xy = 'xy'    
   class file_format:
     png = 'png'
     eps = 'eps'
@@ -108,9 +104,9 @@ def ps_parseargs():
                         action='store',
                         dest="plane",
                         metavar="PLANE",
-                        choices=[ parsedefs.plane.zx, parsedefs.plane.zy,
-                                  parsedefs.plane.xy,],
-                        default=parsedefs.plane.zx,
+                        choices=[ 'xy', 'yz', 'xz',
+                                  'yx', 'zy', 'zx'],
+                        default='zx',
                         help= """Plane to be plotted (Default: zx).""")  
   parser.add_argument(  "--plane-index", 
                         action='store',
@@ -178,7 +174,8 @@ def plotfile(file, args):
   # File
   if args.verbose == True:  print('Reading: ', file)
   g3d = Grid3d(file)
-  g3d.read_data()
+  #g3d.read_data()
+
   if args.verbose == True:  print('Read-in completed.')
   
   if args.verbose == True: 
@@ -186,7 +183,7 @@ def plotfile(file, args):
     g3d.print_attributes()
     
 
-  if (args.plane == parsedefs.plane.zx) | (args.plane == parsedefs.plane.zy):
+  if 'z' in args.plane:
     
     if args.zax == parsedefs.zax.zeta:
       x_array = g3d.get_zeta_arr()
@@ -201,46 +198,49 @@ def plotfile(file, args):
       print('Error: No/wrong z-axis option selected!')
       sys.exit()
     
-    if args.plane == parsedefs.plane.zx:
+    if 'x' in args.plane:
       y_array = g3d.get_x_arr(1)
       ylabel = r'$k_p x$'
       if args.plane_index == None:
         index = math.floor(g3d.nx[2]/2) - 1
-        if g3d.nx[2]%2 == 1:
-          data = g3d.data[:,:,index].transpose(1, 0)
-        else:
-          data = ( g3d.data[:,:,index].transpose(1, 0)
-                    + g3d.data[:,:,index+1].transpose(1, 0) )/2
+        g3d.read_slice(i2=index)
+        data = g3d.slice.transpose(1, 0)
+        if g3d.nx[2]%2 == 0:
+          g3d.read_slice(i2=index+1)
+          data = ( data + g3d.slice.transpose(1, 0) )/2
       else:
-        data = g3d.data[:,:,args.plane_index].transpose(1, 0)
+        g3d.read_slice(i2=args.plane_index)
+        data = g3d.slice.transpose(1, 0)
 
-    elif args.plane == parsedefs.plane.zy:
+    elif 'y' in args.plane:
       y_array = g3d.get_x_arr(2)
       ylabel = r'$k_p y$'
       if args.plane_index == None:
         index = math.floor(g3d.nx[1]/2) - 1
-        if g3d.nx[1]%2 == 1:
-          data = g3d.data[:,index,:].transpose(1, 0)
-        else:
-          data = ( g3d.data[:,index,:].transpose(1, 0)
-                    + g3d.data[:,index+1,:].transpose(1, 0) )/2
+        g3d.read_slice(i1=index)
+        data = g3d.slice.transpose(1, 0)
+        if g3d.nx[1]%2 == 0:
+          g3d.read_slice(i1=index+1)
+          data = ( data + g3d.slice.transpose(1, 0) )/2
       else:
-        data = g3d.data[:,args.plane_index,:].transpose(1, 0)
+        g3d.read_slice(i1=args.plane_index)
+        data = g3d.slice.transpose(1, 0)
 
-  elif args.plane == parsedefs.plane.xy:
+  elif ('x' in args.plane) and ('y' in args.plane):
     x_array = g3d.get_x_arr(1)
     xlabel = r'$k_p x$'
     y_array = g3d.get_x_arr(2)
     ylabel = r'$k_p y$'
     if args.plane_index == None:    
       index = math.floor(g3d.nx[0]/2) - 1
-      if g3d.nx[0]%2 == 1:
-        data = g3d.data[index,:,:].transpose(1, 0)
-      else:
-        data = ( g3d.data[index,:,:].transpose(1, 0)
-                  + g3d.data[index+1,:,:].transpose(1, 0) )/2   
+      g3d.read_slice(i0=index)
+      data = g3d.slice.transpose(1, 0)      
+      if g3d.nx[0]%2 == 0:
+        g3d.read_slice(i0=index+1)
+        data = ( data + g3d.slice.transpose(1, 0) )/2   
     else:
-      data = g3d.data[args.plane_index,:,:].transpose(1, 0)
+      g3d.read_slice(i0=args.plane_index)
+      data = g3d.slice.transpose(1, 0)
 
   saveformat = args.file_format  
   filesuffix = '_%06.f' % (np.floor(g3d.time))
@@ -329,6 +329,7 @@ def main():
     elif os.path.isdir(path):
       print('"' + path + '"' + ' is a directory.')
       if args.process_all == True:
+        print('Processing all g3d files in the provided directory.')
         for root, dirs, files in os.walk(path):  
           for filename in files:
             if is_h5mesh_file(filename):
