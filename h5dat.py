@@ -225,52 +225,51 @@ class HiRAW(HiFile):
 class Grid3d(HiFile):
   def __init__(self, file):
     HiFile.__init__(self, file)
-  
     self.read_attrs()
-      
-  def read_data(self): 
-  
-    with h5py.File(self.file,'r') as hf:
-      
-      # Reading dataset (here not caring how dataset is called)
+    with h5py.File(self.file,'r') as hf:      
       self.h5keys = list(hf.keys())
       if len(self.h5keys) == 0:
         print('Error:\tHDF5 file "%s" does not '
           'contain any dataset!' %(self.file) )
         sys.exit()
-      elif len(self.h5keys) == 1:
-        self.data = hf[self.h5keys[0]][()]
-      else:
+      elif len(self.h5keys) > 1:
         print('Error:\tHDF5 file "%s" contains more '
           'than one dataset!' %(self.file) )
         sys.exit()
 
-  def read_slice(self, i0=0, i1=0, i2=0): 
-  
+  def read_data(self): 
     with h5py.File(self.file,'r') as hf:
-      
       # Reading dataset (here not caring how dataset is called)
-      self.h5keys = list(hf.keys())
-      if len(self.h5keys) == 0:
-        print('Error:\tHDF5 file "%s" does '
-          'not contain any dataset!' %(self.file) )
-        sys.exit()
-      elif len(self.h5keys) == 1:
-        if i0!=0 and i1==0 and i2==0:
-          self.slice = hf[self.h5keys[0]][i0,:,:]
-        elif i0==0 and i1!=0 and i2==0:
-          self.slice = hf[self.h5keys[0]][:,i1,:]
-        elif i0==0 and i1==0 and i2!=0:
-          self.slice = hf[self.h5keys[0]][:,:,i2]
-        else:
-          print('Error:\tExactly one index must ' 
-            'be provided for HDF slice read in!')
-          sys.exit()         
-      else:
-        print('Error:\tHDF5 file "%s" contains more '
-          'than one dataset!' %(self.file) )
-        sys.exit()
+        self.data = hf[self.h5keys[0]][()]
 
+
+  def read_slice(self, i0=None, i1=None, i2=None): 
+    with h5py.File(self.file,'r') as hf:     
+    # Reading dataset (here not caring how dataset is called)
+      if i0!=None and i1==None and i2==None:
+        self.slice = hf[self.h5keys[0]][i0,:,:]
+      elif i0==None and i1!=None and i2==None:
+        self.slice = hf[self.h5keys[0]][:,i1,:]
+      elif i0==None and i1==None and i2!=None:
+        self.slice = hf[self.h5keys[0]][:,:,i2]
+      else:
+        print('Error:\tExactly one index must ' 
+          'be provided for HDF slice read in!')
+        sys.exit()         
+
+  def read_line(self, i0=None, i1=None, i2=None): 
+    with h5py.File(self.file,'r') as hf:     
+      # Reading dataset (here not caring how dataset is called)
+      if i0!=None and i1!=None and i2==None:
+        self.line = hf[self.h5keys[0]][i0,i1,:]
+      elif i0!=None and i1==None and i2!=None:
+        self.line = hf[self.h5keys[0]][i0,:,i2]
+      elif i0==None and i1!=None and i2!=None:
+        self.line = hf[self.h5keys[0]][:,i1,i2]
+      else:
+        print('Error:\tExactly two indices must ' 
+          'be provided for HDF line read in!')
+        sys.exit()         
 
 
 class SliceMoms(H5File):
