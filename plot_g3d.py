@@ -287,36 +287,27 @@ class G3d_plot_slice(G3d_plot):
       if 'x' in self.args.plane:
         if self.args.plane_index == None:
           index = math.floor(self.g3d.nx[2]/2) - 1
-          self.g3d.read_slice(i2=index)
-          self.slice = self.g3d.slice
+          self.slice = self.g3d.read_slice(i2=index)
           if self.g3d.nx[2]%2 == 0:
-            self.g3d.read_slice(i2=index+1)
-            self.slice = ( self.slice + self.g3d.slice )/2
+            self.slice = (self.slice + self.g3d.read_slice(i2=index+1))/2
         else:
-          self.g3d.read_slice(i2=self.args.plane_index)
-          self.slice = self.g3d.slice
+          self.slice = self.g3d.read_slice(i2=self.args.plane_index)
       elif 'y' in self.args.plane:
         if self.args.plane_index == None:
           index = math.floor(self.g3d.nx[1]/2) - 1
-          self.g3d.read_slice(i1=index)
-          self.slice = self.g3d.slice
+          self.slice = self.g3d.read_slice(i1=index)
           if self.g3d.nx[1]%2 == 0:
-            self.g3d.read_slice(i1=index+1)
-            self.slice = ( self.slice + self.g3d.slice )/2
+            self.slice = ( self.slice  + self.g3d.read_slice(i1=index+1) )/2
         else:
-          self.g3d.read_slice(i1=self.args.plane_index)
-          self.slice = self.g3d.slice
+          self.slice = self.g3d.read_slice(i1=self.args.plane_index)
     elif ('x' in self.args.plane) and ('y' in self.args.plane):
       if self.args.plane_index == None:    
         index = math.floor(self.g3d.nx[0]/2) - 1
-        self.g3d.read_slice(i0=index)
-        self.slice = self.g3d.slice      
+        self.slice = self.g3d.read_slice(i0=index)   
         if self.g3d.nx[0]%2 == 0:
-          self.g3d.read_slice(i0=index+1)
-          self.slice = ( self.slice + self.g3d.slice )/2   
+          self.slice = ( self.slice  + self.g3d.read_slice(i0=index+1) )/2 
       else:
-        self.g3d.read_slice(i0=self.args.plane_index)
-        self.slice = g3d.slice
+        self.slice = self.g3d.read_slice(i0=self.args.plane_index)
 
     if self.args.plane in ['xy','zx','zy']:
       self.slice = np.transpose( self.slice )
@@ -422,51 +413,54 @@ class G3d_plot_line(G3d_plot):
         # Default: central lineout
         idx1 = math.floor(self.g3d.nx[1]/2) - 1
         idx2 = math.floor(self.g3d.nx[2]/2) - 1
-        self.g3d.read_line(i1=idx1, i2=idx2)
-        self.line = self.g3d.line
-        if self.g3d.nx[1]%2 == 0:
-          self.g3d.read_line(i1=idx1+1, i2=idx2)
-          self.line = ( self.line + self.g3d.line )/2
-        if self.g3d.nx[2]%2 == 0:
-          self.g3d.read_line(i1=idx1, i2=idx2+1)
-          self.line = ( self.line + self.g3d.line )/2          
+        self.line = self.g3d.read_line(i1=idx1, i2=idx2)
+        if self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 0:
+          line01 = self.g3d.read_line(i1=idx1, i2=idx2+1)
+          line10 = self.g3d.read_line(i1=idx1+1, i2=idx2)
+          line11 = self.g3d.read_line(i1=idx1+1, i2=idx2+1)
+          self.line = ( self.line + line01 + line10 + line11 )/4
+        elif self.g3d.nx[1]%2 == 1 and self.g3d.nx[2]%2 == 0:
+          self.line = ( self.line + self.g3d.read_line(i1=idx1, i2=idx2+1) )/2
+        elif self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 1:
+          self.line = ( self.line + self.g3d.read_line(i1=idx1+1, i2=idx2) )/2
       else:
-        self.g3d.read_slice(i1=lout_idx[0], i2=lout_idx[1])
-        self.line = self.g3d.line
+        self.line = self.g3d.read_slice(i1=lout_idx[0], i2=lout_idx[1])
 
     elif 'x' == self.args.loutax:
       if self.args.lout_idx == None:
         # Default: central lineout
-        idx0 = math.floor(self.g3d.nx[0]/2) - 1
+        idx1 = math.floor(self.g3d.nx[0]/2) - 1
         idx2 = math.floor(self.g3d.nx[2]/2) - 1
-        self.g3d.read_line(i0=idx0, i2=idx2)
-        self.line = self.g3d.line
-        if self.g3d.nx[0]%2 == 0:
-          self.g3d.read_line(i0=idx0+1, i2=idx2)
-          self.line = ( self.line + self.g3d.line )/2
-        if self.g3d.nx[2]%2 == 0:
-          self.g3d.read_line(i0=idx0, i2=idx2+1)
-          self.line = ( self.line + self.g3d.line )/2          
+        self.line = self.g3d.read_line(i0=idx1, i2=idx2)
+        if self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 0:
+          line01 = self.g3d.read_line(i0=idx1, i2=idx2+1)
+          line10 = self.g3d.read_line(i0=idx1+1, i2=idx2)
+          line11 = self.g3d.read_line(i0=idx1+1, i2=idx2+1)
+          self.line = ( self.line + line01 + line10 + line11 )/4
+        elif self.g3d.nx[0]%2 == 1 and self.g3d.nx[2]%2 == 0:
+          self.line = ( self.line + self.g3d.read_line(i0=idx1, i2=idx2+1) )/2
+        elif self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 1:
+          self.line = ( self.line + self.g3d.read_line(i0=idx1+1, i2=idx2) )/2
       else:
-        self.g3d.read_slice(i0=lout_idx[0], i2=lout_idx[1])
-        self.line = self.g3d.line
+        self.line = self.g3d.read_slice(i0=lout_idx[0], i2=lout_idx[1])
 
     elif 'y' == self.args.loutax:
       if self.args.lout_idx == None:
         # Default: central lineout
-        idx0 = math.floor(self.g3d.nx[0]/2) - 1
-        idx1 = math.floor(self.g3d.nx[1]/2) - 1
-        self.g3d.read_line(i0=idx0, i1=idx1)
-        self.line = self.g3d.line
-        if self.g3d.nx[0]%2 == 0:
-          self.g3d.read_line(i0=idx0+1, i1=idx1)
-          self.line = ( self.line + self.g3d.line )/2
-        if self.g3d.nx[1]%2 == 0:
-          self.g3d.read_line(i0=idx0, i1=idx1+1)
-          self.line = ( self.line + self.g3d.line )/2          
+        idx1 = math.floor(self.g3d.nx[0]/2) - 1
+        idx2 = math.floor(self.g3d.nx[1]/2) - 1
+        self.line = self.g3d.read_line(i0=idx1, i1=idx2)
+        if self.g3d.nx[0]%2 == 0 and self.g3d.nx[1]%2 == 0:
+          line01 = self.g3d.read_line(i0=idx1, i1=idx2+1)
+          line10 = self.g3d.read_line(i0=idx1+1, i1=idx2)
+          line11 = self.g3d.read_line(i0=idx1+1, i1=idx2+1)
+          self.line = ( self.line + line01 + line10 + line11 )/4
+        elif self.g3d.nx[0]%2 == 1 and self.g3d.nx[1]%2 == 0:
+          self.line = ( self.line + self.g3d.read_line(i0=idx1, i1=idx2+1) )/2
+        elif self.g3d.nx[0]%2 == 0 and self.g3d.nx[1]%2 == 1:
+          self.line = ( self.line + self.g3d.read_line(i0=idx1+1, i1=idx2) )/2
       else:
-        self.g3d.read_slice(i0=lout_idx[0], i1=lout_idx[1])
-        self.line = self.g3d.line
+        self.line = self.g3d.read_slice(i0=lout_idx[0], i1=lout_idx[1])
 
 
   def plot( self, ifsave=True ):  

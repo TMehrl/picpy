@@ -255,7 +255,8 @@ class Grid3d(HiFile):
       else:
         print('Error:\tExactly one index must ' 
           'be provided for HDF slice read in!')
-        sys.exit()         
+        sys.exit() 
+    return(self.slice)       
 
   def read_line(self, i0=None, i1=None, i2=None): 
     with h5py.File(self.file,'r') as hf:     
@@ -269,7 +270,8 @@ class Grid3d(HiFile):
       else:
         print('Error:\tExactly two indices must ' 
           'be provided for HDF line read in!')
-        sys.exit()         
+        sys.exit()
+    return(self.line)            
 
 
 class SliceMoms(H5File):
