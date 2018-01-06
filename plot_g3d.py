@@ -10,6 +10,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+from matplotlib.ticker import FormatStrFormatter
 from matplotlib import cm
 import picdefs
 from h5dat import Grid3d
@@ -501,6 +502,10 @@ class G3d_plot_line(G3d_plot):
     ax = plt.gca()
     ax.set_ylabel(self.ylabel, fontsize=14)
     ax.set_xlabel(self.xlabel, fontsize=14)
+
+    if not (-3.0 < math.log(np.max(abs(self.line)),10) < 3.0):
+      ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+      plt.gcf().subplots_adjust(left=0.18)
 
     self.mkdirs_if_nexist()
 
