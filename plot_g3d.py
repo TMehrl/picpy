@@ -379,7 +379,7 @@ class G3d_plot_slice(G3d_plot):
     ax.set_ylabel(self.ylabel, fontsize=14)
     ax.set_xlabel(self.xlabel, fontsize=14)
     cbar = fig.colorbar(cax)
-    cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ) )
+    cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )
 
     self.mkdirs_if_nexist()
 
@@ -482,7 +482,6 @@ class G3d_plot_line(G3d_plot):
           self.line = ( self.line + self.g3d.read_line(i0=idx1+1, i1=idx2) )/2
       else:
         self.line = self.g3d.read_slice(i0=lout_idx[0], i1=lout_idx[1])
-
 
   def plot( self, ifsave=True ):  
     if self.args.verbose: print('Generating line plot')    
