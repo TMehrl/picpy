@@ -2,6 +2,9 @@
 
 import math
 import numpy as np
+import matplotlib
+# Force matplotlib to not use any Xwindows backend.
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import plot_g3d
 
@@ -11,7 +14,27 @@ def sim_theo_cmp_plot( g3d_p ):
     fig = plt.figure()
     cax = plt.plot( g3d_p.x_array, y_theo)
     cax = plt.plot( g3d_p.x_array, g3d_p.line)
-    plt.show()
+
+    g3d_p.mkdirs_if_nexist()
+
+    saveformat = g3d_p.args.file_format
+    filesuffix = '_%06.f' % (np.floor(g3d_p.g3d.time))
+
+    fileprefix = g3d_p.g3d.name
+
+    savename = fileprefix + filesuffix + '.' + saveformat
+
+    if saveformat=='png':
+        fig.savefig(  g3d_p.args.savepath + '/' + savename,
+                  format=saveformat,
+                  dpi=600)
+    else:
+        fig.savefig(  g3d_p.args.savepath + '/' + savename,
+                      format=saveformat)
+    if g3d_p.args.verbose: print('Saved "' + savename + '" at: ' + g3d_p.args.savepath)
+
+    if g3d_p.args.ifshow: plt.show()
+    plt.close(fig)
 
 def main():
     parser = plot_g3d.parser( ptype='line' )
