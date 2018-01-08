@@ -117,7 +117,7 @@ def cmp_plot_Ez(g3d_p,
     Ez_theo = lin_Ez_theo( plasma, beam, zeta_array )
 
     fig = plt.figure()
-    #cax = plt.plot( g3d_p.x_array, g3d_p.line)
+    cax = plt.plot( g3d_p.x_array, g3d_p.line)
     cax = plt.plot( g3d_p.x_array, Ez_theo, '--')
 
     g3d_p.mkdirs_if_nexist()
