@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import numpy as np
-import os
-import argparse
-import math
 import sys
+import os
+import math
+import argparse
+import numpy as np
 import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
@@ -23,9 +23,9 @@ class parsedefs:
         eps = 'eps'
         pdf = 'pdf'
     class zax:
-        zeta  = 'zeta'
-        z     = 'z'
-        xi    = 'xi'
+        zeta = 'zeta'
+        z = 'z'
+        xi = 'xi'
     class save_prefix:
         name = 'g3d_name'
 
@@ -47,40 +47,40 @@ def parser(ptype='none'):
 
     usg = "Usage: %prog [options] <file or path>"
 
-    desc="""This is the picpy postprocessing tool."""
+    desc = """This is the picpy postprocessing tool."""
 
     savepath = './plots'
     file_format = None
 
     parser = argparse.ArgumentParser(description=desc)
     parser.add_argument(  'path',
-                          metavar='PATH',
-                          nargs='*',
-                          help='Path to grid file.')
+                          metavar = 'PATH',
+                          nargs = '*',
+                          help = 'Path to grid file.')
     parser.add_argument(  "-v", "--verbose",
-                          dest="verbose",
+                          dest = "verbose",
                           action="store_true",
                           default=True,
                           help = "Print info (Default).")
     parser.add_argument(  "-q", "--quiet",
-                          dest="verbose",
-                          action="store_false",
+                          dest = "verbose",
+                          action = "store_false",
                           help = "Don't print info.")
     parser.add_argument(  "--show",
-                          dest="ifshow",
-                          action="store_true",
+                          dest = "ifshow",
+                          action = "store_true",
                           default=False,
                           help = "Show figure.")
     parser.add_argument(  "-a", "--all",
-                          action='store_true',
-                          dest="process_all",
-                          default=False,
-                          help="Process all files in path.")
+                          action = 'store_true',
+                          dest = "process_all",
+                          default = False,
+                          help = "Process all files in path.")
     parser.add_argument(  "--name-prefix",
-                          action="store",
-                          dest="save_prefix",
-                          metavar="NAME",
-                          default=parsedefs.save_prefix.name,
+                          action = "store",
+                          dest = "save_prefix",
+                          metavar = "NAME",
+                          default = parsedefs.save_prefix.name,
                           help = """Define customized prefix of output filename.""")
     parser.add_argument(  "-c", "--code",
                           action="store",
@@ -192,10 +192,16 @@ def gen_pretty_grid_name( gname ):
         return r'$J_z$'
     elif gname == 'Jz':
         return r'$J_z$'
-    elif gname == 'plasma_charge':
-        return r'$\rho_p$'
-    elif gname == 'beam_charge':
-        return r'$\rho_b$'
+    elif 'plasma' in gname:
+        if 'charge' in gname:
+            return r'$\rho_p$'
+        else:
+            return r'$n_p$'
+    elif 'beam' in gname:
+        if 'charge' in gname:
+            return r'$\rho_b$'
+        else:
+            return r'$n_b$'                   
     else:
         return gname
 
@@ -529,21 +535,19 @@ class G3d_plot_line(G3d_plot):
         plt.close(fig)
 
 
-
-def plotfiles(args, ptype='none'):
+def gen_filelist(args):
+    
     if not args.path:
         print('Error: No file provided!')
         sys.exit()
+
+    flist = []
 
     for path in args.path:
         if os.path.isfile(path) :
             file = path
             if is_h5g3d_file(file):
-                if ptype == 'slice':
-                    g3d_p = G3d_plot_slice(file, args)
-                elif ptype == 'line':
-                    g3d_p = G3d_plot_line(file, args)
-                g3d_p.plot()
+                flist.append(file)
             else:
                 print('Skipping: ' + file)
         elif os.path.isdir(path):
@@ -554,14 +558,9 @@ def plotfiles(args, ptype='none'):
                     for filename in files:
                         file = root + '/' + filename
                         if is_h5g3d_file(file):
-                            if ptype == 'slice':
-                                g3d_p = G3d_plot_slice(file, args)
-                            elif ptype == 'line':
-                                g3d_p = G3d_plot_line(file, args)
-                            g3d_p.plot()
+                            flist.append(file)
                         else:
                             print('Skipping: ' + file)
-                sys.exit()
             else:
                 print('Error: Use the flag "-a" to process all files in the provided directory!')
                 sys.exit()
@@ -571,3 +570,16 @@ def plotfiles(args, ptype='none'):
         else:
             print('Error: Provided path is neither a file nor a directory!')
             sys.exit()
+
+    return flist
+
+def plotfiles(args, ptype='none'):
+    
+    flist = gen_filelist(args)
+
+    for file in flist:
+        if ptype == 'slice':
+            g3d_p = G3d_plot_slice(file, args)
+        elif ptype == 'line':
+            g3d_p = G3d_plot_line(file, args)
+        g3d_p.plot()

@@ -2,10 +2,11 @@
 # h5dat.py
 
 import os
+import sys
 import numpy as np
 import h5py
 import picdefs
-import sys
+
 
 # Dictionary for PIC codes
 piccodes = { 'hipace':'hipace',
