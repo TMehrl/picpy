@@ -9,11 +9,11 @@ import matplotlib.pyplot as plt
 import plot_g3d
 
 def sim_theo_cmp_plot( g3d_p ):
-    y_theo = np.cos(g3d_p.x_array)
+    y_theo = np.max(g3d_p.line) * np.sin(-1*g3d_p.x_array)
 
     fig = plt.figure()
-    cax = plt.plot( g3d_p.x_array, y_theo)
     cax = plt.plot( g3d_p.x_array, g3d_p.line)
+    cax = plt.plot( g3d_p.x_array, y_theo, '--')
 
     g3d_p.mkdirs_if_nexist()
 
@@ -35,6 +35,8 @@ def sim_theo_cmp_plot( g3d_p ):
 
     if g3d_p.args.ifshow: plt.show()
     plt.close(fig)
+
+
 
 def main():
     parser = plot_g3d.parser( ptype='line' )
