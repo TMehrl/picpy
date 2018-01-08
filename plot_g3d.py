@@ -69,7 +69,7 @@ def parser(ptype='none'):
     parser.add_argument(  "--show",
                           dest = "ifshow",
                           action = "store_true",
-                          default=False,
+                          default = False,
                           help = "Show figure.")
     parser.add_argument(  "-a", "--all",
                           action = 'store_true',
