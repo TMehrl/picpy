@@ -331,7 +331,7 @@ class G3d_plot_slice(G3d_plot):
                     index = math.floor(self.g3d.nx[1]/2) - 1
                     self.slice = self.g3d.read_slice(i1=index)
                     if self.g3d.nx[1]%2 == 0:
-                        self.slice = ( self.slice  + self.g3d.read_slice(i1=index+1) )/2
+                        self.slice = ( self.slice + self.g3d.read_slice(i1=index+1) )/2
                 else:
                     self.slice = self.g3d.read_slice(i1=self.args.plane_index)
         elif ('x' in self.args.plane) and ('y' in self.args.plane):
@@ -339,7 +339,7 @@ class G3d_plot_slice(G3d_plot):
                 index = math.floor(self.g3d.nx[0]/2) - 1
                 self.slice = self.g3d.read_slice(i0=index)
                 if self.g3d.nx[0]%2 == 0:
-                    self.slice = ( self.slice  + self.g3d.read_slice(i0=index+1) )/2
+                    self.slice = ( self.slice + self.g3d.read_slice(i0=index+1) )/2
             else:
                 self.slice = self.g3d.read_slice(i0=self.args.plane_index)
 
