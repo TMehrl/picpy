@@ -2,16 +2,22 @@
 
 import sys
 import math
+import argparse
 import numpy as np
 import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 import scipy.constants as constants
+import mpmath
 import plot_g3d
 
 
-def add_parseargs(parser):
+def add_parseargs(plot_g3d_parser):
+    parser = argparse.ArgumentParser(parents=[plot_g3d_parser],
+                                     prog='plot_g3d_lin_vs_theo', 
+                                     conflict_handler='resolve')
     parser.add_argument(  "--plasma-Z",
                           action='store',
                           dest="plasma_Z",
@@ -100,10 +106,19 @@ class Plasma:
             self.lambda_p = 2 * math.pi / self.k_p
             print('k_p = %f' % self.k_p)
 
-def lin_Ez_theo( plasma, beam, zeta_array ):
+def lin_Ez_theo_long_wave( plasma, beam, zeta_array ):
 
     Ez = np.sign(beam.Z/plasma.Z) * np.sqrt(2 * math.pi) * beam.n/plasma.n * beam.sigma_z \
          * np.exp(-1 * beam.sigma_z**2/2) * np.cos( plasma.k_p * (zeta_array - beam.zeta_0) )
+
+    return Ez
+
+
+def lin_Ez_theo_sigma_r( plasma, beam, zeta_array ): 
+
+    Ez = np.sign(beam.Z/plasma.Z) * np.sqrt(2 * math.pi) * beam.n/plasma.n * beam.sigma_z \
+         * np.exp(-1 * beam.sigma_z**2/2) * np.cos( plasma.k_p * (zeta_array - beam.zeta_0) ) \
+         * beam.sigma_r**2/2 * np.exp(beam.sigma_r**2/2) * mpmath.gammainc(0.0,beam.sigma_r**2/2)
 
     return Ez
 
@@ -114,11 +129,26 @@ def cmp_plot_Ez(g3d_p,
 
     zeta_array = g3d_p.x_array
 
-    Ez_theo = lin_Ez_theo( plasma, beam, zeta_array )
+    if beam.sigma_r == 0.0 or beam.sigma_r == None: 
+        Ez_theo = lin_Ez_theo_long_wave( plasma, beam, zeta_array )
+        print('lin_Ez_theo_long_wave')
+    else:
+        Ez_theo = lin_Ez_theo_sigma_r( plasma, beam, zeta_array )
+
+    print('Ratio: %f' % (np.max(Ez_theo)/np.max(g3d_p.line) ) )
 
     fig = plt.figure()
-    cax = plt.plot( g3d_p.x_array, g3d_p.line)
-    cax = plt.plot( g3d_p.x_array, Ez_theo, '--')
+    ax = plt.plot( g3d_p.x_array, g3d_p.line )
+    ax = plt.plot( g3d_p.x_array, Ez_theo, '--' )
+    ax = plt.gca()
+    ax.set_ylabel(g3d_p.ylabel, fontsize=14)
+    ax.set_xlabel(g3d_p.xlabel, fontsize=14)
+
+    if not (-3.0 < math.log(np.max(abs(g3d_p.line)),10) < 3.0):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)  
 
     g3d_p.mkdirs_if_nexist()
 
@@ -159,9 +189,8 @@ def set_beam( args ):
 
 
 def main():
-    parser = plot_g3d.parser( ptype = 'line' )
-    parser = add_parseargs( parser )
-
+    plot_g3d_parser = plot_g3d.parser( ptype = 'line_vs_theo' )
+    parser = add_parseargs( plot_g3d_parser )
     args = parser.parse_args()
     
     beam = set_beam(args)

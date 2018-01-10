@@ -26,8 +26,9 @@ class parsedefs:
         zeta = 'zeta'
         z = 'z'
         xi = 'xi'
-    class save_prefix:
-        name = 'g3d_name'
+    class save:
+        prefix = 'g3d_name'
+        path = './plots'
 
 def two_floats(value):
     values = value.split()
@@ -80,7 +81,7 @@ def parser(ptype='none'):
                           action = "store",
                           dest = "save_prefix",
                           metavar = "NAME",
-                          default = parsedefs.save_prefix.name,
+                          default = parsedefs.save.prefix,
                           help = """Define customized prefix of output filename.""")
     parser.add_argument(  "-c", "--code",
                           action="store",
@@ -149,7 +150,25 @@ def parser(ptype='none'):
                               metavar="'idx0 idx1'",
                               type=two_ints,
                               default=None)
-
+    elif ptype == 'line_vs_theo':
+        # Line plot specific arguments
+        savepath += '/g3d-line_vs_theo'
+        file_format = parsedefs.file_format.eps            
+        parser.add_argument(  "-l", "--lineout-axis",
+                              action='store',
+                              dest="loutax",
+                              metavar="LOUTAX",
+                              choices=[ 'x', 'y', 'z'],
+                              default='z',
+                              help= """Axis along which lineout is generated (Default: z).""")
+        parser.add_argument(  '--lineout-indices',
+                              help='Indices for which lineout is taken.',
+                              action='store',
+                              dest="lout_idx",
+                              metavar="'idx0 idx1'",
+                              type=two_ints,
+                              default=None)
+        
     # General arguments with plot type-specific defaults
     parser.add_argument(  "-s", "--save-path",
                           action="store",
@@ -375,7 +394,7 @@ class G3d_plot_slice(G3d_plot):
         saveformat = self.args.file_format
         filesuffix = '_%06.f' % (np.floor(self.g3d.time))
 
-        if self.args.save_prefix != parsedefs.save_prefix.name:
+        if self.args.save_prefix != parsedefs.save.prefix:
             fileprefix = self.args.save_prefix
         else:
             fileprefix = self.g3d.name
@@ -501,7 +520,7 @@ class G3d_plot_line(G3d_plot):
         saveformat = self.args.file_format
         filesuffix = '_%06.f' % (np.floor(self.g3d.time))
 
-        if self.args.save_prefix != parsedefs.save_prefix.name:
+        if self.args.save_prefix != parsedefs.save.prefix:
             fileprefix = self.args.save_prefix
         else:
             fileprefix = self.g3d.name
@@ -518,6 +537,8 @@ class G3d_plot_line(G3d_plot):
         if not (-3.0 < math.log(np.max(abs(self.line)),10) < 3.0):
             ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
             plt.gcf().subplots_adjust(left=0.18)
+        else:
+            plt.gcf().subplots_adjust(left=0.15)      
 
         self.mkdirs_if_nexist()
 
