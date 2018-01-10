@@ -44,16 +44,12 @@ def two_ints(value):
     values = map(int, values)
     return values
 
-def parser(ptype='none'):
-
-    usg = "Usage: %prog [options] <file or path>"
+def g3d_parser():
 
     desc = """This is the picpy postprocessing tool."""
 
-    savepath = './plots'
-    file_format = None
-
-    parser = argparse.ArgumentParser(description=desc)
+    parser = argparse.ArgumentParser( add_help=False,
+                                      description=desc)
     parser.add_argument(  'path',
                           metavar = 'PATH',
                           nargs = '*',
@@ -99,93 +95,96 @@ def parser(ptype='none'):
                                   parsedefs.zax.xi,],
                           default=parsedefs.zax.zeta,
                           help= "z-axis type (Default: " + parsedefs.zax.zeta + ").")
-    if ptype == 'slice':
-    # Slice plot specific arguments
-        savepath += '/g3d-slice'
-        file_format = parsedefs.file_format.png
-        parser.add_argument(  "-p", "--plane",
-                              action='store',
-                              dest="plane",
-                              metavar="PLANE",
-                              choices=[ 'xy', 'yz', 'xz',
-                                        'yx', 'zy', 'zx'],
-                              default='zx',
-                              help= """Plane to be plotted (Default: zx).""")
-        parser.add_argument(  "--plane-index",
-                              action='store',
-                              dest="plane_index",
-                              metavar="PLANE-IDX",
-                              default=None,
-                              type=int,
-                              help= """Index of plane.""")
-        parser.add_argument(  "--cscale",
-                              action='store',
-                              dest="cscale",
-                              metavar="CSCALE",
-                              choices=[ "lin", "log",],
-                              default="lin",
-                              help= "z-axis type (Default: " + parsedefs.zax.zeta + ").")
-        parser.add_argument(  '--cblim',
-                              help='Colorbar axis limits',
-                              action='store',
-                              dest="cblim",
-                              metavar="'CBMIN CBMAX'",
-                              type=two_floats,
-                              default=None)
-    elif ptype == 'line':
-        # Line plot specific arguments
-        savepath += '/g3d-line'
-        file_format = parsedefs.file_format.eps
-        parser.add_argument(  "-l", "--lineout-axis",
-                              action='store',
-                              dest="loutax",
-                              metavar="LOUTAX",
-                              choices=[ 'x', 'y', 'z'],
-                              default='z',
-                              help= """Axis along which lineout is generated (Default: z).""")
-        parser.add_argument(  '--lineout-indices',
-                              help='Indices for which lineout is taken.',
-                              action='store',
-                              dest="lout_idx",
-                              metavar="'idx0 idx1'",
-                              type=two_ints,
-                              default=None)
-    elif ptype == 'line_vs_theo':
-        # Line plot specific arguments
-        savepath += '/g3d-line_vs_theo'
-        file_format = parsedefs.file_format.eps            
-        parser.add_argument(  "-l", "--lineout-axis",
-                              action='store',
-                              dest="loutax",
-                              metavar="LOUTAX",
-                              choices=[ 'x', 'y', 'z'],
-                              default='z',
-                              help= """Axis along which lineout is generated (Default: z).""")
-        parser.add_argument(  '--lineout-indices',
-                              help='Indices for which lineout is taken.',
-                              action='store',
-                              dest="lout_idx",
-                              metavar="'idx0 idx1'",
-                              type=two_ints,
-                              default=None)
+    return parser
 
-    # General arguments with plot type-specific defaults
+def g3d_slice_subparser(subparsers, parent_parser):
+    parser = subparsers.add_parser( "slice", parents=[parent_parser],
+                                    help="g3d slice plotting")    
+    # Slice plot specific arguments
+    parser.add_argument(  "-p", "--plane",
+                          action='store',
+                          dest="plane",
+                          metavar="PLANE",
+                          choices=[ 'xy', 'yz', 'xz',
+                                    'yx', 'zy', 'zx'],
+                          default='zx',
+                          help= """Plane to be plotted (Default: zx).""")
+    parser.add_argument(  "--plane-index",
+                          action='store',
+                          dest="plane_index",
+                          metavar="PLANE-IDX",
+                          default=None,
+                          type=int,
+                          help= """Index of plane.""")
+    parser.add_argument(  "--cscale",
+                          action='store',
+                          dest="cscale",
+                          metavar="CSCALE",
+                          choices=[ "lin", "log",],
+                          default="lin",
+                          help= "z-axis type (Default: " + parsedefs.zax.zeta + ").")
+    parser.add_argument(  '--cblim',
+                          help='Colorbar axis limits',
+                          action='store',
+                          dest="cblim",
+                          metavar="'CBMIN CBMAX'",
+                          type=two_floats,
+                          default=None)
     parser.add_argument(  "-s", "--save-path",
                           action="store",
                           dest="savepath",
                           metavar="PATH",
-                          default=savepath,
+                          default=parsedefs.save.path + '/g3d-slice',
                           help = """Path to which generated files will be saved.
                               (Default: './')""")
     parser.add_argument(  "-f", "--format",
                           action='store',
                           dest="file_format",
                           metavar="FORMAT",
-                          choices=[ parsedefs.file_format.png,
-                                    parsedefs.file_format.pdf,
-                                    parsedefs.file_format.eps,],
-                          default=file_format,
-                          help= """Format of output file (Default: png).""")
+                          choices=[ 'png',
+                                    'pdf',
+                                    'eps',],
+                          default='png',
+                          help= """Format of output file (Default: png).""")    
+    parser.set_defaults(func=slice)
+    return parser
+
+
+def g3d_line_subparser(subparsers, parent_parser):
+    parser = subparsers.add_parser( "line", parents=[parent_parser],
+                                    help="g3d line plotting")    
+    # Line plot specific arguments
+    parser.add_argument(  "-l", "--lineout-axis",
+                          action='store',
+                          dest="loutax",
+                          metavar="LOUTAX",
+                          choices=[ 'x', 'y', 'z'],
+                          default='z',
+                          help= """Axis along which lineout is generated (Default: z).""")
+    parser.add_argument(  '--lineout-indices',
+                          help='Indices for which lineout is taken.',
+                          action='store',
+                          dest="lout_idx",
+                          metavar="'idx0 idx1'",
+                          type=two_ints,
+                          default=None)
+    parser.add_argument(  "-s", "--save-path",
+                          action="store",
+                          dest="savepath",
+                          metavar="PATH",
+                          default=parsedefs.save.path + '/g3d-line',
+                          help = """Path to which generated files will be saved.
+                              (Default: './')""")
+    parser.add_argument(  "-f", "--format",
+                          action='store',
+                          dest="file_format",
+                          metavar="FORMAT",
+                          choices=[ 'png',
+                                    'pdf',
+                                    'eps',],
+                          default='eps',
+                          help= """Format of output file (Default: eps).""")       
+    parser.set_defaults(func=line)
     return parser
 
 # Converting HDF strings of grid quantity namnes
@@ -625,3 +624,41 @@ def plotfiles(args, ptype='none'):
         elif ptype == 'line':
             g3d_p = G3d_plot_line(file, args)
         g3d_p.plot()
+
+
+def slice(args):
+
+    flist = gen_filelist(args)
+
+    for file in flist:
+        g3d_p = G3d_plot_slice(file, args)
+        g3d_p.plot()        
+
+
+def line(args):
+
+    flist = gen_filelist(args)
+
+    for file in flist:
+        g3d_p = G3d_plot_line(file, args)
+        g3d_p.plot()  
+
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    g3d_parent_parser = g3d_parser()
+    g3d_subparsers = parser.add_subparsers(title="actions")
+
+    g3d_ssp = g3d_slice_subparser(  subparsers=g3d_subparsers,
+                                    parent_parser=g3d_parent_parser)
+
+    g3d_lsp = g3d_line_subparser(  subparsers=g3d_subparsers,
+                                parent_parser=g3d_parent_parser)
+
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()         

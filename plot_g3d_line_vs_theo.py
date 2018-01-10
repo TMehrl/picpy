@@ -45,6 +45,7 @@ def add_parseargs(plot_g3d_parser):
                           metavar="nb",
                           default=0.0,
                           type=float,
+                          required=True,
                           help= """Beam density""") 
     parser.add_argument(  "--beam-sigma_z",
                           action='store',
@@ -52,6 +53,7 @@ def add_parseargs(plot_g3d_parser):
                           metavar="sigma_z",
                           default=0.0,
                           type=float,
+                          required=True,
                           help= """Gaussian beam sigma_z""") 
     parser.add_argument(  "--beam-sigma_r",
                           action='store',
@@ -73,7 +75,27 @@ def add_parseargs(plot_g3d_parser):
                           metavar="Z",
                           default=-1,
                           type=int,
-                          help= """Beam atomic (charge) number.""")                                                                                               
+                          help= """Beam atomic (charge) number.""")
+    parser.add_argument(  "-s", "--save-path",
+                          action="store",
+                          dest="savepath",
+                          metavar="PATH",
+                          default=plot_g3d.parsedefs.save.path + '/g3d-line_vs_theo',
+                          help = """Path to which generated files will be saved.
+                              (Default: './')""")
+    parser.add_argument(  "-f", "--format",
+                          action='store',
+                          dest="file_format",
+                          metavar="FORMAT",
+                          choices=[ 'png',
+                                    'pdf',
+                                    'eps',],
+                          default='eps',
+                          help= """Format of output file (Default: eps).""")
+
+    parser.set_defaults(lout_idx=None)
+    parser.set_defaults(loutax='z')
+
     return parser                                                                
 
 class Beam:
@@ -189,7 +211,7 @@ def set_beam( args ):
 
 
 def main():
-    plot_g3d_parser = plot_g3d.parser( ptype = 'line_vs_theo' )
+    plot_g3d_parser = plot_g3d.g3d_parser()
     parser = add_parseargs( plot_g3d_parser )
     args = parser.parse_args()
     
