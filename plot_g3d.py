@@ -168,7 +168,7 @@ def parser(ptype='none'):
                               metavar="'idx0 idx1'",
                               type=two_ints,
                               default=None)
-        
+
     # General arguments with plot type-specific defaults
     parser.add_argument(  "-s", "--save-path",
                           action="store",
@@ -192,37 +192,38 @@ def parser(ptype='none'):
 # to LaTeX strings
 def gen_pretty_grid_name( gname ):
     if gname == 'ExmBy':
-        return r'$E_x-B_y$'
+        return r'$(E_x-B_y)/E_0$'
     elif gname == 'EypBx':
-        return r'$E_y+B_x$'
+        return r'$(E_y+B_x)/E_0$'
     elif gname == 'Ez':
-        return r'$E_z$'
+        return r'$E_z/E_0$'
     elif gname == 'Bx':
-        return r'$B_x$'
+        return r'$B_x/E_0$'
     elif gname == 'By':
-        return r'$B_y$'
+        return r'$B_y/E_0$'
     elif gname == 'Bz':
-        return r'$B_z$'
+        return r'$B_z/E_0$'
     elif gname == 'Jx':
-        return r'$J_x$'
+        return r'$J_x/cn_0$'
     elif gname == 'Jy':
-        return r'$J_y$'
+        return r'$J_y/cn_0$'
     elif gname == 'Jz':
-        return r'$J_z$'
+        return r'$J_z/cn_0$'
     elif gname == 'Jz':
         return r'$J_z$'
     elif 'plasma' in gname:
         if 'charge' in gname:
-            return r'$\rho_p$'
+            return r'$\rho_p/e n_0$'
         else:
-            return r'$n_p$'
+            return r'$n_p/n_0$'
     elif 'beam' in gname:
         if 'charge' in gname:
-            return r'$\rho_b$'
+            return r'$\rho_b/e n_0$'
         else:
-            return r'$n_b$'                   
+            return r'$n_b/n_0$'                   
     else:
         return gname
+
 
 # Returning boolean: if file extension is hdf5 extension
 def is_h5_file(fext):
@@ -298,6 +299,21 @@ class G3d_plot:
                 print("Creating folder: " + path)
                 os.mkdir(path)
 
+    def if_is_number_density( self ):
+        name = self.g3d.name
+        if 'plasma' in name:
+            if 'charge' in name:
+                return False
+            else:
+                return True
+        elif 'beam' in name:
+            if 'charge' in name:
+                return False
+            else:
+                return True                  
+        else:
+            return False
+
 class G3d_plot_slice(G3d_plot):
     def __init__(self, file, args):
         G3d_plot.__init__(self, file, args)
@@ -365,6 +381,9 @@ class G3d_plot_slice(G3d_plot):
         if self.args.plane in ['xy','zx','zy']:
             self.slice = np.transpose( self.slice )
 
+        if self.if_is_number_density():
+            self.slice = np.abs(self.slice)
+
     def set_cmap( self ):
         if self.args.cscale == "log":
             self.slice = np.log(abs(self.slice))
@@ -426,7 +445,6 @@ class G3d_plot_slice(G3d_plot):
 
         if self.args.ifshow: plt.show()
         plt.close(fig)
-
 
 
 class G3d_plot_line(G3d_plot):
@@ -514,6 +532,9 @@ class G3d_plot_line(G3d_plot):
                     self.line = ( self.line + self.g3d.read_line(i0=idx1+1, i1=idx2) )/2
             else:
                 self.line = self.g3d.read_slice(i0=lout_idx[0], i1=lout_idx[1])
+
+        if self.if_is_number_density():
+            self.line = np.abs(self.line)
 
     def plot( self, ifsave=True ):
         if self.args.verbose: print('Generating line plot')
