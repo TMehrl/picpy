@@ -99,7 +99,7 @@ def g3d_parser():
 
 def g3d_slice_subparser(subparsers, parent_parser):
     parser = subparsers.add_parser( "slice", parents=[parent_parser],
-                                    help="g3d slice plotting")    
+                                    help="Grid 3D slice plotting")    
     # Slice plot specific arguments
     parser.add_argument(  "-p", "--plane",
                           action='store',
@@ -146,13 +146,12 @@ def g3d_slice_subparser(subparsers, parent_parser):
                                     'eps',],
                           default='png',
                           help= """Format of output file (Default: png).""")    
-    parser.set_defaults(func=slice)
     return parser
 
 
 def g3d_line_subparser(subparsers, parent_parser):
     parser = subparsers.add_parser( "line", parents=[parent_parser],
-                                    help="g3d line plotting")    
+                                    help="Grid 3D line plotting")    
     # Line plot specific arguments
     parser.add_argument(  "-l", "--lineout-axis",
                           action='store',
@@ -183,8 +182,7 @@ def g3d_line_subparser(subparsers, parent_parser):
                                     'pdf',
                                     'eps',],
                           default='eps',
-                          help= """Format of output file (Default: eps).""")       
-    parser.set_defaults(func=line)
+                          help= """Format of output file (Default: eps).""")
     return parser
 
 # Converting HDF strings of grid quantity namnes
@@ -614,17 +612,6 @@ def gen_filelist(args):
 
     return flist
 
-def plotfiles(args, ptype='none'):
-    
-    flist = gen_filelist(args)
-
-    for file in flist:
-        if ptype == 'slice':
-            g3d_p = G3d_plot_slice(file, args)
-        elif ptype == 'line':
-            g3d_p = G3d_plot_line(file, args)
-        g3d_p.plot()
-
 
 def slice(args):
 
@@ -648,15 +635,22 @@ def line(args):
 def main():
     parser = argparse.ArgumentParser()
     g3d_parent_parser = g3d_parser()
-    g3d_subparsers = parser.add_subparsers(title="actions")
+    g3d_subparsers = parser.add_subparsers(title="plot-type")
 
     g3d_ssp = g3d_slice_subparser(  subparsers=g3d_subparsers,
                                     parent_parser=g3d_parent_parser)
+    g3d_ssp.set_defaults(func=slice)
 
-    g3d_lsp = g3d_line_subparser(  subparsers=g3d_subparsers,
-                                parent_parser=g3d_parent_parser)
+    g3d_lsp = g3d_line_subparser( subparsers=g3d_subparsers,
+                                  parent_parser=g3d_parent_parser)
+    g3d_lsp.set_defaults(func=line)
 
     args = parser.parse_args()
+    
+    if len(sys.argv)==1:
+        parser.print_help()
+        sys.exit(1)
+
     args.func(args)
 
 
