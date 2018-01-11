@@ -62,6 +62,13 @@ def add_parseargs(plot_g3d_parser):
                           default=0.0,
                           type=float,
                           help= """Gaussian beam sigma_r""") 
+    parser.add_argument(  "--beam-sigma_xy",
+                          action='store',
+                          dest="beam_sigma_xy",
+                          metavar="sigma_xy",
+                          default=0.0,
+                          type=float,
+                          help= """Gaussian beam sigma_x = sigma_y""")     
     parser.add_argument(  "--beam-zeta_0",
                           action='store',
                           dest="beam_zeta_0",
@@ -130,17 +137,17 @@ class Plasma:
 
 def lin_Ez_theo_long_wave( plasma, beam, zeta_array ):
 
-    Ez = np.sign(beam.Z/plasma.Z) * np.sqrt(2 * math.pi) * beam.n/plasma.n * beam.sigma_z \
-         * np.exp(-1 * beam.sigma_z**2/2) * np.cos( plasma.k_p * (zeta_array - beam.zeta_0) )
+    Ez = -np.sign(beam.Z) * np.sqrt(2 * math.pi) * beam.n/plasma.n * plasma.k_p * beam.sigma_z \
+         * np.exp(-1 * (plasma.k_p * beam.sigma_z)**2/2) * np.cos( plasma.k_p * (zeta_array - beam.zeta_0) )
 
     return Ez
 
 
 def lin_Ez_theo_sigma_r( plasma, beam, zeta_array ): 
 
-    Ez = np.sign(beam.Z/plasma.Z) * np.sqrt(2 * math.pi) * beam.n/plasma.n * beam.sigma_z \
-         * np.exp(-1 * beam.sigma_z**2/2) * np.cos( plasma.k_p * (zeta_array - beam.zeta_0) ) \
-         * beam.sigma_r**2/2 * np.exp(beam.sigma_r**2/2) * mpmath.gammainc(0.0,beam.sigma_r**2/2)
+    Ez = -np.sign(beam.Z) * np.sqrt(2 * math.pi) * beam.n/plasma.n * plasma.k_p*beam.sigma_z \
+         * np.exp(-1 * (plasma.k_p*beam.sigma_z)**2/2) * np.cos( plasma.k_p * (zeta_array - beam.zeta_0) ) \
+         * (plasma.k_p*beam.sigma_r)**2/2 * np.exp((plasma.k_p*beam.sigma_r)**2/2) * mpmath.gammainc(0.0,(plasma.k_p*beam.sigma_r)**2/2)
 
     return Ez
 
@@ -202,11 +209,21 @@ def set_plasma( args ):
 
 
 def set_beam( args ):
-    beam = Beam(n = args.beam_n, 
-                sigma_z = args.beam_sigma_z, 
-                sigma_r = args.beam_sigma_r,
-                zeta_0 = args.beam_zeta_0,
-                Z = args.beam_Z )
+    if args.beam_sigma_r != 0.0 and args.beam_sigma_xy == 0.0:
+        beam = Beam(n = args.beam_n, 
+                    sigma_z = args.beam_sigma_z, 
+                    sigma_r = args.beam_sigma_r,
+                    zeta_0 = args.beam_zeta_0,
+                    Z = args.beam_Z )
+    elif args.beam_sigma_r == 0.0 and args.beam_sigma_xy != 0.0:
+        beam = Beam(n = args.beam_n, 
+                    sigma_z = args.beam_sigma_z, 
+                    sigma_r = args.beam_sigma_xy * np.sqrt(2), # DOUBLE CHECK THIS!!!
+                    zeta_0 = args.beam_zeta_0,
+                    Z = args.beam_Z )
+    else:
+        print('ERROR: "beam_sigma_r" can''t be set in conjunction with "beam_sigma_xy"!')
+        sys.exit(1)     
     return beam
 
 
