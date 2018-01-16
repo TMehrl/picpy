@@ -238,41 +238,86 @@ class Grid3d(HiFile):
                   'than one dataset!' %(self.file) )
                 sys.exit()
 
-    def read_data(self):
+    def read_3D(self):
         with h5py.File(self.file,'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             self.data = hf[self.h5keys[0]][()]
 
 
-    def read_slice(self, i0=None, i1=None, i2=None):
+    def read_2D(self, i0=None, i1=None, i2=None):
         with h5py.File(self.file,'r') as hf:
         # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1==None and i2==None:
-                self.slice = hf[self.h5keys[0]][i0,:,:]
+                slice = hf[self.h5keys[0]][i0,:,:]
             elif i0==None and i1!=None and i2==None:
-                self.slice = hf[self.h5keys[0]][:,i1,:]
+                slice = hf[self.h5keys[0]][:,i1,:]
             elif i0==None and i1==None and i2!=None:
-                self.slice = hf[self.h5keys[0]][:,:,i2]
+                slice = hf[self.h5keys[0]][:,:,i2]
             else:
                 print('Error:\tExactly one index must '
                   'be provided for HDF slice read in!')
                 sys.exit()
-        return(self.slice)
+        return(slice)
 
-    def read_line(self, i0=None, i1=None, i2=None):
+    def read_1D(self, i0=None, i1=None, i2=None):
         with h5py.File(self.file,'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1!=None and i2==None:
-                self.line = hf[self.h5keys[0]][i0,i1,:]
+                line = hf[self.h5keys[0]][i0,i1,:]
             elif i0!=None and i1==None and i2!=None:
-                self.line = hf[self.h5keys[0]][i0,:,i2]
+                line = hf[self.h5keys[0]][i0,:,i2]
             elif i0==None and i1!=None and i2!=None:
-                self.line = hf[self.h5keys[0]][:,i1,i2]
+                line = hf[self.h5keys[0]][:,i1,i2]
             else:
                 print('Error:\tExactly two indices must '
                   'be provided for HDF line read in!')
                 sys.exit()
-        return(self.line)
+        return(line)
+
+    def read_0D(self, i0=None, i1=None, i2=None):
+        with h5py.File(self.file,'r') as hf:
+            # Reading dataset (here not caring how dataset is called)
+            if i0!=None and i1!=None and i2!=None:
+                point = hf[self.h5keys[0]][i0,i1,i2]
+            else:
+                print('Error:\tExactly three indices must '
+                  'be provided for HDF point read in!')
+                sys.exit(1)
+        return(point)
+
+    def __n_none(self, arg0, arg1, arg2):
+        return sum([arg0 == None, arg1 == None, arg2 == None])
+
+    def read(self, 
+             i0=None, 
+             i1=None, 
+             i2=None,
+             x0=None,
+             x1=None,
+             x2=None):
+        if self.__n_none(x0, x1, x2) == 3:
+            if self.__n_none(i0, i1, i2) == 3:
+                return self.read_3D()
+            elif self.__n_none(i0, i1, i2) == 2:
+                return self.read_2D(i0=i0, i1=i1, i2=i2) 
+            elif self.__n_none(i0, i1, i2) == 1:
+                return self.read_1D(i0=i0, i1=i1, i2=i2)             
+            elif self.__n_none(i0, i1, i2) == 0:
+                return self.read_0D(i0=i0, i1=i1, i2=i2)
+        elif self.__n_none(i0, i1, i2) == 3:
+            if x0 != None:
+                i0 = np.argmin(np.abs(self.get_x_arr(0)-x0))
+            if x1 != None:
+                i1 = np.argmin(np.abs(self.get_x_arr(1)-x1))
+            if x2 != None:
+                i2 = np.argmin(np.abs(self.get_x_arr(2)-x2))
+            return self.read(i0=i0, i1=i1, i2=i2)                    
+        else:
+            print('Error:\tMixed indices and positions '
+              'not allowed for grid 3d read in!')
+            sys.exit(1)                                  
+
+
 
 
 class SliceMoms(H5File):

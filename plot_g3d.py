@@ -109,13 +109,20 @@ def g3d_slice_subparser(subparsers, parent_parser):
                                     'yx', 'zy', 'zx'],
                           default='zx',
                           help= """Plane to be plotted (Default: zx).""")
-    parser.add_argument(  "--plane-index",
+    parser.add_argument(  "--pidx",
                           action='store',
                           dest="plane_index",
                           metavar="PLANE-IDX",
                           default=None,
                           type=int,
                           help= """Index of plane.""")
+    parser.add_argument(  "--ppos",
+                          action='store',
+                          dest="plane_pos",
+                          metavar="PLANE-POS",
+                          default=None,
+                          type=float,
+                          help= """Position of plane.""")    
     parser.add_argument(  "--cscale",
                           action='store',
                           dest="cscale",
@@ -153,20 +160,27 @@ def g3d_line_subparser(subparsers, parent_parser):
     parser = subparsers.add_parser( "line", parents=[parent_parser],
                                     help="Grid 3D line plotting")    
     # Line plot specific arguments
-    parser.add_argument(  "-l", "--lineout-axis",
+    parser.add_argument(  "-l", "--lout-axis",
                           action='store',
                           dest="loutax",
                           metavar="LOUTAX",
                           choices=[ 'x', 'y', 'z'],
                           default='z',
                           help= """Axis along which lineout is generated (Default: z).""")
-    parser.add_argument(  '--lineout-indices',
+    parser.add_argument(  '--lout-indices',
                           help='Indices for which lineout is taken.',
                           action='store',
                           dest="lout_idx",
                           metavar="'idx0 idx1'",
                           type=two_ints,
                           default=None)
+    parser.add_argument(  "--lout-zeta-pos",
+                          action='store',
+                          dest="lout_zeta_pos",
+                          metavar="LOUT-ZETA-POS",
+                          type=float,    
+                          default=None,
+                          help= """Zeta-position at which lineout is generated (Default: 0.0).""")    
     parser.add_argument(  "-s", "--save-path",
                           action="store",
                           dest="savepath",
@@ -236,6 +250,14 @@ def is_g3d_file(fname):
 def is_h5g3d_file(file):
     fname, fext = os.path.splitext(file)
     return is_h5_file(fext) and is_g3d_file(fname)
+
+class G3d_hslab:
+    def __init__(self, file, i0=None, i1=None, i2=None):
+        self.file = file
+        # Do everything here that does not require any args!!!
+        # - readin of hyperslab
+        # - axes arrays
+        # etc.       
 
 # General Grid3D_plot class
 class G3d_plot:
@@ -351,29 +373,45 @@ class G3d_plot_slice(G3d_plot):
         # read slice
         if 'z' in self.args.plane:
             if 'x' in self.args.plane:
-                if self.args.plane_index == None:
+                if (self.args.plane_index == None) and (self.args.plane_pos == None):
                     index = math.floor(self.g3d.nx[2]/2) - 1
-                    self.slice = self.g3d.read_slice(i2=index)
+                    self.slice = self.g3d.read(i2=index)
                     if self.g3d.nx[2]%2 == 0:
-                        self.slice = (self.slice + self.g3d.read_slice(i2=index+1))/2
+                        self.slice = (self.slice + self.g3d.read(i2=index+1))/2
+                elif (self.args.plane_index != None) and (self.args.plane_pos == None):
+                    self.slice = self.g3d.read(i2=self.args.plane_index)
+                elif (self.args.plane_index == None) and (self.args.plane_pos != None): 
+                    self.slice = self.g3d.read(x2=self.args.plane_pos)
                 else:
-                    self.slice = self.g3d.read_slice(i2=self.args.plane_index)
+                    print('ERROR: plane-index can''t be used in conjunction with plane-position!')
+                    sys.exit(1) 
+
             elif 'y' in self.args.plane:
-                if self.args.plane_index == None:
+                if (self.args.plane_index == None) and (self.args.plane_pos == None):
                     index = math.floor(self.g3d.nx[1]/2) - 1
-                    self.slice = self.g3d.read_slice(i1=index)
+                    self.slice = self.g3d.read(i1=index)
                     if self.g3d.nx[1]%2 == 0:
-                        self.slice = ( self.slice + self.g3d.read_slice(i1=index+1) )/2
+                        self.slice = ( self.slice + self.g3d.read(i1=index+1) )/2
+                elif (self.args.plane_index != None) and (self.args.plane_pos == None): 
+                    self.slice = self.g3d.read(i1=self.args.plane_index)
+                elif (self.args.plane_index == None) and (self.args.plane_pos != None): 
+                    self.slice = self.g3d.read(x1=self.args.plane_pos)                    
                 else:
-                    self.slice = self.g3d.read_slice(i1=self.args.plane_index)
+                    print('ERROR: plane-index can''t be used in conjunction with plane-position!')
+                    sys.exit(1) 
         elif ('x' in self.args.plane) and ('y' in self.args.plane):
-            if self.args.plane_index == None:
+            if (self.args.plane_index == None) and (self.args.plane_pos == None):
                 index = math.floor(self.g3d.nx[0]/2) - 1
-                self.slice = self.g3d.read_slice(i0=index)
+                self.slice = self.g3d.read(i0=index)
                 if self.g3d.nx[0]%2 == 0:
-                    self.slice = ( self.slice + self.g3d.read_slice(i0=index+1) )/2
+                    self.slice = ( self.slice + self.g3d.read(i0=index+1) )/2
+            elif (self.args.plane_index != None) and (self.args.plane_pos == None):
+                self.slice = self.g3d.read(i0=self.args.plane_index)
+            elif (self.args.plane_index == None) and (self.args.plane_pos != None):    
+                self.slice = self.g3d.read(x0=self.args.plane_pos) 
             else:
-                self.slice = self.g3d.read_slice(i0=self.args.plane_index)
+                print('ERROR: plane-index can''t be used in conjunction with plane-position!')
+                sys.exit(1)                 
 
         if self.args.plane in ['xy','zx','zy']:
             self.slice = np.transpose( self.slice )
@@ -481,54 +519,64 @@ class G3d_plot_line(G3d_plot):
                 # Default: central lineout
                 idx1 = math.floor(self.g3d.nx[1]/2) - 1
                 idx2 = math.floor(self.g3d.nx[2]/2) - 1
-                self.line = self.g3d.read_line(i1=idx1, i2=idx2)
+                self.line = self.g3d.read(i1=idx1, i2=idx2)
                 if self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 0:
-                    line01 = self.g3d.read_line(i1=idx1, i2=idx2+1)
-                    line10 = self.g3d.read_line(i1=idx1+1, i2=idx2)
-                    line11 = self.g3d.read_line(i1=idx1+1, i2=idx2+1)
+                    line01 = self.g3d.read(i1=idx1, i2=idx2+1)
+                    line10 = self.g3d.read(i1=idx1+1, i2=idx2)
+                    line11 = self.g3d.read(i1=idx1+1, i2=idx2+1)
                     self.line = ( self.line + line01 + line10 + line11 )/4
                 elif self.g3d.nx[1]%2 == 1 and self.g3d.nx[2]%2 == 0:
-                    self.line = ( self.line + self.g3d.read_line(i1=idx1, i2=idx2+1) )/2
+                    self.line = ( self.line + self.g3d.read(i1=idx1, i2=idx2+1) )/2
                 elif self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 1:
-                    self.line = ( self.line + self.g3d.read_line(i1=idx1+1, i2=idx2) )/2
+                    self.line = ( self.line + self.g3d.read(i1=idx1+1, i2=idx2) )/2
             else:
-                self.line = self.g3d.read_slice(i1=lout_idx[0], i2=lout_idx[1])
+                self.line = self.g3d.read(i1=lout_idx[0], i2=lout_idx[1])
 
         elif 'x' == self.args.loutax:
-            if self.args.lout_idx == None:
+            if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
                 # Default: central lineout
                 idx1 = math.floor(self.g3d.nx[0]/2) - 1
                 idx2 = math.floor(self.g3d.nx[2]/2) - 1
-                self.line = self.g3d.read_line(i0=idx1, i2=idx2)
+                self.line = self.g3d.read(i0=idx1, i2=idx2)
                 if self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 0:
-                    line01 = self.g3d.read_line(i0=idx1, i2=idx2+1)
-                    line10 = self.g3d.read_line(i0=idx1+1, i2=idx2)
-                    line11 = self.g3d.read_line(i0=idx1+1, i2=idx2+1)
+                    line01 = self.g3d.read(i0=idx1, i2=idx2+1)
+                    line10 = self.g3d.read(i0=idx1+1, i2=idx2)
+                    line11 = self.g3d.read(i0=idx1+1, i2=idx2+1)
                     self.line = ( self.line + line01 + line10 + line11 )/4
                 elif self.g3d.nx[0]%2 == 1 and self.g3d.nx[2]%2 == 0:
-                    self.line = ( self.line + self.g3d.read_line(i0=idx1, i2=idx2+1) )/2
+                    self.line = ( self.line + self.g3d.read(i0=idx1, i2=idx2+1) )/2
                 elif self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 1:
-                    self.line = ( self.line + self.g3d.read_line(i0=idx1+1, i2=idx2) )/2
+                    self.line = ( self.line + self.g3d.read(i0=idx1+1, i2=idx2) )/2
+            elif (self.args.lout_idx != None) and (self.args.lout_zeta_pos == None):
+                self.line = self.g3d.read(i0=lout_idx[0], i2=lout_idx[1])
+            elif (self.args.lout_idx == None) and (self.args.lout_zeta_pos != None):
+                self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x2=0.0)
             else:
-                self.line = self.g3d.read_slice(i0=lout_idx[0], i2=lout_idx[1])
+                print('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
+                sys.exit(1)                                      
 
         elif 'y' == self.args.loutax:
-            if self.args.lout_idx == None:
+            if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
                 # Default: central lineout
                 idx1 = math.floor(self.g3d.nx[0]/2) - 1
                 idx2 = math.floor(self.g3d.nx[1]/2) - 1
-                self.line = self.g3d.read_line(i0=idx1, i1=idx2)
+                self.line = self.g3d.read(i0=idx1, i1=idx2)
                 if self.g3d.nx[0]%2 == 0 and self.g3d.nx[1]%2 == 0:
-                    line01 = self.g3d.read_line(i0=idx1, i1=idx2+1)
-                    line10 = self.g3d.read_line(i0=idx1+1, i1=idx2)
-                    line11 = self.g3d.read_line(i0=idx1+1, i1=idx2+1)
+                    line01 = self.g3d.read(i0=idx1, i1=idx2+1)
+                    line10 = self.g3d.read(i0=idx1+1, i1=idx2)
+                    line11 = self.g3d.read(i0=idx1+1, i1=idx2+1)
                     self.line = ( self.line + line01 + line10 + line11 )/4
                 elif self.g3d.nx[0]%2 == 1 and self.g3d.nx[1]%2 == 0:
-                    self.line = ( self.line + self.g3d.read_line(i0=idx1, i1=idx2+1) )/2
+                    self.line = ( self.line + self.g3d.read(i0=idx1, i1=idx2+1) )/2
                 elif self.g3d.nx[0]%2 == 0 and self.g3d.nx[1]%2 == 1:
-                    self.line = ( self.line + self.g3d.read_line(i0=idx1+1, i1=idx2) )/2
+                    self.line = ( self.line + self.g3d.read(i0=idx1+1, i1=idx2) )/2
+            elif (self.args.lout_idx != None) and (self.args.lout_zeta_pos == None):
+                self.line = self.g3d.read(i0=lout_idx[0], i1=lout_idx[1])
+            elif (self.args.lout_idx == None) and (self.args.lout_zeta_pos != None):
+                self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x1=0.0)
             else:
-                self.line = self.g3d.read_slice(i0=lout_idx[0], i1=lout_idx[1])
+                print('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
+                sys.exit(1)                  
 
         if self.if_is_number_density():
             self.line = np.abs(self.line)
@@ -634,8 +682,9 @@ def line(args):
 
 def main():
     parser = argparse.ArgumentParser()
-    g3d_parent_parser = g3d_parser()
     g3d_subparsers = parser.add_subparsers(title="plot-type")
+
+    g3d_parent_parser = g3d_parser()
 
     g3d_ssp = g3d_slice_subparser(  subparsers=g3d_subparsers,
                                     parent_parser=g3d_parent_parser)
