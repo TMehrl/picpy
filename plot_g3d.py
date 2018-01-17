@@ -318,7 +318,7 @@ class G3d_plot:
                 print("Creating folder: " + path)
                 os.mkdir(path)
 
-    def if_is_number_density( self ):
+    def is_number_density( self ):
         name = self.g3d.name
         if 'plasma' in name:
             if 'charge' in name:
@@ -416,7 +416,7 @@ class G3d_plot_slice(G3d_plot):
         if self.args.plane in ['xy','zx','zy']:
             self.slice = np.transpose( self.slice )
 
-        if self.if_is_number_density():
+        if self.is_number_density():
             self.slice = np.abs(self.slice)
 
     def set_cmap( self ):
@@ -426,15 +426,21 @@ class G3d_plot_slice(G3d_plot):
         cblim = [0.0, 0.0]
 
         if self.g3d.type == picdefs.hipace.h5.g3dtypes.density:
-            self.colormap = 'PuBu_r';
-            cblim[0] = np.amin(self.slice)
-            cblim[1] = np.amax(self.slice)
+            if self.is_number_density():
+                self.colormap = cm.PuBu;
+                cblim[0] = np.amin(self.slice)
+                cblim[1] = np.amax(self.slice)
+            else:
+                self.colormap = cm.RdGy;
+                cblim[0] = -np.amax(abs(self.slice))
+                cblim[1] = np.amax(abs(self.slice))              
+
         elif self.g3d.type == picdefs.hipace.h5.g3dtypes.field:
-            self.colormap = cm.coolwarm
+            self.colormap = cm.RdBu
             cblim[0] = -np.amax(abs(self.slice))
             cblim[1] = np.amax(abs(self.slice))
         elif self.g3d.type == picdefs.hipace.h5.g3dtypes.current:
-            self.colormap = cm.coolwarm
+            self.colormap = cm.PuOr
             cblim[0] = -np.amax(abs(self.slice))
             cblim[1] = np.amax(abs(self.slice))
 
@@ -578,7 +584,7 @@ class G3d_plot_line(G3d_plot):
                 print('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
                 sys.exit(1)                  
 
-        if self.if_is_number_density():
+        if self.is_number_density():
             self.line = np.abs(self.line)
 
     def plot( self, ifsave=True ):
