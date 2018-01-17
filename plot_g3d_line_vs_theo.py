@@ -192,6 +192,13 @@ def g3d_lvst_Wr_subparser(subparsers, g3d_lvst_parent):
                           metavar="'idx0 idx1'",
                           type=two_ints,
                           default=None)
+    parser.add_argument(  "--rmax",
+                      action='store',
+                      dest="rmax",
+                      metavar="RMAX",
+                      type=float,                      
+                      default=None,
+                      help= """Maximum radius for plotting.""")    
     return parser
 
 class Beam:
@@ -318,6 +325,8 @@ def cmp_plot_Wr(args,
         zeta_pos = args.lout_zeta_pos   
 
     x_array = g3d.get_x_arr(1)
+               
+
     Wr_sim = g3d.read(x0 = zeta_pos, x2 = 0.0)
 
     Wr_theo = lin_Wr_theo_sigma_r( plasma = plasma, 
@@ -333,8 +342,13 @@ def cmp_plot_Wr(args,
     ax = plt.plot( x_array, Wr_sim )
     ax = plt.plot( x_array, Wr_theo, '--' )
     ax = plt.gca()
+    if args.rmax != None:
+        ax.set_xlim([0,args.rmax])
+        ylim = 1.2 * np.max(Wr_theo[np.logical_and(x_array<args.rmax, x_array>0.0)])
+        ax.set_ylim([0,ylim])
+        print(ylim)   
     ax.set_ylabel(r'$W_r/E_0$', fontsize=14)
-    ax.set_xlabel(r'$k_p x$', fontsize=14)
+    ax.set_xlabel(r'$k_p r$', fontsize=14)
 
     if not (-3.0 < math.log(np.max(abs(Wr_sim)),10) < 3.0):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
