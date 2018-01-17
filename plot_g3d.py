@@ -15,6 +15,7 @@ from matplotlib import cm
 import picdefs
 from h5dat import Grid3d
 from h5dat import H5FList
+from h5dat import mkdirs_if_nexist
 
 # Parse defaults/definitions
 class parsedefs:
@@ -292,27 +293,6 @@ class G3d_plot:
             print('Error: Wrong x-axis string!')
             sys.exit()
 
-    def mkdirs_if_nexist( self ):
-        folders = []
-        path = self.args.savepath
-
-        while 1:
-            path, folder = os.path.split(path)
-            if folder != "":
-                folders.append(folder)
-            else:
-                if path != "":
-                    folders.append(path)
-                break
-        folders.reverse()
-
-        path = ""
-        for folder in folders:
-            path = path + folder + "/"
-            if not os.path.isdir(path):
-                print("Creating folder: " + path)
-                os.mkdir(path)
-
     def is_number_density( self ):
         name = self.g3d.name
         if 'plasma' in name:
@@ -468,7 +448,7 @@ class G3d_plot_slice(G3d_plot):
         cbar = fig.colorbar(cax)
         cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )
 
-        self.mkdirs_if_nexist()
+        mkdirs_if_nexist(self.args.savepath)
 
         if saveformat==parsedefs.file_format.png:
             fig.savefig(  self.args.savepath + '/' + savename,
@@ -607,7 +587,7 @@ class G3d_plot_line(G3d_plot):
         else:
             plt.gcf().subplots_adjust(left=0.15)      
 
-        self.mkdirs_if_nexist()
+        mkdirs_if_nexist(self.args.savepath)
 
         if saveformat==parsedefs.file_format.png:
             fig.savefig(  self.args.savepath + '/' + savename,

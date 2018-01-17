@@ -11,25 +11,62 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 import scipy.constants as constants
 import mpmath
-import plot_g3d
+from h5dat import Grid3d
+from h5dat import H5FList
+from h5dat import mkdirs_if_nexist
 
+# Parse defaults/definitions
+class parsedefs:
+    class file_format:
+        png = 'png'
+        eps = 'eps'
+        pdf = 'pdf'
+    class zax:
+        zeta = 'zeta'
+        z = 'z'
+        xi = 'xi'
+    class save:
+        prefix = 'g3d_name'
+        path = './plots'
+
+def two_floats(value):
+    values = value.split()
+    if len(values) != 2:
+        raise argparse.ArgumentError
+    values = map(float, values)
+    return values
+
+def two_ints(value):
+    values = value.split()
+    if len(values) != 2:
+        raise argparse.ArgumentError
+    values = map(int, values)
+    return values
 
 def g3d_lvst_parser():
 
-    parser = argparse.ArgumentParser( add_help=False)
-    # Line vs-theo plot specific arguments
-    parser.add_argument(  "-l", "--lineout-axis",
-                          action='store',
-                          dest="loutax",
-                          metavar="LOUTAX",
-                          choices=[ 'x', 'y', 'z'],
-                          default='z',
-                          help= """Axis along which lineout is generated (Default: z).""")
+    desc = """This is the picpy postprocessing tool."""
+    # Line vs-theo plot arguments
+    parser = argparse.ArgumentParser( add_help=False,
+                                      description=desc)
+    parser.add_argument(  'path',
+                          metavar = 'PATH',
+                          nargs = '*',
+                          help = 'Path to grid file.')
+    parser.add_argument(  "-v", "--verbose",
+                          dest = "verbose",
+                          action="store_true",
+                          default=True,
+                          help = "Print info (Default).")
+    parser.add_argument(  "-q", "--quiet",
+                          dest = "verbose",
+                          action = "store_false",
+                          help = "Don't print info.")    
     parser.add_argument(  "-s", "--save-path",
                           action="store",
                           dest="savepath",
                           metavar="PATH",
-                          default=plot_g3d.parsedefs.save.path + '/g3d-line-vs-theo',
+                          default=parsedefs.save.path + '/g3d-line-vs-theo',
                           help = """Path to which generated files will be saved.
                               (Default: './')""")
     parser.add_argument(  "-f", "--format",
@@ -109,25 +146,32 @@ def g3d_lvst_parser():
     return parser
 
 
-def g3d_lvst_Ez_subparser(subparsers, g3d_parent, g3d_lvst_parent):
-    parser = subparsers.add_parser( "Ez", parents=[g3d_parent, g3d_lvst_parent],
+def g3d_lvst_Ez_subparser(subparsers, g3d_lvst_parent):
+    parser = subparsers.add_parser( "Ez", parents=[g3d_lvst_parent],
                                     conflict_handler='resolve',
                                     help="Ez longitudinal lineout")
-    parser.add_argument(  "-l", "--lineout-axis",
+    parser.add_argument( "-l", "--lineout-axis",
                       action='store',
                       dest="loutax",
                       metavar="LOUTAX",
                       choices=[ 'x', 'y', 'z'],
                       default='z',
                       help= """Axis along which lineout is generated (Default: z).""")
+    parser.add_argument(  '--lineout-indices',
+                          help='Indices for which lineout is taken.',
+                          action='store',
+                          dest="lout_idx",
+                          metavar="'idx1 idx2'",
+                          type=two_ints,
+                          default=None)                           
     return parser
 
 
-def g3d_lvst_Wr_subparser(subparsers, g3d_parent, g3d_lvst_parent):
-    parser = subparsers.add_parser( "Wr", parents=[g3d_parent, g3d_lvst_parent],
+def g3d_lvst_Wr_subparser(subparsers, g3d_lvst_parent):
+    parser = subparsers.add_parser( "Wr", parents=[g3d_lvst_parent],
                                     conflict_handler='resolve',
                                     help="Wr transverse lineout")
-    parser.add_argument(  "-l", "--lout-axis",
+    parser.add_argument( "-l", "--lineout-axis",
                       action='store',
                       dest="loutax",
                       metavar="LOUTAX",
@@ -138,6 +182,7 @@ def g3d_lvst_Wr_subparser(subparsers, g3d_parent, g3d_lvst_parent):
                       action='store',
                       dest="lout_zeta_pos",
                       metavar="LOUT-ZETA-POS",
+                      type=float,                      
                       default=None,
                       help= """Zeta-position at which lineout is generated (Default: 0.0).""")
     parser.add_argument(  '--lineout-indices',
@@ -145,8 +190,8 @@ def g3d_lvst_Wr_subparser(subparsers, g3d_parent, g3d_lvst_parent):
                           action='store',
                           dest="lout_idx",
                           metavar="'idx0 idx1'",
-                          type=plot_g3d.two_ints,
-                          default=None)    
+                          type=two_ints,
+                          default=None)
     return parser
 
 class Beam:
@@ -179,7 +224,7 @@ class Plasma:
             self.lambda_p = 2 * math.pi / self.k_p
             print('k_p = %f' % self.k_p)
 
-def lin_Ez_theo_long_wave( plasma, beam, zeta_array ):
+def lin_Ez_theo_long_pwave( plasma, beam, zeta_array ):
 
     Ez = -np.sign(beam.Z) * np.sqrt(2 * math.pi) * beam.n/plasma.n * plasma.k_p * beam.sigma_z \
          * np.exp(-1 * (plasma.k_p * beam.sigma_z)**2/2) * np.cos( plasma.k_p * (zeta_array - beam.zeta_0) )
@@ -203,8 +248,8 @@ def cmp_plot_Ez(g3d_p,
     zeta_array = g3d_p.x_array
 
     if beam.sigma_r == 0.0 or beam.sigma_r == None: 
-        Ez_theo = lin_Ez_theo_long_wave( plasma, beam, zeta_array )
-        print('lin_Ez_theo_long_wave')
+        Ez_theo = lin_Ez_theo_long_pwave( plasma, beam, zeta_array )
+        print('using: lin_Ez_theo_long_pwave')
     else:
         Ez_theo = lin_Ez_theo_sigma_r( plasma, beam, zeta_array )
 
@@ -245,53 +290,72 @@ def cmp_plot_Ez(g3d_p,
     plt.close(fig)
 
 
-def cmp_plot_Wr(g3d_p, 
+
+def lin_Wr_theo_sigma_r( plasma, beam, x_array, zeta_pos ): 
+
+    def H(x):
+        return (1-np.exp(-x))/x
+
+    if plasma.A == 0:
+        Wr = x_array/2
+    else:
+        Wr = x_array/2 * ( 1 + plasma.Z 
+                               * np.sqrt(constants.m_e/(plasma.A * constants.m_p)) 
+                               * beam.n 
+                               * zeta_pos**2/2 
+                               * H( x_array**2/(2*beam_sigma_r**2) ) )
+
+    return Wr
+
+def cmp_plot_Wr(args,
+                g3d, 
                 plasma, 
                 beam ):
 
-    zeta_array = g3d_p.x_array
+    if args.lout_zeta_pos == None:
+        zeta_pos = 0.0
+    else:
+        zeta_pos = args.lout_zeta_pos   
 
-    # if beam.sigma_r == 0.0 or beam.sigma_r == None: 
-    #     _theo = lin_Ez_theo_long_wave( plasma, beam, zeta_array )
-    #     print('lin_Ez_theo_long_wave')
-    # else:
-    #     Ez_theo = lin_Ez_theo_sigma_r( plasma, beam, zeta_array )
+    x_array = g3d.get_x_arr(1)
+    Wr_sim = g3d.read(x0 = zeta_pos, x2 = 0.0)
 
-    # print('Ratio: %f' % (np.max(Ez_theo)/np.max(g3d_p.line) ) )
+    Wr_theo = lin_Wr_theo_sigma_r( plasma = plasma, 
+                                   beam = beam,
+                                   x_array = x_array,
+                                   zeta_pos = zeta_pos)
 
-    # fig = plt.figure()
-    # ax = plt.plot( g3d_p.x_array, g3d_p.line )
-    # ax = plt.plot( g3d_p.x_array, Ez_theo, '--' )
-    # ax = plt.gca()
-    # ax.set_ylabel(g3d_p.ylabel, fontsize=14)
-    # ax.set_xlabel(g3d_p.xlabel, fontsize=14)
 
-    # if not (-3.0 < math.log(np.max(abs(g3d_p.line)),10) < 3.0):
-    #     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
-    #     plt.gcf().subplots_adjust(left=0.18)
-    # else:
-    #     plt.gcf().subplots_adjust(left=0.15)  
 
-    # g3d_p.mkdirs_if_nexist()
+    print('Ratio: %f' % (np.max(Wr_theo)/np.max(Wr_sim) ) )
 
-    # saveformat = g3d_p.args.file_format
-    # filesuffix = '_%06.f' % (np.floor(g3d_p.g3d.time))
+    fig = plt.figure()
+    ax = plt.plot( x_array, Wr_sim )
+    ax = plt.plot( x_array, Wr_theo, '--' )
+    ax = plt.gca()
+    ax.set_ylabel(r'$W_r/E_0$', fontsize=14)
+    ax.set_xlabel(r'$k_p x$', fontsize=14)
 
-    # fileprefix = g3d_p.g3d.name
+    if not (-3.0 < math.log(np.max(abs(Wr_sim)),10) < 3.0):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)  
 
-    # savename = fileprefix + filesuffix + '.' + saveformat
+    filesuffix = '_t_%06.f' % (np.floor(g3d.time))
+    fileprefix = 'Wr_' + 'zeta_%0.1f' % zeta_pos
+    saveformat = 'eps'
+    savepath = args.savepath
 
-    # if saveformat=='png':
-    #     fig.savefig(  g3d_p.args.savepath + '/' + savename,
-    #               format=saveformat,
-    #               dpi=600)
-    # else:
-    #     fig.savefig(  g3d_p.args.savepath + '/' + savename,
-    #                   format=saveformat)
-    # if g3d_p.args.verbose: print('Saved "' + savename + '" at: ' + g3d_p.args.savepath)
+    mkdirs_if_nexist(savepath)
 
-    # if g3d_p.args.ifshow: plt.show()
-    # plt.close(fig)
+    savename = fileprefix + filesuffix + '.' + saveformat
+
+    fig.savefig(  savepath + '/' + savename,
+                      format=saveformat)
+    if args.verbose: print('Saved "' + savename + '" at: ' + args.savepath)
+
+    plt.close(fig)
 
 def set_plasma( args ):
     plasma = Plasma(n = args.plasma_n, 
@@ -342,12 +406,13 @@ def lvst_Wr(args):
     beam = set_beam(args)
     plasma = set_plasma(args)
 
-    flist = plot_g3d.gen_filelist( args )
+    h5flist = H5FList(args.path, 'g3d')
+    flist = h5flist.get()
 
     for file in flist:
-        g3d_p = plot_g3d.G3d_plot_line(file, args)
-        if (g3d_p.g3d.name == 'ExmBy' or g3d_p.g3d.name == 'EypBx'):  
-            cmp_plot_Wr(g3d_p, plasma, beam)
+        g3d = Grid3d(file)
+        if (g3d.name == 'ExmBy' or g3d.name == 'EypBx'):  
+            cmp_plot_Wr(args, g3d, plasma, beam)
         else:
             print('ERROR: Dataset is no ExmBy or EypBx dataset!')
             sys.exit(1)    
@@ -357,16 +422,13 @@ def main():
     parser = argparse.ArgumentParser()
     g3d_subparsers = parser.add_subparsers(title="plot-type")
 
-    g3d_pp = plot_g3d.g3d_parser()
     g3d_lvst_pp = g3d_lvst_parser()
 
     g3d_lvst_Ez_sp = g3d_lvst_Ez_subparser( subparsers=g3d_subparsers,
-                                            g3d_parent=g3d_pp,
                                             g3d_lvst_parent=g3d_lvst_pp)
     g3d_lvst_Ez_sp.set_defaults(func=lvst_Ez)
 
     g3d_lvst_Wr_sp = g3d_lvst_Wr_subparser( subparsers=g3d_subparsers,
-                                            g3d_parent=g3d_pp,
                                             g3d_lvst_parent=g3d_lvst_pp)
     g3d_lvst_Wr_sp.set_defaults(func=lvst_Wr)
 

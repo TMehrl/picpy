@@ -18,31 +18,55 @@ piccodes = { 'hipace':'hipace',
 # to check whether file is an HDF5 file
 # and to print keys of attributes and datasets
 class H5File:
-    def __init__(self, file, check=False):
+    def __init__(self, file, h5ftype=None):
 
         # Allowed hdf5 extensions:
         self.__h5exts = ['.h5','.hdf5']
+        # Grid 3D types in filenames:
+        self.__g3dtypes = ['density', 'field', 'current']
+        # RAW types in filenames:
+        self.__rawtypes = ['raw']
 
         self.file = file
+        self.h5ftype = h5ftype
 
-        if check:
-            self.hdf5_check()
-
-    def hdf5_check(self):
-        fpath, fext = os.path.splitext(self.file)
-        if any(fext == s for s in self.__h5exts):
-            pass
+    # Returning boolean: if file extension is hdf5 extension
+    def is_h5_file(self, fext=None):
+        if (fext!=None):
+            return any(fext == h5ext for h5ext in self.__h5exts)
         else:
-            print('Error:\tExtension of file "%s" is not supported!' %fname)
-            print('\tAllowed file extensions: ',list(self.__h5exts))
-            sys.exit()
+            fname, fext = os.path.splitext(self.file)
+            return any(fext == h5ext for h5ext in self.__h5exts)          
 
-    def if_hdf5_file(self):
-        fpath, fext = os.path.splitext(self.file)
-        if any(fext == s for s in self.__h5exts):
-            return True
+
+    # Returning boolean: if file name contains 'raw'
+    def is_g3d_file(self, fname):
+        return any((mq in fname) for mq in self.__g3dtypes)
+
+    # Returning boolean: if file name contains 'raw'
+    def is_raw_file(self, fname):
+        return any((mq in fname) for mq in self.__rawtypes)
+
+    # Returning boolean:  if file extension is hdf5 extension and
+    #                     if file name contains name of grid quantity
+    def is_h5g3d_file(self):
+        fname, fext = os.path.splitext(self.file)
+        return self.is_h5_file(fext=fext) and self.is_g3d_file(fname=fname)
+
+    # Returning boolean:  if file extension is hdf5 extension and
+    #                     if file name contains 'raw'
+    def is_h5raw_file(self):
+        fname, fext = os.path.splitext(self.file)
+        return self.is_h5_file(fext=fext) and self.is_raw_file(fname=fname)
+
+    def fcheck(self):
+        if self.h5ftype == 'g3d':
+            return self.is_h5g3d_file()
+        elif self.h5ftype == 'raw':       
+            return self.is_h5raw_file()
         else:
-            return False
+            print('Error: No file type specified ["g3d", "raw"]!')
+            sys.exit(1)
 
     def print_datasets(self):
         with h5py.File(self.file,'r') as hf:
@@ -353,83 +377,12 @@ class SliceMoms(H5File):
                 self.avgx3p3 = np.array(hf.get( 'avgx3p3' ))
 
 
-class DIR:
-    def __init__(self, dir):
-        if os.path.isdir(dir):
-            sys.stdout.write('Reading directory: %s\n' % dir)
-            sys.stdout.flush()
-
-            self.dir = dir
-        else:
-            print(dir + ' is not a directory!')
-            sys.exit()
-
-    def list_files(self, strpattern):
-        self.flist=[]
-        ftime=[]
-        flist_usort=[]
-        for root, dirs, files in os.walk(self.dir):
-            for name in files:
-                h5file = H5File(name)
-                if (strpattern in name) & h5file.if_hdf5_file():
-                    fpath, fext = os.path.splitext(name)
-                    ftime.append(int(fpath[-picdefs.hipace.h5.Nfname_digits:]))
-                    flist_usort.append(name)
-            idx = np.argsort(np.asarray(ftime))
-            self.nf = len(flist_usort)
-            # Sorting
-            for i in range(0,self.nf):
-                self.flist.append(flist_usort[idx[i]])
-
-    def filepath(self, i):
-        fstr = '%s/%s' % (self.dir, self.flist[i])
-        return fstr
-
 
 class H5FList():
     def __init__(self, paths, h5ftype=None):
-        # Allowed hdf5 extensions:
-        self.__h5exts = ['.h5','.hdf5']
-        self.__g3dtypes = ['density', 'field', 'current']
-        self.__rawtypes = ['raw']
 
         self.paths = paths
         self.h5ftype = h5ftype
-
-    # Returning boolean: if file extension is hdf5 extension
-    def is_h5_file(self, fext):
-        return any(fext == h5ext for h5ext in self.__h5exts)
-
-    # Returning boolean: if file name contains name of grid quantity
-    # ['density', 'field', 'current']
-    def is_g3d_file(self, fname):
-        return any((mq in fname) for mq in self.__g3dtypes)
-
-    # Returning boolean: if file name contains 'raw'
-    def is_raw_file(self, fname):
-        return any((mq in fname) for mq in self.__rawtyes)
-
-    # Returning boolean:  if file extension is hdf5 extension and
-    #                     if file name contains name of grid quantity
-    def is_h5g3d_file(self, file):
-        fname, fext = os.path.splitext(file)
-        return self.is_h5_file(fext) and self.is_g3d_file(fname)
-
-    # Returning boolean:  if file extension is hdf5 extension and
-    #                     if file name contains 'raw'
-    def is_h5raw_file(self, file):
-        fname, fext = os.path.splitext(file)
-        return self.is_h5_file(fext) and self.is_raw_file(fname)
-
-
-    def fcheck(self, file):
-        if self.h5ftype == 'g3d':
-            return self.is_h5g3d_file(file)
-        elif self.h5ftype == 'raw':       
-            return self.is_h5raw_file(file)
-        else:
-            print('Error: No file type specified ["g3d", "raw"]!')
-            sys.exit(1)
 
     def get(self):
         if not self.paths:
@@ -439,9 +392,10 @@ class H5FList():
         flist = []
 
         for path in self.paths:
-            if os.path.isfile(path) :
+            if os.path.isfile(path):
                 file = path
-                if self.fcheck(file):
+                h5f = H5File(file, self.h5ftype)
+                if h5f.fcheck():
                     flist.append(file)
                 else:
                     print('Skipping: ' + file)
@@ -451,7 +405,8 @@ class H5FList():
                 for root, dirs, files in os.walk(path):
                     for filename in files:
                         file = root + '/' + filename
-                        if self.fcheck(file):
+                        h5f = H5File(file, self.h5ftype)
+                        if h5f.fcheck():
                             flist.append(file)
                         else:
                             print('Skipping: ' + file)
@@ -462,3 +417,25 @@ class H5FList():
                 print('Error: Provided path is neither a file nor a directory!')
                 sys.exit()
         return flist
+
+
+def mkdirs_if_nexist( path ):
+    folders = []
+
+    while 1:
+        path, folder = os.path.split(path)
+        if folder != "":
+            folders.append(folder)
+        else:
+            if path != "":
+                folders.append(path)
+            break
+    folders.reverse()
+
+    path = ""
+    for folder in folders:
+        path = path + folder + "/"
+        if not os.path.isdir(path):
+            print("Creating folder: " + path)
+            os.mkdir(path)
+                 
