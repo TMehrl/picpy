@@ -14,7 +14,7 @@ from matplotlib.ticker import FormatStrFormatter
 from matplotlib import cm
 import picdefs
 from h5dat import Grid3d
-
+from h5dat import H5FList
 
 # Parse defaults/definitions
 class parsedefs:
@@ -68,11 +68,6 @@ def g3d_parser():
                           action = "store_true",
                           default = False,
                           help = "Show figure.")
-    parser.add_argument(  "-a", "--all",
-                          action = 'store_true',
-                          dest = "process_all",
-                          default = False,
-                          help = "Process all files in path.")
     parser.add_argument(  "--name-prefix",
                           action = "store",
                           dest = "save_prefix",
@@ -628,48 +623,10 @@ class G3d_plot_line(G3d_plot):
         plt.close(fig)
 
 
-def gen_filelist(args):
-    
-    if not args.path:
-        print('Error: No file provided!')
-        sys.exit()
-
-    flist = []
-
-    for path in args.path:
-        if os.path.isfile(path) :
-            file = path
-            if is_h5g3d_file(file):
-                flist.append(file)
-            else:
-                print('Skipping: ' + file)
-        elif os.path.isdir(path):
-            print('"' + path + '"' + ' is a directory.')
-            if args.process_all == True:
-                print('Processing all g3d files in the provided directory.')
-                for root, dirs, files in os.walk(path):
-                    for filename in files:
-                        file = root + '/' + filename
-                        if is_h5g3d_file(file):
-                            flist.append(file)
-                        else:
-                            print('Skipping: ' + file)
-            else:
-                print('Error: Use the flag "-a" to process all files in the provided directory!')
-                sys.exit()
-        elif not os.path.exists(path):
-            print('Error: Provided path does not exist!')
-            sys.exit()
-        else:
-            print('Error: Provided path is neither a file nor a directory!')
-            sys.exit()
-
-    return flist
-
-
 def slice(args):
 
-    flist = gen_filelist(args)
+    h5flist = H5FList(args.path, h5ftype='g3d')
+    flist = h5flist.get()
 
     for file in flist:
         g3d_p = G3d_plot_slice(file, args)
@@ -678,7 +635,8 @@ def slice(args):
 
 def line(args):
 
-    flist = gen_filelist(args)
+    h5flist = H5FList(args.path, h5ftype='g3d')
+    flist = h5flist.get()
 
     for file in flist:
         g3d_p = G3d_plot_line(file, args)

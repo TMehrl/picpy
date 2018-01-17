@@ -384,3 +384,81 @@ class DIR:
     def filepath(self, i):
         fstr = '%s/%s' % (self.dir, self.flist[i])
         return fstr
+
+
+class H5FList():
+    def __init__(self, paths, h5ftype=None):
+        # Allowed hdf5 extensions:
+        self.__h5exts = ['.h5','.hdf5']
+        self.__g3dtypes = ['density', 'field', 'current']
+        self.__rawtypes = ['raw']
+
+        self.paths = paths
+        self.h5ftype = h5ftype
+
+    # Returning boolean: if file extension is hdf5 extension
+    def is_h5_file(self, fext):
+        return any(fext == h5ext for h5ext in self.__h5exts)
+
+    # Returning boolean: if file name contains name of grid quantity
+    # ['density', 'field', 'current']
+    def is_g3d_file(self, fname):
+        return any((mq in fname) for mq in self.__g3dtypes)
+
+    # Returning boolean: if file name contains 'raw'
+    def is_raw_file(self, fname):
+        return any((mq in fname) for mq in self.__rawtyes)
+
+    # Returning boolean:  if file extension is hdf5 extension and
+    #                     if file name contains name of grid quantity
+    def is_h5g3d_file(self, file):
+        fname, fext = os.path.splitext(file)
+        return self.is_h5_file(fext) and self.is_g3d_file(fname)
+
+    # Returning boolean:  if file extension is hdf5 extension and
+    #                     if file name contains 'raw'
+    def is_h5raw_file(self, file):
+        fname, fext = os.path.splitext(file)
+        return self.is_h5_file(fext) and self.is_raw_file(fname)
+
+
+    def fcheck(self, file):
+        if self.h5ftype == 'g3d':
+            return self.is_h5g3d_file(file)
+        elif self.h5ftype == 'raw':       
+            return self.is_h5raw_file(file)
+        else:
+            print('Error: No file type specified ["g3d", "raw"]!')
+            sys.exit(1)
+
+    def get(self):
+        if not self.paths:
+            print('Error: No file provided!')
+            sys.exit(1)
+
+        flist = []
+
+        for path in self.paths:
+            if os.path.isfile(path) :
+                file = path
+                if self.fcheck(file):
+                    flist.append(file)
+                else:
+                    print('Skipping: ' + file)
+            elif os.path.isdir(path):
+                print('"' + path + '"' + ' is a directory.')
+                print('Processing all g3d files in the provided directory.')
+                for root, dirs, files in os.walk(path):
+                    for filename in files:
+                        file = root + '/' + filename
+                        if self.fcheck(file):
+                            flist.append(file)
+                        else:
+                            print('Skipping: ' + file)
+            elif not os.path.exists(path):
+                print('Error: Provided path does not exist!')
+                sys.exit()
+            else:
+                print('Error: Provided path is neither a file nor a directory!')
+                sys.exit()
+        return flist
