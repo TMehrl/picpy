@@ -202,14 +202,14 @@ def g3d_lvst_Wr_subparser(subparsers, g3d_lvst_parent):
 
 class Beam:
     def __init__(self, n=0.0, sigma_z = 0.0, sigma_r = 0.0, zeta_0 = 0.0, Z=-1):    
-        if not (n == 0.0 or sigma_z == 0.0):
+        if not (n == 0.0):
             self.n = n
             self.sigma_z = sigma_z
             self.sigma_r = sigma_r
             self.zeta_0 = zeta_0
             self.Z = Z
         else:
-            print('ERROR: Beam density and beam sigma_z must be specified!')
+            print('ERROR: Beam density must be specified!')
             sys.exit()
 
 class Plasma:
@@ -305,11 +305,11 @@ def lin_Wr_theo_sigma_r( plasma, beam, x_array, zeta_pos ):
     if plasma.A == 0:
         Wr = x_array/2
     else:
-        Wr = x_array/2 * ( 1 + plasma.Z 
-                               * np.sqrt(constants.m_e/(plasma.A * constants.m_p)) 
+        Wr = x_array/2 * ( 1.0 + plasma.Z 
+                               * constants.m_e/(plasma.A * constants.m_p)
                                * beam.n 
                                * zeta_pos**2/2 
-                               * H( x_array**2/(2*beam.sigma_r**2) ) )
+                               * H( x_array**2/( 2 * beam.sigma_r**2 ) ) )
 
     return Wr
 
@@ -321,7 +321,7 @@ def cmp_plot_Wr(args,
     if args.lout_zeta_pos == None:
         zeta_pos = 0.0
     else:
-        zeta_pos = args.lout_zeta_pos   
+        zeta_pos = args.lout_zeta_pos
 
     x_array = g3d.get_x_arr(1)
                
@@ -338,8 +338,19 @@ def cmp_plot_Wr(args,
     print('Ratio: %f' % (np.max(Wr_theo)/np.max(Wr_sim) ) )
 
     fig = plt.figure()
-    ax = plt.plot( x_array, Wr_sim )
-    ax = plt.plot( x_array, Wr_theo, '--' )
+    ax_sim = plt.plot( x_array, Wr_sim,
+                       linestyle='-',
+                       color='tab:blue',
+                       label='Simulation' )
+    ax_theo = plt.plot( x_array, Wr_theo, 
+                        linestyle ='--',
+                        color='tab:orange',
+                        label='Lin. theory'  )
+    ax_half = plt.plot( x_array, x_array*0.5, 
+                        linestyle ='-.',
+                        label=r'$W_r/E_0=k_p r/2$',
+                        color=[0.5, 0.5, 0.5])
+    plt.legend()
     ax = plt.gca()
     if args.rmax != None:
         ax.set_xlim([0,args.rmax])
