@@ -113,7 +113,6 @@ def g3d_lvst_parser():
                           metavar="sigma_z",
                           default=0.0,
                           type=float,
-                          required=True,
                           help= """Gaussian beam sigma_z""") 
     parser.add_argument(  "--beam-sigma_r",
                           action='store',
@@ -310,7 +309,7 @@ def lin_Wr_theo_sigma_r( plasma, beam, x_array, zeta_pos ):
                                * np.sqrt(constants.m_e/(plasma.A * constants.m_p)) 
                                * beam.n 
                                * zeta_pos**2/2 
-                               * H( x_array**2/(2*beam_sigma_r**2) ) )
+                               * H( x_array**2/(2*beam.sigma_r**2) ) )
 
     return Wr
 
@@ -346,7 +345,9 @@ def cmp_plot_Wr(args,
         ax.set_xlim([0,args.rmax])
         ylim = 1.2 * np.max(Wr_theo[np.logical_and(x_array<args.rmax, x_array>0.0)])
         ax.set_ylim([0,ylim])
-        print(ylim)   
+        print(ylim)
+    else:
+        ax.set_xlim([0,np.max(x_array)])            
     ax.set_ylabel(r'$W_r/E_0$', fontsize=14)
     ax.set_xlabel(r'$k_p r$', fontsize=14)
 
