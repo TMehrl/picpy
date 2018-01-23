@@ -54,12 +54,13 @@ class Slices:
             if (edges==[]) and (range == None):
                 self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(raw.nx[0]+1))
             elif (edges==[]) and (range != None):
-                self.edges = np.arange(start=range[0],stop=range[1],step=dx0,dtype=np.float32)
+                self.edges = np.arange(start=range[0]-dx0/2,stop=range[1]+dx0/2,step=dx0,dtype=np.float32)
         elif nbins != 0:
             if range==None:
                 self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(nbins+1))
             else:
-                self.edges = np.linspace(range[0], range[1], num=(nbins+1))
+                dx0_step = (range[1] - range[0])/nbins
+                self.edges = np.linspace(range[0]-dx0_step/2, range[1]+dx0_step/2, num=(nbins+1))
         else:
             self.edges = edges
 
