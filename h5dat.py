@@ -424,6 +424,8 @@ class H5FList():
             else:
                 print('Error: Provided path is neither a file nor a directory!')
                 sys.exit()
+        # Alphabetically sorting list
+        flist = sorted(flist)
         return flist
 
 
