@@ -31,20 +31,6 @@ class parsedefs:
         prefix = 'g3d_name'
         path = './plots'
 
-def two_floats(value):
-    values = value.split()
-    if len(values) != 2:
-        raise argparse.ArgumentError
-    values = map(float, values)
-    return values
-
-def two_ints(value):
-    values = value.split()
-    if len(values) != 2:
-        raise argparse.ArgumentError
-    values = map(int, values)
-    return values
-
 def g3d_parser():
 
     desc = """This is the picpy postprocessing tool."""
@@ -131,7 +117,8 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           action='store',
                           dest="cblim",
                           metavar="'CBMIN CBMAX'",
-                          type=two_floats,
+                          nargs=2,
+                          type=float,
                           default=None)
     parser.add_argument(  "-s", "--save-path",
                           action="store",
@@ -168,7 +155,8 @@ def g3d_line_subparser(subparsers, parent_parser):
                           action='store',
                           dest="lout_idx",
                           metavar="'idx0 idx1'",
-                          type=two_ints,
+                          nargs=2,
+                          type=int,
                           default=None)
     parser.add_argument(  "--lout-zeta-pos",
                           action='store',

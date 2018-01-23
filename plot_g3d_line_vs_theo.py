@@ -8,6 +8,7 @@ import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from matplotlib.ticker import FormatStrFormatter
 import scipy.constants as constants
 import mpmath
@@ -29,19 +30,6 @@ class parsedefs:
         prefix = 'g3d_name'
         path = './plots'
 
-def two_floats(value):
-    values = value.split()
-    if len(values) != 2:
-        raise argparse.ArgumentError
-    values = map(float, values)
-    return values
-
-def two_ints(value):
-    values = value.split()
-    if len(values) != 2:
-        raise argparse.ArgumentError
-    values = map(int, values)
-    return values
 
 def g3d_lvst_parser():
 
@@ -161,7 +149,8 @@ def g3d_lvst_Ez_subparser(subparsers, g3d_lvst_parent):
                           action='store',
                           dest="lout_idx",
                           metavar="'idx1 idx2'",
-                          type=two_ints,
+                          type=int,
+                          nargs=2,
                           default=None)                           
     return parser
 
@@ -177,19 +166,21 @@ def g3d_lvst_Wr_subparser(subparsers, g3d_lvst_parent):
                       choices=[ 'x', 'y', 'z'],
                       default='x',
                       help= """Axis along which lineout is generated (Default: x).""")
-    parser.add_argument(  "--lout-zeta-pos",
+    parser.add_argument(  "--zeta-pos",
                       action='store',
-                      dest="lout_zeta_pos",
+                      dest="zeta_pos",
                       metavar="LOUT-ZETA-POS",
                       type=float,                      
                       default=None,
+                      nargs='*',
                       help= """Zeta-position at which lineout is generated (Default: 0.0).""")
     parser.add_argument(  '--lineout-indices',
                           help='Indices for which lineout is taken.',
                           action='store',
                           dest="lout_idx",
                           metavar="'idx0 idx1'",
-                          type=two_ints,
+                          type=int,
+                          nargs=2,
                           default=None)
     parser.add_argument(  "--rmax",
                       action='store',
@@ -201,11 +192,11 @@ def g3d_lvst_Wr_subparser(subparsers, g3d_lvst_parent):
     return parser
 
 class Beam:
-    def __init__(self, n=0.0, sigma_z = 0.0, sigma_r = 0.0, zeta_0 = 0.0, Z=-1):    
+    def __init__(self, n=0.0, sigma_z = 0.0, sigma_xy = 0.0, zeta_0 = 0.0, Z=-1):    
         if not (n == 0.0):
             self.n = n
             self.sigma_z = sigma_z
-            self.sigma_r = sigma_r
+            self.sigma_xy = sigma_xy
             self.zeta_0 = zeta_0
             self.Z = Z
         else:
@@ -220,15 +211,15 @@ class Plasma:
             self.n = n
             self.A = A
             self.Z = Z
-
-            if self.A != 0:
-                print('Plasma A = %d' % A)
-                self.omega_p = np.sqrt(constants.m_e/(self.A * constants.m_p)) * abs(self.Z) * np.sqrt(self.n)
-            else:
-                self.omega_p = np.sqrt(self.n) * abs(self.Z)
-            self.k_p = self.omega_p
-            self.lambda_p = 2 * math.pi / self.k_p
-            print('k_p = %f' % self.k_p)
+            # if self.A != 0:
+            #     print('Ion A = %d' % A)
+            #     print('Ion Z = %d' % Z)
+            #     self.omega_p = np.sqrt(constants.m_e/(self.A * constants.m_p)) * abs(self.Z) * np.sqrt(self.n)
+            # else:
+            #     self.omega_p = np.sqrt(self.n) * abs(self.Z)
+            # self.k_p = self.omega_p
+            # self.lambda_p = 2 * math.pi / self.k_p
+            # print('k_p = %f' % self.k_p)
 
 def lin_Ez_theo_long_pwave( plasma, beam, zeta_array ):
 
@@ -297,7 +288,7 @@ def cmp_plot_Ez(g3d_p,
 
 
 
-def lin_Wr_theo_sigma_r( plasma, beam, x_array, zeta_pos ): 
+def lin_Wr_theo( plasma, beam, x_array, zeta_pos ): 
 
     def H(x):
         return (1-np.exp(-x))/x
@@ -309,7 +300,7 @@ def lin_Wr_theo_sigma_r( plasma, beam, x_array, zeta_pos ):
                                * constants.m_e/(plasma.A * constants.m_p)
                                * beam.n 
                                * zeta_pos**2/2 
-                               * H( x_array**2/( 2 * beam.sigma_r**2 ) ) )
+                               * H( x_array**2/( 2 * beam.sigma_xy**2 ) ) )
 
     return Wr
 
@@ -318,47 +309,63 @@ def cmp_plot_Wr(args,
                 plasma, 
                 beam ):
 
-    if args.lout_zeta_pos == None:
-        zeta_pos = 0.0
+    print(type(args.zeta_pos))
+    print(args.zeta_pos)
+
+    if args.zeta_pos == None:
+        zeta_pos_list = [0.0]
     else:
-        zeta_pos = args.lout_zeta_pos
+        zeta_pos_list = args.zeta_pos
 
     x_array = g3d.get_x_arr(1)
-               
+       
+    Nsimlines = len(zeta_pos_list)
+    Nzeta = g3d.get_nx(1)
 
-    Wr_sim = g3d.read(x0 = zeta_pos, x2 = 0.0)
+    Wr_sim = np.zeros((Nzeta, Nsimlines))
+    Wr_theo = np.zeros((Nzeta, Nsimlines))
 
-    Wr_theo = lin_Wr_theo_sigma_r( plasma = plasma, 
-                                   beam = beam,
-                                   x_array = x_array,
-                                   zeta_pos = zeta_pos)
+    for i in range(0, Nsimlines):
+        zeta_pos = zeta_pos_list[i]
+        Wr_sim[:,i] = g3d.read(x0 = zeta_pos, x2 = 0.0)
+        Wr_theo[:,i] = lin_Wr_theo( plasma = plasma, 
+                               beam = beam,
+                               x_array = x_array,
+                               zeta_pos = zeta_pos)
 
+    cmap = cm.tab10
 
-
-    print('Ratio: %f' % (np.max(Wr_theo)/np.max(Wr_sim) ) )
-
-    fig = plt.figure()
-    ax_sim = plt.plot( x_array, Wr_sim,
-                       linestyle='-',
-                       color='tab:blue',
-                       label='Simulation' )
-    ax_theo = plt.plot( x_array, Wr_theo, 
-                        linestyle ='--',
-                        color='tab:orange',
-                        label='Lin. theory'  )
+    fig = plt.figure(num=None, 
+                     figsize=(9, 7), 
+                     dpi=80, 
+                     facecolor='w', 
+                     edgecolor='k')
     ax_half = plt.plot( x_array, x_array*0.5, 
-                        linestyle ='-.',
-                        label=r'$W_r/E_0=k_p r/2$',
-                        color=[0.5, 0.5, 0.5])
+                        linestyle ='-',
+                        label=r'$k_p r/2$',
+                        color=[0.5, 0.5, 0.5])    
+    for i in range(0, Nsimlines):
+        zeta_pos = zeta_pos_list[i]
+        ax_sim = plt.plot( x_array, Wr_sim[:,i],
+                           linestyle='-',
+                           color=cmap(i),
+                           label=r'PIC, $k_p \zeta = %0.1f$' %  zeta_pos)
+        ax_theo = plt.plot( x_array, Wr_theo[:,i], 
+                            linestyle ='--',
+                            color=cmap(i),
+                            label=r'Theo, $k_p \zeta = %0.1f$' %  zeta_pos)
     plt.legend()
     ax = plt.gca()
     if args.rmax != None:
-        ax.set_xlim([0,args.rmax])
-        ylim = 1.2 * np.max(Wr_theo[np.logical_and(x_array<args.rmax, x_array>0.0)])
-        ax.set_ylim([0,ylim])
-        print(ylim)
+        xmax = args.rmax
+        ymax = 1.2 * np.amax(Wr_sim[np.logical_and(x_array<xmax, x_array>0.0)])
     else:
-        ax.set_xlim([0,np.max(x_array)])            
+        max_idx = np.where(Wr_sim==np.amax(Wr_sim))[0][0]
+        xmax = x_array[max_idx]
+        ymax = 1.2 * np.amax(Wr_sim)
+        print(ymax)
+    ax.set_xlim([0,xmax])
+    ax.set_ylim([0,ymax])            
     ax.set_ylabel(r'$W_r/E_0$', fontsize=14)
     ax.set_xlabel(r'$k_p r$', fontsize=14)
 
@@ -394,13 +401,13 @@ def set_beam( args ):
     if args.beam_sigma_r != 0.0 and args.beam_sigma_xy == 0.0:
         beam = Beam(n = args.beam_n, 
                     sigma_z = args.beam_sigma_z, 
-                    sigma_r = args.beam_sigma_r,
+                    sigma_xy = args.beam_sigma_r/np.sqrt(2.0),
                     zeta_0 = args.beam_zeta_0,
                     Z = args.beam_Z )
     elif args.beam_sigma_r == 0.0 and args.beam_sigma_xy != 0.0:
         beam = Beam(n = args.beam_n, 
                     sigma_z = args.beam_sigma_z, 
-                    sigma_r = args.beam_sigma_xy * np.sqrt(2.0),
+                    sigma_xy = args.beam_sigma_xy,
                     zeta_0 = args.beam_zeta_0,
                     Z = args.beam_Z )
     elif args.beam_sigma_r == 0.0 and args.beam_sigma_xy == 0.0:

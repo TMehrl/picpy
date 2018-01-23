@@ -209,6 +209,9 @@ class HiFile(H5Keys, H5File):
     def get_nt(self):
         return round(self.time/self.dt)
 
+    def get_nx(self,dim):
+        return self.nx[dim]        
+
 
 # class H5PIC(H5File):
 #   def __init__(self, file, piccode):
@@ -253,7 +256,9 @@ class Grid3d(HiFile):
         self.read_attrs()
         with h5py.File(self.file,'r') as hf:
             self.h5keys = list(hf.keys())
-            if len(self.h5keys) == 0:
+            if len(self.h5keys) == 1:
+                self.dsetkey = self.h5keys[0]
+            elif len(self.h5keys) == 0:
                 print('Error:\tHDF5 file "%s" does not '
                   'contain any dataset!' %(self.file) )
                 sys.exit()
@@ -262,21 +267,24 @@ class Grid3d(HiFile):
                   'than one dataset!' %(self.file) )
                 sys.exit()
 
+        # self.fid = h5py.h5f.open(self.file.encode())
+        # self.dset = h5py.h5d.open(self.fid, self.dsetkey.encode())
+
     def read_3D(self):
         with h5py.File(self.file,'r') as hf:
             # Reading dataset (here not caring how dataset is called)
-            self.data = hf[self.h5keys[0]][()]
+            self.data = hf[self.dsetkey][()]
 
 
     def read_2D(self, i0=None, i1=None, i2=None):
         with h5py.File(self.file,'r') as hf:
         # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1==None and i2==None:
-                slice = hf[self.h5keys[0]][i0,:,:]
+                slice = hf[self.dsetkey][i0,:,:]
             elif i0==None and i1!=None and i2==None:
-                slice = hf[self.h5keys[0]][:,i1,:]
+                slice = hf[self.dsetkey][:,i1,:]
             elif i0==None and i1==None and i2!=None:
-                slice = hf[self.h5keys[0]][:,:,i2]
+                slice = hf[self.dsetkey][:,:,i2]
             else:
                 print('Error:\tExactly one index must '
                   'be provided for HDF slice read in!')
@@ -287,11 +295,11 @@ class Grid3d(HiFile):
         with h5py.File(self.file,'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1!=None and i2==None:
-                line = hf[self.h5keys[0]][i0,i1,:]
+                line = hf[self.dsetkey][i0,i1,:]
             elif i0!=None and i1==None and i2!=None:
-                line = hf[self.h5keys[0]][i0,:,i2]
+                line = hf[self.dsetkey][i0,:,i2]
             elif i0==None and i1!=None and i2!=None:
-                line = hf[self.h5keys[0]][:,i1,i2]
+                line = hf[self.dsetkey][:,i1,i2]
             else:
                 print('Error:\tExactly two indices must '
                   'be provided for HDF line read in!')
@@ -302,7 +310,7 @@ class Grid3d(HiFile):
         with h5py.File(self.file,'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1!=None and i2!=None:
-                point = hf[self.h5keys[0]][i0,i1,i2]
+                point = hf[self.dsetkey][i0,i1,i2]
             else:
                 print('Error:\tExactly three indices must '
                   'be provided for HDF point read in!')
@@ -438,4 +446,3 @@ def mkdirs_if_nexist( path ):
         if not os.path.isdir(path):
             print("Creating folder: " + path)
             os.mkdir(path)
-                 
