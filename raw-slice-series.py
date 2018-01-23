@@ -25,7 +25,6 @@ class parsedefaults:
     savepath = './'
     raw_ident_str = 'raw_beam_'
     mom_order = 2
-    Nbins = 256
     Nfiles = 0
     crossterms = False
 
@@ -85,15 +84,22 @@ def ps_parseargs():
                           action='store',
                           dest="Nbins",
                           metavar="Nbins",
-                          default=parsedefaults.Nbins,
-                          help= 'Number of bins. (Default: %i)' % parsedefaults.Nbins)
+                          default=None,
+                          help= 'Number of bins.')
     parser.add_argument(  "--xterms",
                           action="store_true",
                           dest="crossterms",
                           default=parsedefaults.crossterms,
                           help = 'Compute averages of crossterms, '
                           'e.g. <x1p3> (Default: %s).' % parsedefaults.crossterms)
-
+    parser.add_argument(  '--zeta-range',
+                          help='zeta range',
+                          action='store',
+                          dest="zeta_range",
+                          metavar="'ZETA_MIN ZETA_MAX'",
+                          nargs=2,
+                          type=float,
+                          default=None)
 
 #   parser.add_argument(  "-c", "--code",
 #                       type='choice',
@@ -124,30 +130,34 @@ def main():
 
     args = parser.parse_args()
 
-    Nbins = args.Nbins
+    
     mom_order = args.mom_order
     crossterms = args.crossterms
 
-    print(args.path)
 
     h5fl = H5FList(args.path, h5ftype='raw')
-    flist = h5fl.get()
+    flist = h5fl.get(verbose=False)
 
     Nfiles = len(flist)
 
-    # if (dir.nf > 0):
-    #     if (args.Nfiles == parsedefaults.Nfiles):
-    #         Nfiles = dir.nf
-    #     elif int(args.Nfiles) <= dir.nf:
-    #         Nfiles = int(args.Nfiles)
-    #     else:
-    #         sys.stderr('Error: Nfiles cannot be greater than the actual number of files!')
-    # else :
-    #     print(  'Error:\tNo phase space (raw) files in directory!\n' +
-    #             ('\tCheck the used path (currently: "%s")\n' % args.savepath) +
-    #             ('\tCheck the used RAW identification string (currently: "%s")' % args.raw_ident_str)
-    #           )
-    #     sys.exit()
+    # Getting file information
+    raw = HiRAW(flist[0])
+    raw.read_attrs()
+
+    if args.Nbins == None and args.zeta_range == None:
+        zeta_range = None
+        slices = ps_ana.Slices(raw)          
+        Nbins = slices.nbins
+    elif args.Nbins != None and args.zeta_range == None:
+        Nbins = args.Nbins
+        zeta_range = None
+    elif args.Nbins == None and args.zeta_range != None:
+        zeta_range = args.zeta_range
+        slices = ps_ana.Slices(raw, range=zeta_range)          
+        Nbins = slices.nbins
+    else:
+        Nbins = args.Nbins
+        zeta_range = args.zeta_range    
 
     sys.stdout.write('There are %i raw files to process...\n' % Nfiles)
     sys.stdout.flush()
@@ -214,7 +224,8 @@ def main():
         raw.read_data()
 
         time_array[i] = raw.time
-        slices = ps_ana.Slices(raw, nbins=Nbins)
+        slices = ps_ana.Slices(raw, nbins=Nbins, range=zeta_range)
+
         slices.calc_moments(order = mom_order, crossterms=crossterms)
         avgx1[i,:] = slices.avgx1
         avgx2[i,:] = slices.avgx2

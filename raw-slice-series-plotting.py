@@ -4,7 +4,7 @@
 
 import numpy as np
 import os
-from argparse import ArgumentParser
+import argparse
 from optparse import OptionParser
 #from optparse import OptionGroup
 import math
@@ -32,34 +32,34 @@ class parsedefs:
 
 def ps_parseopts():
 
-    usg = "Usage: %prog [options] <file or path>"
-
     desc="""This is the picpy postprocessing tool."""
 
-    parser = ArgumentParser(usage=usg, description=desc)
+    parser = argparse.ArgumentParser(description=desc)
     #parser = OptionParser(usage=usg, description=desc)
-    parser.add_option(  "-v", "--verbose",
+    parser.add_argument(  'path',
+                          metavar = 'PATH',
+                          help = 'Path to raw files.')    
+    parser.add_argument(  "-v", "--verbose",
                         action="store_true",
                         dest="verbose",
                         default=True,
                         help = "Print info (Default).")
-    parser.add_option(  "-q", "--quiet",
+    parser.add_argument(  "-q", "--quiet",
                         action="store_false",
                         dest="verbose",
                         help = "Don't print info.")
-    parser.add_option(  "-s", "--save-path",
+    parser.add_argument(  "-s", "--save-path",
                         dest="savepath",
                         metavar="PATH",
                         default='./',
                         help = """Path to which generated files will be saved.
                               (Default: './')""")
-    parser.add_option(  "-n", "--name-prefix",
+    parser.add_argument(  "-n", "--name-prefix",
                         dest="save_prefix",
                         metavar="NAME",
                         default=parsedefs.save_prefix.name,
                         help = """Define customized prefix of output filename.""")
-    parser.add_option(  "-c", "--code",
-                        type='choice',
+    parser.add_argument(  "-c", "--code",
                         action='store',
                         dest="piccode",
                         metavar="CODE",
@@ -67,8 +67,7 @@ def ps_parseopts():
                         default = picdefs.code.hipace,
                         help= "PIC code which was used to generate files (Default: " +
                               picdefs.code.hipace + ").")
-    parser.add_option(  "-d", "--dim",
-                        type='choice',
+    parser.add_argument(  "-d", "--dim",
                         action='store',
                         dest="dimensionality",
                         metavar="DIM",
@@ -76,7 +75,7 @@ def ps_parseopts():
                         default=3,
                         help= """Dimensionality of PIC simulation
                               (Default: 3).""")
-    parser.add_option(  "-N", "--number-of-files",
+    parser.add_argument(  "-N", "--number-of-files",
                         action='store',
                         dest="Nfiles",
                         metavar="NFILES",
@@ -91,9 +90,11 @@ def main():
 
     parser = ps_parseopts()
 
-    (opts, args) = parser.parse_args()
+    args = parser.parse_args()
 
-    slm = SliceMoms(args[0])
+    file = args.path
+
+    slm = SliceMoms(file)
 
     Xb0 = np.ones(slm.avgx2[0,:].shape)
     for i in range(0,len(slm.zeta_array)):

@@ -46,14 +46,20 @@ def moments(array1, array2, weights, order=2, central=True, roots=False):
 
 # Class for slice analysis
 class Slices:
-    def __init__(self, raw, edges=[], nbins=0):
+    def __init__(self, raw, edges=[], nbins=0, range=None):
 
         dx0 = (raw.xmax[0] - raw.xmin[0])/raw.nx[0]
         self.raw = raw
-        if (edges==[]) & (nbins==0):
-            self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(raw.nx[0]+1))
+        if nbins == 0:
+            if (edges==[]) and (range == None):
+                self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(raw.nx[0]+1))
+            elif (edges==[]) and (range != None):
+                self.edges = np.arange(start=range[0],stop=range[1],step=dx0,dtype=np.float32)
         elif nbins != 0:
-            self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(nbins+1))
+            if range==None:
+                self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(nbins+1))
+            else:
+                self.edges = np.linspace(range[0], range[1], num=(nbins+1))
         else:
             self.edges = edges
 
@@ -110,12 +116,12 @@ class Slices:
 
             if timings: self.cm_afsortingpart_time = time.time()
 
-            self.avgx1 = np.average(X1, axis=1, weights=Q)
-            self.avgx2 = np.average(X2, axis=1, weights=Q)
-            self.avgx3 = np.average(X3, axis=1, weights=Q)
-            self.avgp1 = np.average(P1, axis=1, weights=Q)
-            self.avgp2 = np.average(P2, axis=1, weights=Q)
-            self.avgp3 = np.average(P3, axis=1, weights=Q)
+            self.avgx1 = np.ma.average(X1, axis=1, weights=Q)
+            self.avgx2 = np.ma.average(X2, axis=1, weights=Q)
+            self.avgx3 = np.ma.average(X3, axis=1, weights=Q)
+            self.avgp1 = np.ma.average(P1, axis=1, weights=Q)
+            self.avgp2 = np.ma.average(P2, axis=1, weights=Q)
+            self.avgp3 = np.ma.average(P3, axis=1, weights=Q)
 
             if timings: self.cm_afcalcavg_time = time.time()
 
@@ -131,55 +137,55 @@ class Slices:
 
             if timings: self.cm_afallocsqavg_time = time.time()
 
-            self.avgx1sq = np.average(np.power(X1,2), axis=1, weights=Q)
-            self.avgx2sq = np.average(np.power(X2,2), axis=1, weights=Q)
-            self.avgx3sq = np.average(np.power(X3,2), axis=1, weights=Q)
+            self.avgx1sq = np.ma.average(np.power(X1,2), axis=1, weights=Q)
+            self.avgx2sq = np.ma.average(np.power(X2,2), axis=1, weights=Q)
+            self.avgx3sq = np.ma.average(np.power(X3,2), axis=1, weights=Q)
 
-            self.avgp1sq = np.average(np.power(P1,2), axis=1, weights=Q)
-            self.avgp2sq = np.average(np.power(P2,2), axis=1, weights=Q)
-            self.avgp3sq = np.average(np.power(P3,2), axis=1, weights=Q)
+            self.avgp1sq = np.ma.average(np.power(P1,2), axis=1, weights=Q)
+            self.avgp2sq = np.ma.average(np.power(P2,2), axis=1, weights=Q)
+            self.avgp3sq = np.ma.average(np.power(P3,2), axis=1, weights=Q)
 
-            self.avgx1p1 = np.average(np.multiply(X1,P1), axis=1, weights=Q)
-            self.avgx2p2 = np.average(np.multiply(X2,P2), axis=1, weights=Q)
-            self.avgx3p3 = np.average(np.multiply(X2,P3), axis=1, weights=Q)
+            self.avgx1p1 = np.ma.average(np.multiply(X1,P1), axis=1, weights=Q)
+            self.avgx2p2 = np.ma.average(np.multiply(X2,P2), axis=1, weights=Q)
+            self.avgx3p3 = np.ma.average(np.multiply(X2,P3), axis=1, weights=Q)
 
             if crossterms:
-                self.avgx1x2 = np.average(np.multiply(X1,P2), axis=1, weights=Q)
-                self.avgx3x1 = np.average(np.multiply(X1,P3), axis=1, weights=Q)
-                self.avgx2x3 = np.average(np.multiply(X2,P3), axis=1, weights=Q)
+                self.avgx1x2 = np.ma.average(np.multiply(X1,P2), axis=1, weights=Q)
+                self.avgx3x1 = np.ma.average(np.multiply(X1,P3), axis=1, weights=Q)
+                self.avgx2x3 = np.ma.average(np.multiply(X2,P3), axis=1, weights=Q)
 
-                self.avgp1p2 = np.average(np.multiply(X1,P2), axis=1, weights=Q)
-                self.avgp3p1 = np.average(np.multiply(X1,P3), axis=1, weights=Q)
-                self.avgp2p3 = np.average(np.multiply(X2,P3), axis=1, weights=Q)
+                self.avgp1p2 = np.ma.average(np.multiply(X1,P2), axis=1, weights=Q)
+                self.avgp3p1 = np.ma.average(np.multiply(X1,P3), axis=1, weights=Q)
+                self.avgp2p3 = np.ma.average(np.multiply(X2,P3), axis=1, weights=Q)
 
-                self.avgx1p2 = np.average(np.multiply(X1,P2), axis=1, weights=Q)
-                self.avgx1p3 = np.average(np.multiply(X1,P3), axis=1, weights=Q)
+                self.avgx1p2 = np.ma.average(np.multiply(X1,P2), axis=1, weights=Q)
+                self.avgx1p3 = np.ma.average(np.multiply(X1,P3), axis=1, weights=Q)
 
-                self.avgx2p1 = np.average(np.multiply(X2,P1), axis=1, weights=Q)
-                self.avgx2p3 = np.average(np.multiply(X2,P3), axis=1, weights=Q)
+                self.avgx2p1 = np.ma.average(np.multiply(X2,P1), axis=1, weights=Q)
+                self.avgx2p3 = np.ma.average(np.multiply(X2,P3), axis=1, weights=Q)
 
-                self.avgx3p1 = np.average(np.multiply(X3,P1), axis=1, weights=Q)
-                self.avgx3p2 = np.average(np.multiply(X3,P2), axis=1, weights=Q)
+                self.avgx3p1 = np.ma.average(np.multiply(X3,P1), axis=1, weights=Q)
+                self.avgx3p2 = np.ma.average(np.multiply(X3,P2), axis=1, weights=Q)
 
             if timings: self.cm_afcalcsqavg_time = time.time()
 
         if order > 2:
 
-            self.avgx1cube = np.average(np.power( X1 ,3), axis=1, weights=Q)
-            self.avgx2cube = np.average(np.power( X2 ,3), axis=1, weights=Q)
-            self.avgx3cube = np.average(np.power( X3 ,3), axis=1, weights=Q)
+            self.avgx1cube = np.ma.average(np.power( X1 ,3), axis=1, weights=Q)
+            self.avgx2cube = np.ma.average(np.power( X2 ,3), axis=1, weights=Q)
+            self.avgx3cube = np.ma.average(np.power( X3 ,3), axis=1, weights=Q)
 
-            self.avgp1cube = np.average(np.power( P1 ,3), axis=1, weights=Q)
-            self.avgp2cube = np.average(np.power( P2 ,3), axis=1, weights=Q)
-            self.avgp3cube = np.average(np.power( P3 ,3), axis=1, weights=Q)
+            self.avgp1cube = np.ma.average(np.power( P1 ,3), axis=1, weights=Q)
+            self.avgp2cube = np.ma.average(np.power( P2 ,3), axis=1, weights=Q)
+            self.avgp3cube = np.ma.average(np.power( P3 ,3), axis=1, weights=Q)
 
-            self.avgx1sqp1 = np.average(np.multiply(np.power(X1,2),P1), axis=1, weights=Q)
-            self.avgx2sqp2 = np.average(np.multiply(np.power(X2,2),P2), axis=1, weights=Q)
-            self.avgx3sqp3 = np.average(np.multiply(np.power(X3,2),P3), axis=1, weights=Q)
+            self.avgx1sqp1 = np.ma.average(np.multiply(np.power(X1,2),P1), axis=1, weights=Q)
+            self.avgx2sqp2 = np.ma.average(np.multiply(np.power(X2,2),P2), axis=1, weights=Q)
+            self.avgx3sqp3 = np.ma.average(np.multiply(np.power(X3,2),P3), axis=1, weights=Q)
 
-            self.avgx1p1sq = np.average(np.multiply(X1,np.power(P1,2)), axis=1, weights=Q)
-            self.avgx2p2sq = np.average(np.multiply(X2,np.power(P2,2)), axis=1, weights=Q)
-            self.avgx3p3sq = np.average(np.multiply(X3,np.power(P3,2)), axis=1, weights=Q)
+            self.avgx1p1sq = np.ma.average(np.multiply(X1,np.power(P1,2)), axis=1, weights=Q)
+            self.avgx2p2sq = np.ma.average(np.multiply(X2,np.power(P2,2)), axis=1, weights=Q)
+            self.avgx3p3sq = np.ma.average(np.multiply(X3,np.power(P3,2)), axis=1, weights=Q)
 
 
         if timings:

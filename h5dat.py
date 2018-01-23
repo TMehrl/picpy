@@ -355,7 +355,7 @@ class Grid3d(HiFile):
 class SliceMoms(H5File):
     def __init__(self, file):
 
-        H5File.__init__(self, file, check=True)
+        H5File.__init__(self, file)
 
         self.read()
 
@@ -392,7 +392,7 @@ class H5FList():
         self.paths = paths
         self.h5ftype = h5ftype
 
-    def get(self):
+    def get(self, verbose=True):
         if not self.paths:
             print('Error: No file provided!')
             sys.exit(1)
@@ -406,10 +406,12 @@ class H5FList():
                 if h5f.fcheck():
                     flist.append(file)
                 else:
-                    print('Skipping: ' + file)
+                    if verbose: print('Skipping: ' + file)
             elif os.path.isdir(path):
-                print('"' + path + '"' + ' is a directory.')
-                print('Processing all g3d files in the provided directory.')
+                if verbose: print('"' + path + '"' + ' is a directory.')
+                if verbose: 
+                    print('Processing all ' + self.h5ftype + 
+                          ' files in the provided directory.')
                 for root, dirs, files in os.walk(path):
                     for filename in files:
                         file = root + '/' + filename
@@ -417,7 +419,7 @@ class H5FList():
                         if h5f.fcheck():
                             flist.append(file)
                         else:
-                            print('Skipping: ' + file)
+                           if verbose: print('Skipping: ' + file)
             elif not os.path.exists(path):
                 print('Error: Provided path does not exist!')
                 sys.exit()
