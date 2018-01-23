@@ -4,7 +4,7 @@
 
 import numpy as np
 import os
-from argparse import ArgumentParser
+import argparse
 import math
 import sys
 import matplotlib
@@ -15,7 +15,7 @@ import matplotlib.colors as colors
 from matplotlib.colors import LogNorm
 import picdefs
 from h5dat import HiRAW
-from h5dat import DIR
+from h5dat import H5FList
 import ps_ana
 import h5py
 
@@ -31,14 +31,13 @@ class parsedefaults:
 
 def ps_parseargs():
 
-    usg = 'Usage: %prog [options] <file or path>'
-
     desc='This is the picpy postprocessing tool.'
 
-    parser = ArgumentParser(usage=usg, description=desc)
+    parser = argparse.ArgumentParser(description=desc)
     parser.add_argument(  'path',
-                          metavar='PATH',
-                          help='Path to raw outputs.')
+                          metavar = 'PATH',
+                          nargs = '*',
+                          help = 'Path to raw files.')
     parser.add_argument(  '-v', '--verbose',
                           action='store_true',
                           dest='verbose',
@@ -72,8 +71,7 @@ def ps_parseargs():
                           metavar="MOMORDER",
                           choices=[1, 2, 3,],
                           default=parsedefaults.mom_order,
-                          help='Order of moment evaluation (Default: 2).'
-                          )
+                          help='Order of moment evaluation (Default: 2).')
 #                        '(Default: %i).' % parsedefaults.mom_order)
     parser.add_argument(  "--Nfiles",
                           type=int,
@@ -95,6 +93,8 @@ def ps_parseargs():
                           default=parsedefaults.crossterms,
                           help = 'Compute averages of crossterms, '
                           'e.g. <x1p3> (Default: %s).' % parsedefaults.crossterms)
+
+
 #   parser.add_argument(  "-c", "--code",
 #                       type='choice',
 #                       action='store',
@@ -128,22 +128,26 @@ def main():
     mom_order = args.mom_order
     crossterms = args.crossterms
 
-    dir = DIR(args.path)
-    dir.list_files(args.raw_ident_str)
+    print(args.path)
 
-    if (dir.nf > 0):
-        if (args.Nfiles == parsedefaults.Nfiles):
-            Nfiles = dir.nf
-        elif int(args.Nfiles) <= dir.nf:
-            Nfiles = int(args.Nfiles)
-        else:
-            sys.stderr('Error: Nfiles cannot be greater than the actual number of files!')
-    else :
-        print(  'Error:\tNo phase space (raw) files in directory!\n' +
-                ('\tCheck the used path (currently: "%s")\n' % args.savepath) +
-                ('\tCheck the used RAW identification string (currently: "%s")' % args.raw_ident_str)
-              )
-        sys.exit()
+    h5fl = H5FList(args.path, h5ftype='raw')
+    flist = h5fl.get()
+
+    Nfiles = len(flist)
+
+    # if (dir.nf > 0):
+    #     if (args.Nfiles == parsedefaults.Nfiles):
+    #         Nfiles = dir.nf
+    #     elif int(args.Nfiles) <= dir.nf:
+    #         Nfiles = int(args.Nfiles)
+    #     else:
+    #         sys.stderr('Error: Nfiles cannot be greater than the actual number of files!')
+    # else :
+    #     print(  'Error:\tNo phase space (raw) files in directory!\n' +
+    #             ('\tCheck the used path (currently: "%s")\n' % args.savepath) +
+    #             ('\tCheck the used RAW identification string (currently: "%s")' % args.raw_ident_str)
+    #           )
+    #     sys.exit()
 
     sys.stdout.write('There are %i raw files to process...\n' % Nfiles)
     sys.stdout.flush()
@@ -200,11 +204,12 @@ def main():
             print('Third order crossterms not yet implemented!')
 
 
-    for i in range(0, Nfiles):
-        sys.stdout.write('Processing: %s\t(%i/%i)\n' % (dir.filepath(i), i+1, Nfiles))
+    for i in range(0,Nfiles):
+        file = flist[i]
+        sys.stdout.write('Processing: %s\t(%i/%i)\n' % (file, i+1, Nfiles))
         sys.stdout.flush()
 
-        raw = HiRAW(dir.filepath(i))
+        raw = HiRAW(file)
         raw.read_attrs()
         raw.read_data()
 
