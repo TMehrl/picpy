@@ -148,7 +148,7 @@ def g3d_lvst_Ez_subparser(subparsers, g3d_lvst_parent):
                           help='Indices for which lineout is taken.',
                           action='store',
                           dest="lout_idx",
-                          metavar="'idx1 idx2'",
+                          metavar=('IDX1', 'IDX2'),
                           type=int,
                           nargs=2,
                           default=None)                           
@@ -178,7 +178,7 @@ def g3d_lvst_Wr_subparser(subparsers, g3d_lvst_parent):
                           help='Indices for which lineout is taken.',
                           action='store',
                           dest="lout_idx",
-                          metavar="'idx0 idx1'",
+                          metavar=('IDX0', 'IDX1'),
                           type=int,
                           nargs=2,
                           default=None)

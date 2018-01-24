@@ -25,7 +25,6 @@ class parsedefaults:
     savepath = './'
     raw_ident_str = 'raw_beam_'
     mom_order = 2
-    Nfiles = 0
     crossterms = False
 
 def ps_parseargs():
@@ -77,7 +76,7 @@ def ps_parseargs():
                           action='store',
                           dest="Nfiles",
                           metavar="NFILES",
-                          default=parsedefaults.Nfiles,
+                          default=None,
                           help='Number of files to analyze.')
     parser.add_argument(  "--Nbins",
                           type=int,
@@ -96,7 +95,7 @@ def ps_parseargs():
                           help='zeta range',
                           action='store',
                           dest="zeta_range",
-                          metavar="'ZETA_MIN ZETA_MAX'",
+                          metavar=('ZETA_MIN', 'ZETA_MAX'),
                           nargs=2,
                           type=float,
                           default=None)
@@ -138,7 +137,10 @@ def main():
     h5fl = H5FList(args.path, h5ftype='raw')
     flist = h5fl.get(verbose=False)
 
-    Nfiles = len(flist)
+    if args.Nfiles == None:
+        Nfiles = len(flist)
+    else:
+        Nfiles = args.Nfiles
 
     # Getting file information
     raw = HiRAW(flist[0])

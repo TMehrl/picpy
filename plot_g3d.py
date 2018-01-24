@@ -116,7 +116,7 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           help='Colorbar axis limits',
                           action='store',
                           dest="cblim",
-                          metavar="CBMIN CBMAX",
+                          metavar=('CBMIN', 'CBMAX'),
                           nargs=2,
                           type=float,
                           default=None)
@@ -154,7 +154,7 @@ def g3d_line_subparser(subparsers, parent_parser):
                           help='Indices for which lineout is taken.',
                           action='store',
                           dest="lout_idx",
-                          metavar="idx0 idx1",
+                          metavar=('idx0', 'idx1'),
                           nargs=2,
                           type=int,
                           default=None)
@@ -185,7 +185,7 @@ def g3d_line_subparser(subparsers, parent_parser):
                           help='Range of lineout.',
                           action='store',
                           dest="range",
-                          metavar="XMIN XMAX",
+                          metavar=('XMIN', 'XMAX'),
                           nargs=2,
                           type=float,
                           default=None)    
