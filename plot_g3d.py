@@ -116,7 +116,7 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           help='Colorbar axis limits',
                           action='store',
                           dest="cblim",
-                          metavar="'CBMIN CBMAX'",
+                          metavar="CBMIN CBMAX",
                           nargs=2,
                           type=float,
                           default=None)
@@ -143,22 +143,22 @@ def g3d_line_subparser(subparsers, parent_parser):
     parser = subparsers.add_parser( "line", parents=[parent_parser],
                                     help="Grid 3D line plotting")    
     # Line plot specific arguments
-    parser.add_argument(  "-l", "--lout-axis",
+    parser.add_argument(  "-a", "--axis",
                           action='store',
                           dest="loutax",
                           metavar="LOUTAX",
                           choices=[ 'x', 'y', 'z'],
                           default='z',
                           help= """Axis along which lineout is generated (Default: z).""")
-    parser.add_argument(  '--lout-indices',
+    parser.add_argument(  '-i', '--indices',
                           help='Indices for which lineout is taken.',
                           action='store',
                           dest="lout_idx",
-                          metavar="'idx0 idx1'",
+                          metavar="idx0 idx1",
                           nargs=2,
                           type=int,
                           default=None)
-    parser.add_argument(  "--lout-zeta-pos",
+    parser.add_argument(  "--zeta-pos",
                           action='store',
                           dest="lout_zeta_pos",
                           metavar="LOUT-ZETA-POS",
@@ -181,6 +181,14 @@ def g3d_line_subparser(subparsers, parent_parser):
                                     'eps',],
                           default='eps',
                           help= """Format of output file (Default: eps).""")
+    parser.add_argument(  '-r','--range',
+                          help='Range of lineout.',
+                          action='store',
+                          dest="range",
+                          metavar="XMIN XMAX",
+                          nargs=2,
+                          type=float,
+                          default=None)    
     return parser
 
 # Converting HDF strings of grid quantity namnes
@@ -569,11 +577,17 @@ class G3d_plot_line(G3d_plot):
         ax.set_ylabel(self.ylabel, fontsize=14)
         ax.set_xlabel(self.xlabel, fontsize=14)
 
-        if not (-3.0 < math.log(np.max(abs(self.line)),10) < 3.0):
-            ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
-            plt.gcf().subplots_adjust(left=0.18)
-        else:
-            plt.gcf().subplots_adjust(left=0.15)      
+        max_abs_val = np.max(np.abs(self.line))
+
+        if max_abs_val > 0.0:
+            if not (-3.0 < math.log(max_abs_val,10) < 3.0):
+                ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+                plt.gcf().subplots_adjust(left=0.18)
+            else:
+                plt.gcf().subplots_adjust(left=0.15)      
+
+        if self.args.range != None:
+            ax.set_xlim(self.args.range)
 
         mkdirs_if_nexist(self.args.savepath)
 

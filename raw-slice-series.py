@@ -153,7 +153,7 @@ def main():
         zeta_range = None
     elif args.Nbins == None and args.zeta_range != None:
         zeta_range = args.zeta_range
-        slices = ps_ana.Slices(raw, range=zeta_range)          
+        slices = ps_ana.Slices(raw, zrange=zeta_range)          
         Nbins = slices.nbins
     else:
         Nbins = args.Nbins
@@ -224,7 +224,7 @@ def main():
         raw.read_data()
 
         time_array[i] = raw.time
-        slices = ps_ana.Slices(raw, nbins=Nbins, range=zeta_range)
+        slices = ps_ana.Slices(raw, nbins=Nbins, zrange=zeta_range)
 
         slices.calc_moments(order = mom_order, crossterms=crossterms)
         avgx1[i,:] = slices.avgx1

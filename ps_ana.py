@@ -46,21 +46,21 @@ def moments(array1, array2, weights, order=2, central=True, roots=False):
 
 # Class for slice analysis
 class Slices:
-    def __init__(self, raw, edges=[], nbins=0, range=None):
+    def __init__(self, raw, edges=[], nbins=0, zrange=None):
 
         dx0 = (raw.xmax[0] - raw.xmin[0])/raw.nx[0]
         self.raw = raw
         if nbins == 0:
-            if (edges==[]) and (range == None):
+            if (edges==[]) and (zrange == None):
                 self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(raw.nx[0]+1))
-            elif (edges==[]) and (range != None):
-                self.edges = np.arange(start=range[0]-dx0/2,stop=range[1]+dx0/2,step=dx0,dtype=np.float32)
+            elif (edges==[]) and (zrange != None):
+                self.edges = np.arange(start=zrange[0]-dx0/2,stop=zrange[1]+dx0/2,step=dx0,dtype=np.float32)
         elif nbins != 0:
-            if range==None:
+            if zrange==None:
                 self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(nbins+1))
             else:
-                dx0_step = (range[1] - range[0])/nbins
-                self.edges = np.linspace(range[0]-dx0_step/2, range[1]+dx0_step/2, num=(nbins+1))
+                dx0_step = (zrange[1] - zrange[0])/nbins
+                self.edges = np.linspace(zrange[0]-dx0_step/2, zrange[1]+dx0_step/2, num=(nbins+1))
         else:
             self.edges = edges
 

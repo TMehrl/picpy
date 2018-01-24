@@ -309,9 +309,6 @@ def cmp_plot_Wr(args,
                 plasma, 
                 beam ):
 
-    print(type(args.zeta_pos))
-    print(args.zeta_pos)
-
     if args.zeta_pos == None:
         zeta_pos_list = [0.0]
     else:
@@ -363,7 +360,6 @@ def cmp_plot_Wr(args,
         max_idx = np.where(Wr_sim==np.amax(Wr_sim))[0][0]
         xmax = x_array[max_idx]
         ymax = 1.2 * np.amax(Wr_sim)
-        print(ymax)
     ax.set_xlim([0,xmax])
     ax.set_ylim([0,ymax])            
     ax.set_ylabel(r'$W_r/E_0$', fontsize=14)

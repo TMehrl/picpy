@@ -131,18 +131,38 @@ def main():
 
 
     fig4 = plt.figure()
-    cax = plt.pcolormesh( np.sqrt( np.absolute( slm.avgx2sq ) ) )
+    cax = plt.pcolormesh( slm.zeta_array,
+                          slm.time_array,
+                          np.sqrt( np.absolute( slm.avgx2sq ) ) )
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
     cbar = fig4.colorbar( cax )
-    cbar.ax.set_ylabel('$\sigma_x$')
+    cbar.ax.set_ylabel(r'$k_p \sigma_x$', fontsize=14)
     fig4.savefig(  'sigma_x.png',
                   format='png')
 
+    emittance = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) 
+                         - np.power(slm.avgx2p2,2))
 
     fig5 = plt.figure()
-    cax = plt.plot( slm.time_array, np.sqrt( np.absolute( slm.avgx2sq[:,80] )) )
-    cbar.ax.set_ylabel('$\sigma_x$')
-    fig5.savefig(  'sigma_x_slice.png',
-                    format='png')
+    cax = plt.pcolormesh( slm.zeta_array,
+                          slm.time_array,
+                          emittance)
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
+    cbar = fig5.colorbar( cax )
+    cbar.ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
+    fig5.savefig(  'emittance_x.png',
+                  format='png')
+
+
+    # fig5 = plt.figure()
+    # cax = plt.plot( slm.time_array, np.sqrt( np.absolute( slm.avgx2sq[:,80] )) )
+    # cbar.ax.set_ylabel('$\sigma_x$')
+    # fig5.savefig(  'sigma_x_slice.png',
+    #                 format='png')
 
 if __name__ == "__main__":
     main()
