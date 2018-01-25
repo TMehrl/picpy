@@ -142,21 +142,50 @@ def main():
     fig4.savefig(  'sigma_x.png',
                   format='png')
 
-    emittance = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) 
-                         - np.power(slm.avgx2p2,2))
 
     fig5 = plt.figure()
+    cax = plt.pcolormesh( slm.zeta_array,
+                          slm.time_array,
+                          np.sqrt( np.absolute( slm.avgp2sq ) ) )
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
+    cbar = fig5.colorbar( cax )
+    cbar.ax.set_ylabel(r'$k_p \sigma_{p_x}$', fontsize=14)
+    fig5.savefig(  'sigma_px.png',
+                  format='png')
+
+    emittance = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) 
+                         - np.power(slm.avgx2p2,2) )
+
+    fig6 = plt.figure()
     cax = plt.pcolormesh( slm.zeta_array,
                           slm.time_array,
                           emittance)
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
-    cbar = fig5.colorbar( cax )
+    cbar = fig6.colorbar( cax )
     cbar.ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
-    fig5.savefig(  'emittance_x.png',
+    fig6.savefig(  'emittance_x.png',
                   format='png')
 
+
+    gamma = np.sqrt( 1 + np.power(slm.avgp1,2) 
+                       + np.power(slm.avgp2,2)
+                       + np.power(slm.avgp3,2) )
+
+    fig7 = plt.figure()
+    cax = plt.pcolormesh( slm.zeta_array,
+                          slm.time_array,
+                          gamma)
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
+    cbar = fig7.colorbar( cax )
+    cbar.ax.set_ylabel(r'$k_p \gamma$', fontsize=14)
+    fig7.savefig(  'gamma.png',
+                  format='png')
 
     # fig5 = plt.figure()
     # cax = plt.plot( slm.time_array, np.sqrt( np.absolute( slm.avgx2sq[:,80] )) )

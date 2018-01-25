@@ -72,12 +72,25 @@ class Slices:
 
         if timings: self.startcm_time = time.time()
 
+
+        # Select subset of particles which are in range
+        idx_part_in_range = np.logical_and(self.raw.x1 > self.edges[0], 
+                                           self.raw.x1 <= self.edges[-1])
+        x1 = self.raw.x1[idx_part_in_range]
+        x2 = self.raw.x2[idx_part_in_range]
+        x3 = self.raw.x3[idx_part_in_range]
+        p1 = self.raw.p1[idx_part_in_range]
+        p2 = self.raw.p2[idx_part_in_range]
+        p3 = self.raw.p3[idx_part_in_range]
+        q = self.raw.q[idx_part_in_range]
+
         # Assign each particle the index of the bin it is located in
         # ( subtract 1 in order to get index '0'
         # if particle is in interval [ edges[0] edges[1] ] etc. )
-        ibinpart = np.searchsorted(self.edges, self.raw.x1) - 1
+        ibinpart = np.searchsorted(self.edges, x1) - 1
+
         self.npart = np.bincount(ibinpart, minlength=self.nbins)
-        self.charge = np.bincount(ibinpart, weights=self.raw.q, minlength=self.nbins)
+        self.charge = np.bincount(ibinpart, weights=q, minlength=self.nbins)
 
         if np.size(self.npart)>self.nbins | np.size(self.charge)>self.nbins:
             print('Warning: particles out of range!')
@@ -101,18 +114,18 @@ class Slices:
 
             if timings: self.cm_afallocsortpart_time = time.time()
 
-            for i in range(0,self.raw.npart):
+            for i in range(0,q.size):
 
                 ibin = ibinpart[i]
                 ipartbin = bincount[ibin]
 
-                Q[ ibin,  ipartbin ] = self.raw.q[i]
-                X1[ ibin, ipartbin ] = self.raw.x1[i]
-                X2[ ibin, ipartbin ] = self.raw.x2[i]
-                X3[ ibin, ipartbin ] = self.raw.x3[i]
-                P1[ ibin, ipartbin ] = self.raw.p1[i]
-                P2[ ibin, ipartbin ] = self.raw.p2[i]
-                P3[ ibin, ipartbin ] = self.raw.p3[i]
+                Q[ ibin,  ipartbin ] = q[i]
+                X1[ ibin, ipartbin ] = x1[i]
+                X2[ ibin, ipartbin ] = x2[i]
+                X3[ ibin, ipartbin ] = x3[i]
+                P1[ ibin, ipartbin ] = p1[i]
+                P2[ ibin, ipartbin ] = p2[i]
+                P3[ ibin, ipartbin ] = p3[i]
                 bincount[ibin] += 1
 
             if timings: self.cm_afsortingpart_time = time.time()
