@@ -11,6 +11,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib.ticker import FormatStrFormatter
+from matplotlib.ticker import MaxNLocator
 from matplotlib import cm
 import picdefs
 from h5dat import Grid3d
@@ -432,12 +433,15 @@ class G3d_plot_slice(G3d_plot):
 
         savename = fileprefix + filesuffix + '.' + saveformat
 
+        levels = MaxNLocator(nbins=256).tick_values(self.cblim[0], self.cblim[1])
+
         fig = plt.figure()
-        cax = plt.pcolormesh( self.x_array,
-                              self.y_array,
-                              self.slice,
-                              vmin=self.cblim[0], vmax=self.cblim[1],
-                              cmap=self.colormap)
+        cax = plt.contourf( self.x_array,
+                            self.y_array,
+                            self.slice,
+                            levels=levels,
+                            vmin=self.cblim[0], vmax=self.cblim[1],
+                            cmap=self.colormap)
         ax = plt.gca()
         ax.set_ylabel(self.ylabel, fontsize=14)
         ax.set_xlabel(self.xlabel, fontsize=14)
