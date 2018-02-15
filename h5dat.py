@@ -212,6 +212,8 @@ class HiFile(H5Keys, H5File):
     def get_nx(self,dim):
         return self.nx[dim]        
 
+    def get_dx(self,dim):
+        return (self.xmax[dim]-self.xmin[dim])/self.nx[dim]
 
 # class H5PIC(H5File):
 #   def __init__(self, file, piccode):

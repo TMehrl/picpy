@@ -2,11 +2,11 @@
 # This script may be executed like this:
 # nohup raw-slice-series.py DATA 1> rss.out 2> rss.err &
 
-import numpy as np
 import os
-import argparse
-import math
 import sys
+import math
+import argparse
+import numpy as np
 import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')

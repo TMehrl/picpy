@@ -95,13 +95,6 @@ def g3d_lvst_parser():
                           type=float,
                           required=True,
                           help= """Beam density""") 
-    parser.add_argument(  "--beam-sigma_z",
-                          action='store',
-                          dest="beam_sigma_z",
-                          metavar="sigma_z",
-                          default=0.0,
-                          type=float,
-                          help= """Gaussian beam sigma_z""") 
     parser.add_argument(  "--beam-sigma_r",
                           action='store',
                           dest="beam_sigma_r",
@@ -151,7 +144,14 @@ def g3d_lvst_Ez_subparser(subparsers, g3d_lvst_parent):
                           metavar=('IDX1', 'IDX2'),
                           type=int,
                           nargs=2,
-                          default=None)                           
+                          default=None)
+    parser.add_argument(  "--beam-sigma_z",
+                          action='store',
+                          dest="beam_sigma_z",
+                          metavar="sigma_z",
+                          default=0.0,
+                          type=float,
+                          help= """Gaussian beam sigma_z""")                                                      
     return parser
 
 
