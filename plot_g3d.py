@@ -592,19 +592,9 @@ class G3d_plot_line(G3d_plot):
 
         if self.args.range != None:
             ax.set_xlim(self.args.range)
-            # ax.relim(visible_only=True)
-            # ax.autoscale(enable=True, axis='y', tight=True)
-            idx = np.zeros(2,dtype=np.int8)
-            print(self.args.range[0])
-            print(self.args.range[1])
-            print(type(self.args.range))
-            idx[0] = np.argmin(np.abs(self.x_array - float(self.args.range[0])))
-            idx[1] = np.argmin(np.abs(self.x_array - float(self.args.range[1])))
-            print(idx)
-            idx = np.sort(idx)
-            print(idx)
-            ax.set_ylim([np.min(self.line[idx[0]:idx[1]]),
-                         np.max(self.line[idx[0]:idx[1]])])
+            lims = ax.get_xlim()
+            idx = np.where( (self.x_array >= lims[0]) & (self.x_array <= lims[1]) )[0]
+            ax.set_ylim( self.line[idx].min(), self.line[idx].max() )
 
         mkdirs_if_nexist(self.args.savepath)
 
