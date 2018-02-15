@@ -593,8 +593,10 @@ class G3d_plot_line(G3d_plot):
         if self.args.range != None:
             ax.set_xlim(self.args.range)
             idx = np.zeros(2,dtype=np.int8)
-            idx[0] = int((np.abs(self.x_array-self.args.range[0])).argmin())
-            idx[1] = int((np.abs(self.x_array-self.args.range[1])).argmin())
+            print(self.args.range)
+            print(self.x_array)
+            idx[0] = (np.abs(self.x_array-self.args.range[0])).argmin()
+            idx[1] = (np.abs(self.x_array-self.args.range[1])).argmin()
             print(idx)
             idx = np.sort(idx)
             print(idx)
