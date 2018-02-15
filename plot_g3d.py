@@ -592,12 +592,14 @@ class G3d_plot_line(G3d_plot):
 
         if self.args.range != None:
             ax.set_xlim(self.args.range)
+            # ax.relim(visible_only=True)
+            # ax.autoscale(enable=True, axis='y', tight=True)
             idx = np.zeros(2,dtype=np.int8)
             idx[0] = np.argmin(np.abs(self.x_array-self.args.range[0]))
             idx[1] = np.argmin(np.abs(self.x_array-self.args.range[1]))
+            print(idx)
             idx = np.sort(idx)
-            print([np.min(self.line[idx[0]:idx[1]]),
-                         np.max(self.line[idx[0]:idx[1]])])
+            print(idx)
             ax.set_ylim([np.min(self.line[idx[0]:idx[1]]),
                          np.max(self.line[idx[0]:idx[1]])])
 
