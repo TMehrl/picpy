@@ -172,7 +172,7 @@ def g3d_lvst_Wr_subparser(subparsers, g3d_lvst_parent):
                       metavar="LOUT-ZETA-POS",
                       type=float,                      
                       default=None,
-                      nargs='*',
+                      nargs='+',
                       help= """Zeta-position at which lineout is generated (Default: 0.0).""")
     parser.add_argument(  '--lineout-indices',
                           help='Indices for which lineout is taken.',
@@ -394,15 +394,21 @@ def set_plasma( args ):
 
 
 def set_beam( args ):
+
+    if args.subparser_name == 'Ez':
+        sigma_z = args.beam_sigma_z
+    else:
+        sigma_z = 0
+
     if args.beam_sigma_r != 0.0 and args.beam_sigma_xy == 0.0:
         beam = Beam(n = args.beam_n, 
-                    sigma_z = args.beam_sigma_z, 
+                    sigma_z = sigma_z, 
                     sigma_xy = args.beam_sigma_r/np.sqrt(2.0),
                     zeta_0 = args.beam_zeta_0,
                     Z = args.beam_Z )
     elif args.beam_sigma_r == 0.0 and args.beam_sigma_xy != 0.0:
         beam = Beam(n = args.beam_n, 
-                    sigma_z = args.beam_sigma_z, 
+                    sigma_z = sigma_z, 
                     sigma_xy = args.beam_sigma_xy,
                     zeta_0 = args.beam_zeta_0,
                     Z = args.beam_Z )
@@ -449,7 +455,8 @@ def lvst_Wr(args):
 def main():
 
     parser = argparse.ArgumentParser()
-    g3d_subparsers = parser.add_subparsers(title="plot-type")
+    g3d_subparsers = parser.add_subparsers(title="plot-type",
+                                           dest="subparser_name")
 
     g3d_lvst_pp = g3d_lvst_parser()
 
