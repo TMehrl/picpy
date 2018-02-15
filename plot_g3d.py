@@ -596,7 +596,8 @@ class G3d_plot_line(G3d_plot):
             idx[0] = int((np.abs(self.x_array-self.args.range[0])).argmin())
             idx[1] = int((np.abs(self.x_array-self.args.range[1])).argmin())
             idx = np.sort(idx)
-            ax.set_ylim(np.min(self.line[idx[0]:idx[1]]))
+            ax.set_ylim([np.min(self.line[idx[0]:idx[1]]),
+                         np.max(self.line[idx[0]:idx[1]])])
 
         mkdirs_if_nexist(self.args.savepath)
 
