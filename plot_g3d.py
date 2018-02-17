@@ -46,7 +46,7 @@ def g3d_parser():
                           dest = "verbose",
                           action="store_true",
                           default=True,
-                          help = "Print info (Default).")
+                          help = "Print info (default: %(default)s).")
     parser.add_argument(  "-q", "--quiet",
                           dest = "verbose",
                           action = "store_false",
@@ -68,7 +68,7 @@ def g3d_parser():
                           metavar="CODE",
                           choices = [picdefs.code.hipace, picdefs.code.osiris,],
                           default = picdefs.code.hipace,
-                          help="PIC code (Default: " + picdefs.code.hipace + ").")
+                          help="PIC code (default: %(default)s).")
     parser.add_argument(  "-z", "--z-axis",
                           action='store',
                           dest="zax",
@@ -77,7 +77,7 @@ def g3d_parser():
                                   parsedefs.zax.z,
                                   parsedefs.zax.xi,],
                           default=parsedefs.zax.zeta,
-                          help= "z-axis type (Default: " + parsedefs.zax.zeta + ").")
+                          help= "z-axis type (default: %(default)s).")
     return parser
 
 def g3d_slice_subparser(subparsers, parent_parser):
@@ -91,7 +91,7 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           choices=[ 'xy', 'yz', 'xz',
                                     'yx', 'zy', 'zx'],
                           default='zx',
-                          help= """Plane to be plotted (Default: zx).""")
+                          help= """Plane to be plotted (default: %(default)s).""")
     parser.add_argument(  "--pidx",
                           action='store',
                           dest="plane_index",
@@ -107,12 +107,10 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           type=float,
                           help= """Position of plane.""")    
     parser.add_argument(  "--cscale",
-                          action='store',
-                          dest="cscale",
-                          metavar="CSCALE",
-                          choices=[ "lin", "log",],
                           default="lin",
-                          help= "z-axis type (Default: " + parsedefs.zax.zeta + ").")
+                          dest="cscale",
+                          choices=[ "lin", "log",],
+                          help= "z-axis type (default: %(default)s).")
     parser.add_argument(  '--cblim',
                           help='Colorbar axis limits',
                           action='store',
@@ -127,7 +125,7 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           metavar="PATH",
                           default=parsedefs.save.path + '/g3d-slice',
                           help = """Path to which generated files will be saved.
-                              (Default: './')""")
+                              (default: %(default)s)""")
     parser.add_argument(  "-f", "--format",
                           action='store',
                           dest="file_format",
@@ -136,7 +134,7 @@ def g3d_slice_subparser(subparsers, parent_parser):
                                     'pdf',
                                     'eps',],
                           default='png',
-                          help= """Format of output file (Default: png).""")    
+                          help= """Format of output file (default: %(default)s).""")    
     return parser
 
 
@@ -150,7 +148,7 @@ def g3d_line_subparser(subparsers, parent_parser):
                           metavar="LOUTAX",
                           choices=[ 'x', 'y', 'z'],
                           default='z',
-                          help= """Axis along which lineout is generated (Default: z).""")
+                          help= """Axis along which lineout is generated (default: %(default)s).""")
     parser.add_argument(  '-i', '--indices',
                           help='Indices for which lineout is taken.',
                           action='store',
@@ -165,14 +163,14 @@ def g3d_line_subparser(subparsers, parent_parser):
                           metavar="LOUT-ZETA-POS",
                           type=float,    
                           default=None,
-                          help= """Zeta-position at which lineout is generated (Default: 0.0).""")    
+                          help= """Zeta-position at which lineout is generated (default: %(default)s).""")    
     parser.add_argument(  "-s", "--save-path",
                           action="store",
                           dest="savepath",
                           metavar="PATH",
                           default=parsedefs.save.path + '/g3d-line',
                           help = """Path to which generated files will be saved.
-                              (Default: './')""")
+                              (default: %(default)s)""")
     parser.add_argument(  "-f", "--format",
                           action='store',
                           dest="file_format",
@@ -181,7 +179,7 @@ def g3d_line_subparser(subparsers, parent_parser):
                                     'pdf',
                                     'eps',],
                           default='eps',
-                          help= """Format of output file (Default: eps).""")
+                          help= """Format of output file (default: %(default)s).""")
     parser.add_argument(  '-r','--range',
                           help='Range of lineout.',
                           action='store',

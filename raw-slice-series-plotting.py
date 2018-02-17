@@ -18,6 +18,7 @@ from matplotlib import cm
 from matplotlib.colors import LogNorm
 import picdefs
 from h5dat import SliceMoms
+from h5dat import mkdirs_if_nexist
 import ps_ana
 import h5py
 
@@ -27,9 +28,13 @@ class parsedefs:
         png = 'png'
         eps = 'eps'
         pdf = 'pdf'
-    class save_prefix:
-        name = 'g3d_name'
-
+    class zax:
+        zeta = 'zeta'
+        z = 'z'
+        xi = 'xi'
+    class save:
+        prefix = 'rss_name'
+        path = './plots'
 
 def ps_parseopts():
 
@@ -44,21 +49,22 @@ def ps_parseopts():
                         action="store_true",
                         dest="verbose",
                         default=True,
-                        help = "Print info (Default).")
+                        help = "Print info (default: %(default)s).")
     parser.add_argument(  "-q", "--quiet",
                         action="store_false",
                         dest="verbose",
                         help = "Don't print info.")
     parser.add_argument(  "-s", "--save-path",
-                        dest="savepath",
-                        metavar="PATH",
-                        default='./',
-                        help = """Path to which generated files will be saved.
-                              (Default: './')""")
+                          action="store",
+                          dest="savepath",
+                          metavar="PATH",
+                          default=parsedefs.save.path + '/raw-slice-series',
+                          help = """Path to which generated files will be saved.
+                              (default: %(default)s)""")
     parser.add_argument(  "-n", "--name-prefix",
                         dest="save_prefix",
                         metavar="NAME",
-                        default=parsedefs.save_prefix.name,
+                        default=parsedefs.save.prefix,
                         help = """Define customized prefix of output filename.""")
     parser.add_argument(  "-c", "--code",
                         action='store',
@@ -66,8 +72,7 @@ def ps_parseopts():
                         metavar="CODE",
                         choices = [picdefs.code.hipace, picdefs.code.osiris,],
                         default = picdefs.code.hipace,
-                        help= "PIC code which was used to generate files (Default: " +
-                              picdefs.code.hipace + ").")
+                        help= "PIC code which was used to generate files (default: %(default)s).")
     parser.add_argument(  "-d", "--dim",
                         action='store',
                         dest="dimensionality",
@@ -75,7 +80,7 @@ def ps_parseopts():
                         choices=[1, 2, 3,],
                         default=3,
                         help= """Dimensionality of PIC simulation
-                              (Default: 3).""")
+                              (default: %(default)s).""")
     parser.add_argument(  "-N", "--number-of-files",
                         action='store',
                         dest="Nfiles",
@@ -86,16 +91,108 @@ def ps_parseopts():
     return parser
 
 
+def plot_save_slice_rms(slm, savepath):
 
-def main():
+    x = slm.zeta_array
+    y = slm.time_array
 
-    parser = ps_parseopts()
+    sigma_x = np.sqrt( np.absolute( slm.avgx2sq ) )
+    fig_sx = plt.figure()
+    cax = plt.pcolormesh( x,
+                          y,
+                          sigma_x,
+                          cmap=cm.Blues,
+                          vmin=0, vmax=np.amax(abs(sigma_x)) )
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
+    cbar = fig_sx.colorbar( cax )
+    cbar.ax.set_ylabel(r'$k_p \sigma_x$', fontsize=14)
+    fig_sx.savefig( savepath + '/sigma_x.png',
+                  format='png',
+                  dpi=600)
 
-    args = parser.parse_args()
 
-    file = args.path
+    sigma_px = np.sqrt( np.absolute( slm.avgp2sq ) )
 
-    slm = SliceMoms(file)
+
+    fig_spx = plt.figure()
+    cax = plt.pcolormesh( x,
+                          y,
+                          sigma_px,
+                          cmap=cm.YlGn,
+                          vmin=0, vmax=np.amax(sigma_px) )
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
+    cbar = fig_spx.colorbar( cax )
+    cbar.ax.set_ylabel(r'$k_p \sigma_{p_x}$', fontsize=14)
+    fig_spx.savefig( savepath + '/sigma_px.png',
+                  format='png',
+                  dpi=600)
+
+    emittance = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) 
+                         - np.power(slm.avgx2p2,2) )
+    fig_e = plt.figure()
+    cax = plt.pcolormesh( x,
+                          y,
+                          emittance,
+                          cmap=cm.Reds,
+                          vmin=np.amin(emittance), vmax=np.amax(emittance) )
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
+    cbar = fig_e.colorbar( cax )
+    cbar.ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
+    fig_e.savefig( savepath + '/slice_emittance_x.png',
+                  format='png',
+                  dpi=600)
+
+
+def plot_save_proj_rms(slm, savepath):
+    
+    t = slm.time_array
+    tot_charge = np.sum(slm.charge, axis=1)
+    xsq = np.divide(np.sum(np.multiply(slm.avgx2sq, slm.charge), axis=1),tot_charge)
+    psq = np.divide(np.sum(np.multiply(slm.avgp2sq, slm.charge), axis=1),tot_charge)
+    xp = np.divide(np.sum(np.multiply(slm.avgx2p2, slm.charge), axis=1),tot_charge)
+
+
+    fig_sx = plt.figure()    
+    plt.plot(t, np.sqrt(xsq))
+    ax = plt.gca()
+    ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_ylabel(r'$k_p\sigma_x$', fontsize=14)    
+    fig_sx.savefig( savepath + '/sigma_x_proj.eps',
+                  format='eps')
+
+    fig_sp = plt.figure()    
+    plt.plot(t, np.sqrt(psq))
+    ax = plt.gca()
+    ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_ylabel(r'$\sigma_{p_x}/m_e c$', fontsize=14)
+    fig_sx.savefig( savepath + '/sigma_px_proj.eps',
+                  format='eps')
+
+
+    fig_xp = plt.figure()    
+    plt.plot(t, xp)
+    ax = plt.gca()
+    ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_ylabel(r'$ k_p x\,p_x/m_e c$', fontsize=14)    
+    fig_xp.savefig( savepath + '/xpx_proj.eps',
+                  format='eps')
+
+    emittance = np.sqrt(xsq*psq-np.power(xp,2))
+    fig_e = plt.figure()    
+    plt.plot(t, emittance)
+    ax = plt.gca()
+    ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)    
+    fig_e.savefig( savepath + '/emittance_proj.eps',
+                  format='eps')
+
+def plot_save_slice_centroids(slm, savepath):
 
     Xb0 = np.ones(slm.avgx2[0,:].shape)
     for i in range(0,len(slm.zeta_array)):
@@ -119,7 +216,7 @@ def main():
                             vmin=-np.amax(abs(slm.avgx2)), vmax=np.amax(abs(slm.avgx2)))
     cbar = fig1.colorbar(cax)
     cbar.ax.set_ylabel('$k_p X_b$')
-    fig1.savefig(  'Xb_raw.png',
+    fig1.savefig( savepath + '/Xb_raw.png',
                   format='png',
                   dpi=600)
 
@@ -127,67 +224,17 @@ def main():
     cax = plt.pcolormesh( Xb_norm )
     cbar = fig2.colorbar(cax)
     cbar.ax.set_ylabel('$|X_b/X_{b,0}|$')
-    fig2.savefig(  'Xb.png',
+    fig2.savefig( savepath + '/Xb.png',
                   format='png',
                   dpi=600)
 
     fig3 = plt.figure()
     plt.plot(slm.zeta_array, slm.avgx2[0,:])
-    fig3.savefig(  './Xb0.png',
+    fig3.savefig( savepath + '/Xb0.png',
                   format='png')
 
 
-    sigma_x = np.sqrt( np.absolute( slm.avgx2sq ) )
-    fig4 = plt.figure()
-    cax = plt.pcolormesh( slm.zeta_array,
-                          slm.time_array,
-                          sigma_x,
-                          cmap=cm.Blues,
-                          vmin=0, vmax=np.amax(abs(sigma_x)) )
-    ax = plt.gca()
-    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-    ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
-    cbar = fig4.colorbar( cax )
-    cbar.ax.set_ylabel(r'$k_p \sigma_x$', fontsize=14)
-    fig4.savefig(  'sigma_x.png',
-                  format='png',
-                  dpi=600)
-
-
-    sigma_px = np.sqrt( np.absolute( slm.avgp2sq ) )
-    fig5 = plt.figure()
-    cax = plt.pcolormesh( slm.zeta_array,
-                          slm.time_array,
-                          sigma_px,
-                          cmap=cm.YlGn,
-                          vmin=0, vmax=np.amax(sigma_px) )
-    ax = plt.gca()
-    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-    ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
-    cbar = fig5.colorbar( cax )
-    cbar.ax.set_ylabel(r'$k_p \sigma_{p_x}$', fontsize=14)
-    fig5.savefig(  'sigma_px.png',
-                  format='png',
-                  dpi=600)
-
-    emittance = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) 
-                         - np.power(slm.avgx2p2,2) )
-    fig6 = plt.figure()
-    cax = plt.pcolormesh( slm.zeta_array,
-                          slm.time_array,
-                          emittance,
-                          cmap=cm.Reds,
-                          vmin=np.amin(emittance), vmax=np.amax(emittance) )
-    ax = plt.gca()
-    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-    ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
-    cbar = fig6.colorbar( cax )
-    cbar.ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
-    fig6.savefig(  'emittance_x.png',
-                  format='png',
-                  dpi=600)
-
-
+def plot_save_slice_ene(slm, savepath):
     gamma = np.sqrt( 1 + np.power(slm.avgp1,2) 
                        + np.power(slm.avgp2,2)
                        + np.power(slm.avgp3,2) )
@@ -203,15 +250,31 @@ def main():
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
     cbar = fig7.colorbar( cax )
     cbar.ax.set_ylabel(r'$\gamma$', fontsize=14)
-    fig7.savefig(  'gamma.png',
+    fig7.savefig( savepath + '/gamma.png',
                   format='png',
                   dpi=600)
 
-    # fig5 = plt.figure()
-    # cax = plt.plot( slm.time_array, np.sqrt( np.absolute( slm.avgx2sq[:,80] )) )
-    # cbar.ax.set_ylabel('$\sigma_x$')
-    # fig5.savefig(  'sigma_x_slice.png',
-    #                 format='png')
+
+def main():
+
+    parser = ps_parseopts()
+
+    args = parser.parse_args()
+
+    file = args.path
+
+    slm = SliceMoms(file)
+
+    mkdirs_if_nexist(args.savepath)
+
+    plot_save_slice_rms(slm, args.savepath)
+
+    plot_save_slice_ene(slm, args.savepath)
+
+    # plot_save_proj_rms(slm, args.savepath)
+
+    # plot_save_slice_centroids(slm, args.savepath)
+
 
 if __name__ == "__main__":
     main()

@@ -129,13 +129,15 @@ def main():
 
     args = parser.parse_args()
 
-    
     mom_order = args.mom_order
     crossterms = args.crossterms
 
-
     h5fl = H5FList(args.path, h5ftype='raw')
     flist = h5fl.get(verbose=False)
+    if len(h5fl.get_uniques()) > 1:
+        print('ERROR: Processing of multiple beams is not implemented yet!')
+        print(h5fl.split_by_uniques())
+        sys.exit()
 
     if args.Nfiles == None:
         Nfiles = len(flist)
@@ -165,6 +167,9 @@ def main():
     sys.stdout.flush()
 
     time_array = np.zeros(Nfiles, dtype=np.float32)
+    
+    charge = np.zeros((Nfiles, Nbins), dtype=np.float32)
+
     avgx1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
     avgx2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
     avgx3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
@@ -229,6 +234,7 @@ def main():
         slices = ps_ana.Slices(raw, nbins=Nbins, zrange=zeta_range)
 
         slices.calc_moments(order = mom_order, crossterms=crossterms)
+        charge[i,:] = slices.charge
         avgx1[i,:] = slices.avgx1
         avgx2[i,:] = slices.avgx2
         avgx3[i,:] = slices.avgx3
@@ -286,6 +292,9 @@ def main():
     h5f = h5py.File(h5savepathname, "w")
     dset_zeta_array = h5f.create_dataset( "zeta_array", data = zeta_array )
     dset_time_array = h5f.create_dataset( "time_array", data = time_array )
+
+    dset_charge = h5f.create_dataset(  "charge", data = charge )
+    
     dset_avgx1 = h5f.create_dataset(  "avgx1", data = avgx1 )
     dset_avgx2 = h5f.create_dataset(  "avgx2", data = avgx2 )
     dset_avgx3 = h5f.create_dataset(  "avgx3", data = avgx3 )

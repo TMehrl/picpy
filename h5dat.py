@@ -26,6 +26,7 @@ class H5File:
         self.__g3dtypes = ['density', 'field', 'current']
         # RAW types in filenames:
         self.__rawtypes = ['raw']
+        self.__n_time_chars = 6
 
         self.file = file
         self.h5ftype = h5ftype
@@ -84,6 +85,18 @@ class H5File:
 
     def get_allowed_h5exts(self):
         return self.__h5exts
+
+    def get_filename(self):
+        return os.path.split(self.file)[1]
+
+    def get_filename_time(self):
+        name_w_time = os.path.splitext(os.path.split(self.file)[1])[0]
+        return float(name_w_time[-self.__n_time_chars:])
+
+    def get_filename_wo_time(self):
+        name_w_time = os.path.splitext(os.path.split(self.file)[1])[0]
+        name_wo_time = name_w_time[0:-self.__n_time_chars]
+        return name_wo_time
 
 # Keys for HDF5 files
 # Keys for PIC HDF5 files
@@ -368,6 +381,7 @@ class SliceMoms(H5File):
             # Reading datasets
             self.time_array = np.array(hf.get( 'time_array' ))
             self.zeta_array = np.array(hf.get( 'zeta_array' ))
+            self.charge = np.array(hf.get( 'charge' ))
             self.avgx1 = np.array(hf.get( 'avgx1' ))
             self.avgx2 = np.array(hf.get( 'avgx2' ))
             self.avgx3 = np.array(hf.get( 'avgx3' ))
@@ -393,6 +407,7 @@ class H5FList():
 
         self.paths = paths
         self.h5ftype = h5ftype
+        self.flist = None
 
     def get(self, verbose=True):
         if not self.paths:
@@ -404,7 +419,7 @@ class H5FList():
         for path in self.paths:
             if os.path.isfile(path):
                 file = path
-                h5f = H5File(file, self.h5ftype)
+                h5f = H5File(file, h5ftype=self.h5ftype)
                 if h5f.fcheck():
                     flist.append(file)
                 else:
@@ -417,7 +432,7 @@ class H5FList():
                 for root, dirs, files in os.walk(path):
                     for filename in files:
                         file = root + '/' + filename
-                        h5f = H5File(file, self.h5ftype)
+                        h5f = H5File(file, h5ftype=self.h5ftype)
                         if h5f.fcheck():
                             flist.append(file)
                         else:
@@ -429,11 +444,35 @@ class H5FList():
                 print('Error: Provided path is neither a file nor a directory!')
                 sys.exit()
         # Alphabetically sorting list
-        flist = sorted(flist)
-        return flist
+        self.flist = sorted(flist)
+        return self.flist
+
+    def get_uniques(self):
+        n_time_chars = 6;
+        fnames = []
+        if self.flist == None:
+            self.get()
+        for f in self.flist:
+            h5f = H5File(f)
+            fnames.append(h5f.get_filename_wo_time())
+        return list(set(fnames))
+
+    def split_by_uniques(self):
+        if self.flist == None:
+            self.get()
+        uniques = self.get_uniques()
+
+        # initialize and append to list of lists
+        lofl = [[] for i in range(len(uniques))] 
+        for i in range(len(uniques)):
+            for f in self.flist:
+                if uniques[i] in os.path.split(f)[1]:
+                    lofl[i].append(f)
+        return lofl
 
 
 def mkdirs_if_nexist( path ):
+    
     folders = []
 
     while 1:
