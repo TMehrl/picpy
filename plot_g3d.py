@@ -65,14 +65,12 @@ def g3d_parser():
     parser.add_argument(  "-c", "--code",
                           action="store",
                           dest="piccode",
-                          metavar="CODE",
                           choices = [picdefs.code.hipace, picdefs.code.osiris,],
                           default = picdefs.code.hipace,
                           help="PIC code (default: %(default)s).")
     parser.add_argument(  "-z", "--z-axis",
                           action='store',
                           dest="zax",
-                          metavar="ZAXIS",
                           choices=[ parsedefs.zax.zeta,
                                   parsedefs.zax.z,
                                   parsedefs.zax.xi,],
@@ -129,7 +127,6 @@ def g3d_slice_subparser(subparsers, parent_parser):
     parser.add_argument(  "-f", "--format",
                           action='store',
                           dest="file_format",
-                          metavar="FORMAT",
                           choices=[ 'png',
                                     'pdf',
                                     'eps',],
@@ -145,7 +142,6 @@ def g3d_line_subparser(subparsers, parent_parser):
     parser.add_argument(  "-a", "--axis",
                           action='store',
                           dest="loutax",
-                          metavar="LOUTAX",
                           choices=[ 'x', 'y', 'z'],
                           default='z',
                           help= """Axis along which lineout is generated (default: %(default)s).""")
@@ -174,7 +170,6 @@ def g3d_line_subparser(subparsers, parent_parser):
     parser.add_argument(  "-f", "--format",
                           action='store',
                           dest="file_format",
-                          metavar="FORMAT",
                           choices=[ 'png',
                                     'pdf',
                                     'eps',],
@@ -416,6 +411,10 @@ class G3d_plot_slice(G3d_plot):
 
         if self.args.cblim != None:
             cblim = list(self.args.cblim)
+
+        if (cblim[0] == 0.0) and (cblim[1] == 0.0):
+            cblim[0] = -1.0
+            cblim[1] = 1.0
 
         self.cblim = cblim
 

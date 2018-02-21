@@ -271,7 +271,7 @@ def main():
 
     plot_save_slice_ene(slm, args.savepath)
 
-    # plot_save_proj_rms(slm, args.savepath)
+    plot_save_proj_rms(slm, args.savepath)
 
     # plot_save_slice_centroids(slm, args.savepath)
 
