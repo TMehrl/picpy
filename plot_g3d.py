@@ -428,7 +428,7 @@ class G3d_plot_slice(G3d_plot):
         else:
             fileprefix = self.g3d.name
 
-        if self.g3d.is_subgrid:
+        if self.g3d.is_subgrid():
             sg_str = '_subgrid'
         else:
             sg_str = ''   
@@ -574,7 +574,7 @@ class G3d_plot_line(G3d_plot):
         else:
             fileprefix = self.g3d.name
 
-        if self.g3d.is_subgrid:
+        if self.g3d.is_subgrid():
             sg_str = '_subgrid'
         else:
             sg_str = ''   
