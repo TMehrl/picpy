@@ -24,6 +24,7 @@ class H5File:
         self.__h5exts = ['.h5','.hdf5']
         # Grid 3D types in filenames:
         self.__g3dtypes = ['density', 'field', 'current']
+        self.__g3dsubgrid_str = 'subgrid'
         # RAW types in filenames:
         self.__rawtypes = ['raw']
         self.__n_time_chars = 6
@@ -97,6 +98,13 @@ class H5File:
         name_w_time = os.path.splitext(os.path.split(self.file)[1])[0]
         name_wo_time = name_w_time[0:-self.__n_time_chars]
         return name_wo_time
+
+    def is_subgrid(self):
+        fname = os.path.splitext(os.path.split(self.file)[1])[0]
+        if (self.__g3dsubgrid_str in fname):
+            return True
+        else:
+            return False    
 
 # Keys for HDF5 files
 # Keys for PIC HDF5 files
