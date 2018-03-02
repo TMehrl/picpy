@@ -394,26 +394,35 @@ class G3d_plot_slice(G3d_plot):
                 self.colormap = cm.PuBu;
                 cblim[0] = np.amin(self.slice)
                 cblim[1] = np.amax(self.slice)
+                if (cblim[0] == 0.0) and (cblim[1] == 0.0):
+                    cblim[0] = 0.0
+                    cblim[1] = 1.0
             else:
                 self.colormap = cm.RdGy;
                 cblim[0] = -np.amax(abs(self.slice))
                 cblim[1] = np.amax(abs(self.slice))              
+                if (cblim[0] == 0.0) and (cblim[1] == 0.0):
+                    cblim[0] = -1.0
+                    cblim[1] = 1.0
 
         elif self.g3d.type == picdefs.hipace.h5.g3dtypes.field:
             self.colormap = cm.RdBu
             cblim[0] = -np.amax(abs(self.slice))
             cblim[1] = np.amax(abs(self.slice))
+            if (cblim[0] == 0.0) and (cblim[1] == 0.0):
+                cblim[0] = -1.0
+                cblim[1] = 1.0            
         elif self.g3d.type == picdefs.hipace.h5.g3dtypes.current:
             self.colormap = cm.PuOr
             cblim[0] = -np.amax(abs(self.slice))
             cblim[1] = np.amax(abs(self.slice))
+            if (cblim[0] == 0.0) and (cblim[1] == 0.0):
+                cblim[0] = -1.0
+                cblim[1] = 1.0 
 
         if self.args.cblim != None:
             cblim = list(self.args.cblim)
 
-        if (cblim[0] == 0.0) and (cblim[1] == 0.0):
-            cblim[0] = -1.0
-            cblim[1] = 1.0
 
         self.cblim = cblim
 
