@@ -433,7 +433,7 @@ class G3d_plot_slice(G3d_plot):
         else:
             sg_str = ''   
 
-        savename = fileprefix + sg_str + filesuffix + '.' + saveformat
+        savename = "%s%s_%s%s.%s" % (fileprefix, sg_str, self.args.plane, filesuffix, saveformat)
 
         levels = MaxNLocator(nbins=256).tick_values(self.cblim[0], self.cblim[1])
 
@@ -579,7 +579,7 @@ class G3d_plot_line(G3d_plot):
         else:
             sg_str = ''   
 
-        savename = fileprefix + sg_str + filesuffix + '.' + saveformat
+        savename = "%s%s_%s%s.%s" % (fileprefix, sg_str, self.args.loutax, filesuffix, saveformat)
 
         fig = plt.figure()
         cax = plt.plot( self.x_array,
