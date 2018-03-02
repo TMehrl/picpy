@@ -55,13 +55,13 @@ def g3d_parser():
                           dest = "ifshow",
                           action = "store_true",
                           default = False,
-                          help = "Show figure.")
+                          help = "Show figure (default: %(default)s).")
     parser.add_argument(  "--name-prefix",
                           action = "store",
                           dest = "save_prefix",
                           metavar = "NAME",
                           default = parsedefs.save.prefix,
-                          help = """Define customized prefix of output filename.""")
+                          help = """Define customized prefix of output filename (default: %(default)s).""")
     parser.add_argument(  "-c", "--code",
                           action="store",
                           dest="piccode",
@@ -85,7 +85,6 @@ def g3d_slice_subparser(subparsers, parent_parser):
     parser.add_argument(  "-p", "--plane",
                           action='store',
                           dest="plane",
-                          metavar="PLANE",
                           choices=[ 'xy', 'yz', 'xz',
                                     'yx', 'zy', 'zx'],
                           default='zx',
@@ -117,7 +116,7 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           nargs=2,
                           type=float,
                           default=None)
-    parser.add_argument(  "-s", "--save-path",
+    parser.add_argument(  "--save-path",
                           action="store",
                           dest="savepath",
                           metavar="PATH",
