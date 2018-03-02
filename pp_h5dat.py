@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-# h5dat.py
+# pp_h5dat.py
 
 import os
 import sys
 import numpy as np
 import h5py
-import picdefs
+import pp_defs
 
 
 # Dictionary for PIC codes

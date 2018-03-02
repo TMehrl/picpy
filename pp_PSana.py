@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# ps_ana.py
+# pp_PSana.py
 
 import os
 import numpy as np
 import h5py
-import picdefs
+import pp_defs
 import sys
 import time
 

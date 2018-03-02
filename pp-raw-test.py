@@ -12,9 +12,9 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib.colors import LogNorm
-import picdefs
-from h5dat import RAW
-import ps_ana
+import pp_defs
+from pp_h5dat import RAW
+import pp_PSana
 
 
 def main():
@@ -33,7 +33,7 @@ def main():
         file = args[0]
 
     # File
-    raw = RAW(file, picdefs.code.hipace)
+    raw = RAW(file, pp_defs.code.hipace)
     raw.print_datasets(file)
     raw.print_attributes(file)
 
@@ -48,7 +48,7 @@ def main():
     fig.savefig(  './long_ps.png',
                   format='png')
 
-    slices = ps_ana.SLICES(raw, nbins=256)
+    slices = pp_PSana.SLICES(raw, nbins=256)
     slices.calc_moments()
     fig = plt.figure()
     plt.plot(slices.centers, np.sqrt(slices.avgx2sq))

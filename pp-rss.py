@@ -13,10 +13,10 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib.colors import LogNorm
-import picdefs
-from h5dat import HiRAW
-from h5dat import H5FList
-import ps_ana
+import pp_defs
+from pp_h5dat import HiRAW
+from pp_h5dat import H5FList
+import pp_PSana
 import h5py
 
 # Parse defaults/definitions
@@ -105,10 +105,10 @@ def ps_parseargs():
 #                       action='store',
 #                       dest="piccode",
 #                       metavar="CODE",
-#                       choices = [picdefs.code.hipace, picdefs.code.osiris,],
-#                       default = picdefs.code.hipace,
+#                       choices = [pp_defs.code.hipace, pp_defs.code.osiris,],
+#                       default = pp_defs.code.hipace,
 #                       help= "PIC code which was used to generate files (Default: '%s')."
-#                             % picdefs.code.hipace)
+#                             % pp_defs.code.hipace)
 #   parser.add_argument(  "-d", "--dim",
 #                       type='choice',
 #                       action='store',
@@ -150,14 +150,14 @@ def main():
 
     if args.Nbins == None and args.zeta_range == None:
         zeta_range = None
-        slices = ps_ana.Slices(raw)          
+        slices = pp_PSana.Slices(raw)          
         Nbins = slices.nbins
     elif args.Nbins != None and args.zeta_range == None:
         Nbins = args.Nbins
         zeta_range = None
     elif args.Nbins == None and args.zeta_range != None:
         zeta_range = args.zeta_range
-        slices = ps_ana.Slices(raw, zrange=zeta_range)          
+        slices = pp_PSana.Slices(raw, zrange=zeta_range)          
         Nbins = slices.nbins
     else:
         Nbins = args.Nbins
@@ -231,7 +231,7 @@ def main():
         raw.read_data()
 
         time_array[i] = raw.time
-        slices = ps_ana.Slices(raw, nbins=Nbins, zrange=zeta_range)
+        slices = pp_PSana.Slices(raw, nbins=Nbins, zrange=zeta_range)
 
         slices.calc_moments(order = mom_order, crossterms=crossterms)
         charge[i,:] = slices.charge

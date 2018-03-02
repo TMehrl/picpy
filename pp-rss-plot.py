@@ -16,10 +16,10 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib import cm
 from matplotlib.colors import LogNorm
-import picdefs
-from h5dat import SliceMoms
-from h5dat import mkdirs_if_nexist
-import ps_ana
+import pp_defs
+from pp_h5dat import SliceMoms
+from pp_h5dat import mkdirs_if_nexist
+import pp_PSana
 import h5py
 
 # Parse defaults/definitions
@@ -70,8 +70,8 @@ def ps_parseopts():
                         action='store',
                         dest="piccode",
                         metavar="CODE",
-                        choices = [picdefs.code.hipace, picdefs.code.osiris,],
-                        default = picdefs.code.hipace,
+                        choices = [pp_defs.code.hipace, pp_defs.code.osiris,],
+                        default = pp_defs.code.hipace,
                         help= "PIC code which was used to generate files (default: %(default)s).")
     parser.add_argument(  "-d", "--dim",
                         action='store',

@@ -13,10 +13,10 @@ import matplotlib.colors as colors
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib.ticker import MaxNLocator
 from matplotlib import cm
-import picdefs
-from h5dat import Grid3d
-from h5dat import H5FList
-from h5dat import mkdirs_if_nexist
+import pp_defs
+from pp_h5dat import Grid3d
+from pp_h5dat import H5FList
+from pp_h5dat import mkdirs_if_nexist
 
 # Parse defaults/definitions
 class parsedefs:
@@ -65,8 +65,8 @@ def g3d_parser():
     parser.add_argument(  "-c", "--code",
                           action="store",
                           dest="piccode",
-                          choices = [picdefs.code.hipace, picdefs.code.osiris,],
-                          default = picdefs.code.hipace,
+                          choices = [pp_defs.code.hipace, pp_defs.code.osiris,],
+                          default = pp_defs.code.hipace,
                           help="PIC code (default: %(default)s).")
     parser.add_argument(  "-z", "--z-axis",
                           action='store',
@@ -223,12 +223,12 @@ def gen_pretty_grid_name( gname ):
 
 # Returning boolean: if file extension is hdf5 extension
 def is_h5_file(fext):
-    return any(fext == h5ext for h5ext in picdefs.fexts.hdf5)
+    return any(fext == h5ext for h5ext in pp_defs.fexts.hdf5)
 
 # Returning boolean: if file name contains name of grid quantity
 # ['density', 'field', 'current']
 def is_g3d_file(fname):
-    return any((mq in fname) for mq in picdefs.hipace.h5.g3dtypes.list)
+    return any((mq in fname) for mq in pp_defs.hipace.h5.g3dtypes.list)
 
 # Returning boolean:  if file extension is hdf5 extension and
 #                     if file name contains name of grid quantity
@@ -389,7 +389,7 @@ class G3d_plot_slice(G3d_plot):
 
         cblim = [0.0, 0.0]
 
-        if self.g3d.type == picdefs.hipace.h5.g3dtypes.density:
+        if self.g3d.type == pp_defs.hipace.h5.g3dtypes.density:
             if self.is_number_density():
                 self.colormap = cm.PuBu;
                 cblim[0] = np.amin(self.slice)
@@ -405,14 +405,14 @@ class G3d_plot_slice(G3d_plot):
                     cblim[0] = -1.0
                     cblim[1] = 1.0
 
-        elif self.g3d.type == picdefs.hipace.h5.g3dtypes.field:
+        elif self.g3d.type == pp_defs.hipace.h5.g3dtypes.field:
             self.colormap = cm.RdBu
             cblim[0] = -np.amax(abs(self.slice))
             cblim[1] = np.amax(abs(self.slice))
             if (cblim[0] == 0.0) and (cblim[1] == 0.0):
                 cblim[0] = -1.0
                 cblim[1] = 1.0            
-        elif self.g3d.type == picdefs.hipace.h5.g3dtypes.current:
+        elif self.g3d.type == pp_defs.hipace.h5.g3dtypes.current:
             self.colormap = cm.PuOr
             cblim[0] = -np.amax(abs(self.slice))
             cblim[1] = np.amax(abs(self.slice))
@@ -422,7 +422,6 @@ class G3d_plot_slice(G3d_plot):
 
         if self.args.cblim != None:
             cblim = list(self.args.cblim)
-
 
         self.cblim = cblim
 
@@ -487,14 +486,14 @@ class G3d_plot_line(G3d_plot):
         self.ylabel = gen_pretty_grid_name( self.g3d.name )
         ylim = [0.0, 0.0]
         # define axis labels and arrays
-        if self.g3d.type == picdefs.hipace.h5.g3dtypes.density:
+        if self.g3d.type == pp_defs.hipace.h5.g3dtypes.density:
             ylim[0] = np.amin(self.line)
             ylim[1] = np.amax(self.line)
-        elif self.g3d.type == picdefs.hipace.h5.g3dtypes.field:
+        elif self.g3d.type == pp_defs.hipace.h5.g3dtypes.field:
             self.colormap = cm.coolwarm
             ylim[0] = -np.amax(abs(self.line))
             ylim[1] = np.amax(abs(self.line))
-        elif self.g3d.type == picdefs.hipace.h5.g3dtypes.current:
+        elif self.g3d.type == pp_defs.hipace.h5.g3dtypes.current:
             self.colormap = cm.coolwarm
             ylim[0] = -np.amax(abs(self.line))
             ylim[1] = np.amax(abs(self.line))
