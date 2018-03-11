@@ -207,6 +207,8 @@ def gen_pretty_grid_name( gname ):
         return r'$J_z/cn_0$'
     elif gname == 'Jz':
         return r'$J_z$'
+    elif gname == 'mpsi':
+        return r'$-\psi/m_e c^2$'
     elif 'plasma' in gname:
         if 'charge' in gname:
             return r'$\rho_p/e n_0$'
