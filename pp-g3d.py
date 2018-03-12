@@ -459,6 +459,20 @@ class G3d_plot_slice(G3d_plot):
         cbar = fig.colorbar(cax)
         cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )
 
+        axpos1 = ax.get_position() # get the original position 
+        cbaxpos1 = cbar.ax.get_position() # get the original position 
+        xshift = 0.05;
+        wcompress = 1.05
+        axpos2 = [axpos1.x0 + xshift, axpos1.y0,  (axpos1.width - xshift) / wcompress, axpos1.height ]
+        ax.set_position(axpos2) # set a new position 
+        axpos2 = ax.get_position()
+        cbaxpos2 = [cbaxpos1.x0 + (axpos2.x0 - axpos1.x0) + (axpos2.width - axpos1.width), \
+                    cbaxpos1.y0, \
+                    cbaxpos1.width, \
+                    cbaxpos1.height ] 
+  
+        cbar.ax.set_position(cbaxpos2)
+
         mkdirs_if_nexist(self.args.savepath)
 
         if saveformat==parsedefs.file_format.png:
