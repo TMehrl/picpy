@@ -630,7 +630,17 @@ class G3d_plot_line(G3d_plot):
         else:
             sg_str = ''   
 
-        savename = "%s%s_%s%s.%s" % (fileprefix, sg_str, self.args.lineax, filesuffix, saveformat)
+        if self.args.if_lineout:
+            proj_str = ''
+        else:
+            proj_str = '_proj'  
+
+        savename = "%s%s_%s%s%s.%s" % (fileprefix, \
+                                       sg_str, \
+                                       self.args.lineax, \
+                                       proj_str, \
+                                       filesuffix, \
+                                       saveformat)
 
         fig = plt.figure()
         cax = plt.plot( self.x_array,
