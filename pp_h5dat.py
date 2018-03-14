@@ -296,7 +296,8 @@ class Grid3d(HiFile):
     def read_3D(self):
         with h5py.File(self.file,'r') as hf:
             # Reading dataset (here not caring how dataset is called)
-            self.data = hf[self.dsetkey][()]
+            data3d = hf[self.dsetkey][()]
+        return data3d
 
 
     def read_2D(self, i0=None, i1=None, i2=None):
@@ -372,7 +373,25 @@ class Grid3d(HiFile):
               'not allowed for grid 3d read in!')
             sys.exit(1)                                  
 
+    def proj_read(self, 
+                  ax0=False, 
+                  ax1=False, 
+                  ax2=False):
 
+        data = self.read_3D()
+        axtup = ()
+        norm = 1
+        if ax0:
+            axtup += (0,)
+            norm *= self.nx[0]
+        if ax1:
+            axtup += (1,)
+            norm *= self.nx[1]
+        if ax2:
+            axtup += (2,)
+            norm *= self.nx[2]           
+
+        return np.sum(data,axis=axtup)/norm
 
 
 class SliceMoms(H5File):

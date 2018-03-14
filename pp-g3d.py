@@ -140,7 +140,7 @@ def g3d_line_subparser(subparsers, parent_parser):
     # Line plot specific arguments
     parser.add_argument(  "-a", "--axis",
                           action='store',
-                          dest="loutax",
+                          dest="lineax",
                           choices=[ 'x', 'y', 'z'],
                           default='z',
                           help= """Axis along which lineout is generated (default: %(default)s).""")
@@ -181,7 +181,16 @@ def g3d_line_subparser(subparsers, parent_parser):
                           metavar=('XMIN', 'XMAX'),
                           nargs=2,
                           type=float,
-                          default=None)    
+                          default=None)
+    parser.add_argument(  "--lino",
+                          dest = "if_lineout",
+                          action="store_true",
+                          default=True,
+                          help = "Generate lineout (default: %(default)s).")
+    parser.add_argument(  "--proj",
+                          dest = "if_lineout",
+                          action = "store_false",
+                          help = "Generate projection (default: False).")                         
     return parser
 
 # Converting HDF strings of grid quantity namnes
@@ -492,14 +501,23 @@ class G3d_plot_line(G3d_plot):
     def __init__(self, file, args):
         G3d_plot.__init__(self, file, args)
 
-        self.set_xaxis( self.args.loutax )
+        self.set_xaxis( self.args.lineax )
         if self.args.verbose: print('Reading data...')
         self.read()
         if self.args.verbose: print('Read-in completed.')
         self.set_yaxis()
 
     def set_yaxis( self ):
-        self.ylabel = gen_pretty_grid_name( self.g3d.name )
+        if self.args.if_lineout:
+            self.ylabel = gen_pretty_grid_name( self.g3d.name )
+        else:
+            self.ylabel = r'$\int \int$' + gen_pretty_grid_name( self.g3d.name )
+            if self.args.lineax == 'z':
+                self.ylabel = self.ylabel + r'$\,dx dy$'
+            if self.args.lineax == 'x':
+                self.ylabel = self.ylabel + r'$\,dy dz$'
+            if self.args.lineax == 'y':
+                self.ylabel = self.ylabel + r'$\,dx dz$'
         ylim = [0.0, 0.0]
         # define axis labels and arrays
         if self.g3d.type == pp_defs.hipace.h5.g3dtypes.density:
@@ -520,69 +538,79 @@ class G3d_plot_line(G3d_plot):
         if self.args.lout_idx != None:
             lout_idx = list(self.args.lout_idx)
 
-        if 'z' == self.args.loutax:
-            if self.args.lout_idx == None:
-                # Default: central lineout
-                idx1 = math.floor(self.g3d.nx[1]/2) - 1
-                idx2 = math.floor(self.g3d.nx[2]/2) - 1
-                self.line = self.g3d.read(i1=idx1, i2=idx2)
-                if self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 0:
-                    line01 = self.g3d.read(i1=idx1, i2=idx2+1)
-                    line10 = self.g3d.read(i1=idx1+1, i2=idx2)
-                    line11 = self.g3d.read(i1=idx1+1, i2=idx2+1)
-                    self.line = ( self.line + line01 + line10 + line11 )/4
-                elif self.g3d.nx[1]%2 == 1 and self.g3d.nx[2]%2 == 0:
-                    self.line = ( self.line + self.g3d.read(i1=idx1, i2=idx2+1) )/2
-                elif self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 1:
-                    self.line = ( self.line + self.g3d.read(i1=idx1+1, i2=idx2) )/2
+        if 'z' == self.args.lineax:
+            if self.args.if_lineout:
+                if self.args.lout_idx == None:
+                    # Default: central lineout
+                    idx1 = math.floor(self.g3d.nx[1]/2) - 1
+                    idx2 = math.floor(self.g3d.nx[2]/2) - 1
+                    self.line = self.g3d.read(i1=idx1, i2=idx2)
+                    if self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 0:
+                        line01 = self.g3d.read(i1=idx1, i2=idx2+1)
+                        line10 = self.g3d.read(i1=idx1+1, i2=idx2)
+                        line11 = self.g3d.read(i1=idx1+1, i2=idx2+1)
+                        self.line = ( self.line + line01 + line10 + line11 )/4
+                    elif self.g3d.nx[1]%2 == 1 and self.g3d.nx[2]%2 == 0:
+                        self.line = ( self.line + self.g3d.read(i1=idx1, i2=idx2+1) )/2
+                    elif self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 1:
+                        self.line = ( self.line + self.g3d.read(i1=idx1+1, i2=idx2) )/2
+                else:
+                    self.line = self.g3d.read(i1=lout_idx[0], i2=lout_idx[1])
             else:
-                self.line = self.g3d.read(i1=lout_idx[0], i2=lout_idx[1])
+                self.line = self.g3d.proj_read(ax1=True,ax2=True)
 
-        elif 'x' == self.args.loutax:
-            if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
-                # Default: central lineout
-                idx1 = math.floor(self.g3d.nx[0]/2) - 1
-                idx2 = math.floor(self.g3d.nx[2]/2) - 1
-                self.line = self.g3d.read(i0=idx1, i2=idx2)
-                if self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 0:
-                    line01 = self.g3d.read(i0=idx1, i2=idx2+1)
-                    line10 = self.g3d.read(i0=idx1+1, i2=idx2)
-                    line11 = self.g3d.read(i0=idx1+1, i2=idx2+1)
-                    self.line = ( self.line + line01 + line10 + line11 )/4
-                elif self.g3d.nx[0]%2 == 1 and self.g3d.nx[2]%2 == 0:
-                    self.line = ( self.line + self.g3d.read(i0=idx1, i2=idx2+1) )/2
-                elif self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 1:
-                    self.line = ( self.line + self.g3d.read(i0=idx1+1, i2=idx2) )/2
-            elif (self.args.lout_idx != None) and (self.args.lout_zeta_pos == None):
-                self.line = self.g3d.read(i0=lout_idx[0], i2=lout_idx[1])
-            elif (self.args.lout_idx == None) and (self.args.lout_zeta_pos != None):
-                self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x2=0.0)
+        elif 'x' == self.args.lineax:
+            if self.args.if_lineout:
+                if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
+                    # Default: central lineout
+                    idx1 = math.floor(self.g3d.nx[0]/2) - 1
+                    idx2 = math.floor(self.g3d.nx[2]/2) - 1
+                    self.line = self.g3d.read(i0=idx1, i2=idx2)
+                    if self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 0:
+                        line01 = self.g3d.read(i0=idx1, i2=idx2+1)
+                        line10 = self.g3d.read(i0=idx1+1, i2=idx2)
+                        line11 = self.g3d.read(i0=idx1+1, i2=idx2+1)
+                        self.line = ( self.line + line01 + line10 + line11 )/4
+                    elif self.g3d.nx[0]%2 == 1 and self.g3d.nx[2]%2 == 0:
+                        self.line = ( self.line + self.g3d.read(i0=idx1, i2=idx2+1) )/2
+                    elif self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 1:
+                        self.line = ( self.line + self.g3d.read(i0=idx1+1, i2=idx2) )/2
+                elif (self.args.lout_idx != None) and (self.args.lout_zeta_pos == None):
+                    self.line = self.g3d.read(i0=lout_idx[0], i2=lout_idx[1])
+                elif (self.args.lout_idx == None) and (self.args.lout_zeta_pos != None):
+                    self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x2=0.0)
+                else:
+                    print('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
+                    sys.exit(1)
             else:
-                print('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
-                sys.exit(1)                                      
+                self.line = self.g3d.proj_read(ax0=True,ax2=True)
 
-        elif 'y' == self.args.loutax:
-            if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
-                # Default: central lineout
-                idx1 = math.floor(self.g3d.nx[0]/2) - 1
-                idx2 = math.floor(self.g3d.nx[1]/2) - 1
-                self.line = self.g3d.read(i0=idx1, i1=idx2)
-                if self.g3d.nx[0]%2 == 0 and self.g3d.nx[1]%2 == 0:
-                    line01 = self.g3d.read(i0=idx1, i1=idx2+1)
-                    line10 = self.g3d.read(i0=idx1+1, i1=idx2)
-                    line11 = self.g3d.read(i0=idx1+1, i1=idx2+1)
-                    self.line = ( self.line + line01 + line10 + line11 )/4
-                elif self.g3d.nx[0]%2 == 1 and self.g3d.nx[1]%2 == 0:
-                    self.line = ( self.line + self.g3d.read(i0=idx1, i1=idx2+1) )/2
-                elif self.g3d.nx[0]%2 == 0 and self.g3d.nx[1]%2 == 1:
-                    self.line = ( self.line + self.g3d.read(i0=idx1+1, i1=idx2) )/2
-            elif (self.args.lout_idx != None) and (self.args.lout_zeta_pos == None):
-                self.line = self.g3d.read(i0=lout_idx[0], i1=lout_idx[1])
-            elif (self.args.lout_idx == None) and (self.args.lout_zeta_pos != None):
-                self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x1=0.0)
+
+        elif 'y' == self.args.lineax:
+            if self.args.if_lineout:
+                if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
+                    # Default: central lineout
+                    idx1 = math.floor(self.g3d.nx[0]/2) - 1
+                    idx2 = math.floor(self.g3d.nx[1]/2) - 1
+                    self.line = self.g3d.read(i0=idx1, i1=idx2)
+                    if self.g3d.nx[0]%2 == 0 and self.g3d.nx[1]%2 == 0:
+                        line01 = self.g3d.read(i0=idx1, i1=idx2+1)
+                        line10 = self.g3d.read(i0=idx1+1, i1=idx2)
+                        line11 = self.g3d.read(i0=idx1+1, i1=idx2+1)
+                        self.line = ( self.line + line01 + line10 + line11 )/4
+                    elif self.g3d.nx[0]%2 == 1 and self.g3d.nx[1]%2 == 0:
+                        self.line = ( self.line + self.g3d.read(i0=idx1, i1=idx2+1) )/2
+                    elif self.g3d.nx[0]%2 == 0 and self.g3d.nx[1]%2 == 1:
+                        self.line = ( self.line + self.g3d.read(i0=idx1+1, i1=idx2) )/2
+                elif (self.args.lout_idx != None) and (self.args.lout_zeta_pos == None):
+                    self.line = self.g3d.read(i0=lout_idx[0], i1=lout_idx[1])
+                elif (self.args.lout_idx == None) and (self.args.lout_zeta_pos != None):
+                    self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x1=0.0)
+                else:
+                    print('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
+                    sys.exit(1)
             else:
-                print('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
-                sys.exit(1)                  
+                self.line = self.g3d.proj_read(ax0=True,ax1=True)                                
 
         if self.is_number_density():
             self.line = np.abs(self.line)
@@ -602,7 +630,7 @@ class G3d_plot_line(G3d_plot):
         else:
             sg_str = ''   
 
-        savename = "%s%s_%s%s.%s" % (fileprefix, sg_str, self.args.loutax, filesuffix, saveformat)
+        savename = "%s%s_%s%s.%s" % (fileprefix, sg_str, self.args.lineax, filesuffix, saveformat)
 
         fig = plt.figure()
         cax = plt.plot( self.x_array,
