@@ -187,10 +187,10 @@ def g3d_line_subparser(subparsers, parent_parser):
                           action="store_true",
                           default=True,
                           help = "Generate lineout (default: %(default)s).")
-    parser.add_argument(  "--proj",
+    parser.add_argument(  "--int",
                           dest = "if_lineout",
                           action = "store_false",
-                          help = "Generate projection (default: False).")                         
+                          help = "Generate integral (default: False).")                         
     return parser
 
 # Converting HDF strings of grid quantity namnes
@@ -511,7 +511,7 @@ class G3d_plot_line(G3d_plot):
         if self.args.if_lineout:
             self.ylabel = gen_pretty_grid_name( self.g3d.name )
         else:
-            self.ylabel = r'$\int \int$' + gen_pretty_grid_name( self.g3d.name )
+            self.ylabel = r'$k_p^2 \int \int$' + gen_pretty_grid_name( self.g3d.name )
             if self.args.lineax == 'z':
                 self.ylabel = self.ylabel + r'$\,dx dy$'
             if self.args.lineax == 'x':
@@ -557,7 +557,7 @@ class G3d_plot_line(G3d_plot):
                 else:
                     self.line = self.g3d.read(i1=lout_idx[0], i2=lout_idx[1])
             else:
-                self.line = self.g3d.proj_read(ax1=True,ax2=True)
+                self.line = self.g3d.read_integrate(ax1=True,ax2=True)
 
         elif 'x' == self.args.lineax:
             if self.args.if_lineout:
@@ -583,7 +583,7 @@ class G3d_plot_line(G3d_plot):
                     print('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
                     sys.exit(1)
             else:
-                self.line = self.g3d.proj_read(ax0=True,ax2=True)
+                self.line = self.g3d.read_integrate(ax0=True,ax2=True)
 
 
         elif 'y' == self.args.lineax:
@@ -610,7 +610,7 @@ class G3d_plot_line(G3d_plot):
                     print('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
                     sys.exit(1)
             else:
-                self.line = self.g3d.proj_read(ax0=True,ax1=True)                                
+                self.line = self.g3d.read_integrate(ax0=True,ax1=True)                                
 
         if self.is_number_density():
             self.line = np.abs(self.line)
@@ -631,14 +631,14 @@ class G3d_plot_line(G3d_plot):
             sg_str = ''   
 
         if self.args.if_lineout:
-            proj_str = ''
+            integral_str = ''
         else:
-            proj_str = '_proj'  
+            integral_str = '_int'  
 
         savename = "%s%s_%s%s%s.%s" % (fileprefix, \
                                        sg_str, \
                                        self.args.lineax, \
-                                       proj_str, \
+                                       integral_str, \
                                        filesuffix, \
                                        saveformat)
 

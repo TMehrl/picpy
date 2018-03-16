@@ -373,25 +373,25 @@ class Grid3d(HiFile):
               'not allowed for grid 3d read in!')
             sys.exit(1)                                  
 
-    def proj_read(self, 
-                  ax0=False, 
-                  ax1=False, 
-                  ax2=False):
-
+    def read_integrate(self, 
+                       ax0=False, 
+                       ax1=False, 
+                       ax2=False):
+        # read and integrate along specified axes 
         data = self.read_3D()
         axtup = ()
-        norm = 1
+        dx = 1
         if ax0:
             axtup += (0,)
-            norm *= self.nx[0]
+            dx *= self.get_dx(0)
         if ax1:
             axtup += (1,)
-            norm *= self.nx[1]
+            dx *= self.get_dx(1)
         if ax2:
             axtup += (2,)
-            norm *= self.nx[2]           
+            dx *= self.get_dx(2)           
 
-        return np.sum(data,axis=axtup)/norm
+        return np.sum(data,axis=axtup) * dx
 
 
 class SliceMoms(H5File):
