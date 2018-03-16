@@ -144,7 +144,7 @@ def g3d_line_subparser(subparsers, parent_parser):
                           choices=[ 'x', 'y', 'z'],
                           default='z',
                           help= """Axis along which lineout is generated (default: %(default)s).""")
-    parser.add_argument(  '-i', '--indices',
+    parser.add_argument(  '-i', '--idx',
                           help='Indices for which lineout is taken.',
                           action='store',
                           dest="lout_idx",
