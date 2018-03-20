@@ -76,6 +76,11 @@ def g3d_parser():
                                   parsedefs.zax.xi,],
                           default=parsedefs.zax.zeta,
                           help= "z-axis type (default: %(default)s).")
+    parser.add_argument(  "--int",
+                          dest = "if_integrate",
+                          action = "store_true",
+                          default=False,                          
+                          help = "Plot integrated quantity (default: %(default)s).")      
     return parser
 
 def g3d_slice_subparser(subparsers, parent_parser):
@@ -181,16 +186,7 @@ def g3d_line_subparser(subparsers, parent_parser):
                           metavar=('XMIN', 'XMAX'),
                           nargs=2,
                           type=float,
-                          default=None)
-    parser.add_argument(  "--lino",
-                          dest = "if_lineout",
-                          action="store_true",
-                          default=True,
-                          help = "Generate lineout (default: %(default)s).")
-    parser.add_argument(  "--int",
-                          dest = "if_lineout",
-                          action = "store_false",
-                          help = "Generate integral (default: False).")                         
+                          default=None)                       
     return parser
 
 # Converting HDF strings of grid quantity namnes
@@ -348,45 +344,55 @@ class G3d_plot_slice(G3d_plot):
         # read slice
         if 'z' in self.args.plane:
             if 'x' in self.args.plane:
-                if (self.args.plane_index == None) and (self.args.plane_pos == None):
-                    index = math.floor(self.g3d.nx[2]/2) - 1
-                    self.slice = self.g3d.read(i2=index)
-                    if self.g3d.nx[2]%2 == 0:
-                        self.slice = (self.slice + self.g3d.read(i2=index+1))/2
-                elif (self.args.plane_index != None) and (self.args.plane_pos == None):
-                    self.slice = self.g3d.read(i2=self.args.plane_index)
-                elif (self.args.plane_index == None) and (self.args.plane_pos != None): 
-                    self.slice = self.g3d.read(x2=self.args.plane_pos)
+                if not self.args.if_integrate:
+                    if (self.args.plane_index == None) and (self.args.plane_pos == None):
+                        index = math.floor(self.g3d.nx[2]/2) - 1
+                        self.slice = self.g3d.read(i2=index)
+                        if self.g3d.nx[2]%2 == 0:
+                            self.slice = (self.slice + self.g3d.read(i2=index+1))/2
+                    elif (self.args.plane_index != None) and (self.args.plane_pos == None):
+                        self.slice = self.g3d.read(i2=self.args.plane_index)
+                    elif (self.args.plane_index == None) and (self.args.plane_pos != None): 
+                        self.slice = self.g3d.read(x2=self.args.plane_pos)
+                    else:
+                        print('ERROR: plane-index can''t be used in conjunction with plane-position!')
+                        sys.exit(1)
                 else:
-                    print('ERROR: plane-index can''t be used in conjunction with plane-position!')
-                    sys.exit(1) 
+                    self.slice = self.g3d.read_integrate(ax2=True)
 
             elif 'y' in self.args.plane:
+                if not self.args.if_integrate:
+                    if (self.args.plane_index == None) and (self.args.plane_pos == None):
+                        index = math.floor(self.g3d.nx[1]/2) - 1
+                        self.slice = self.g3d.read(i1=index)
+                        if self.g3d.nx[1]%2 == 0:
+                            self.slice = ( self.slice + self.g3d.read(i1=index+1) )/2
+                    elif (self.args.plane_index != None) and (self.args.plane_pos == None): 
+                        self.slice = self.g3d.read(i1=self.args.plane_index)
+                    elif (self.args.plane_index == None) and (self.args.plane_pos != None): 
+                        self.slice = self.g3d.read(x1=self.args.plane_pos)                    
+                    else:
+                        print('ERROR: plane-index can''t be used in conjunction with plane-position!')
+                        sys.exit(1)
+                else:
+                    self.slice = self.g3d.read_integrate(ax1=True)
+
+        elif ('x' in self.args.plane) and ('y' in self.args.plane):
+            if not self.args.if_integrate:
                 if (self.args.plane_index == None) and (self.args.plane_pos == None):
-                    index = math.floor(self.g3d.nx[1]/2) - 1
-                    self.slice = self.g3d.read(i1=index)
-                    if self.g3d.nx[1]%2 == 0:
-                        self.slice = ( self.slice + self.g3d.read(i1=index+1) )/2
-                elif (self.args.plane_index != None) and (self.args.plane_pos == None): 
-                    self.slice = self.g3d.read(i1=self.args.plane_index)
-                elif (self.args.plane_index == None) and (self.args.plane_pos != None): 
-                    self.slice = self.g3d.read(x1=self.args.plane_pos)                    
+                    index = math.floor(self.g3d.nx[0]/2) - 1
+                    self.slice = self.g3d.read(i0=index)
+                    if self.g3d.nx[0]%2 == 0:
+                        self.slice = ( self.slice + self.g3d.read(i0=index+1) )/2
+                elif (self.args.plane_index != None) and (self.args.plane_pos == None):
+                    self.slice = self.g3d.read(i0=self.args.plane_index)
+                elif (self.args.plane_index == None) and (self.args.plane_pos != None):    
+                    self.slice = self.g3d.read(x0=self.args.plane_pos) 
                 else:
                     print('ERROR: plane-index can''t be used in conjunction with plane-position!')
-                    sys.exit(1) 
-        elif ('x' in self.args.plane) and ('y' in self.args.plane):
-            if (self.args.plane_index == None) and (self.args.plane_pos == None):
-                index = math.floor(self.g3d.nx[0]/2) - 1
-                self.slice = self.g3d.read(i0=index)
-                if self.g3d.nx[0]%2 == 0:
-                    self.slice = ( self.slice + self.g3d.read(i0=index+1) )/2
-            elif (self.args.plane_index != None) and (self.args.plane_pos == None):
-                self.slice = self.g3d.read(i0=self.args.plane_index)
-            elif (self.args.plane_index == None) and (self.args.plane_pos != None):    
-                self.slice = self.g3d.read(x0=self.args.plane_pos) 
+                    sys.exit(1)
             else:
-                print('ERROR: plane-index can''t be used in conjunction with plane-position!')
-                sys.exit(1)                 
+                self.slice = self.g3d.read_integrate(ax0=True)                      
 
         if self.args.plane in ['xy','zx','zy']:
             self.slice = np.transpose( self.slice )
@@ -508,7 +514,7 @@ class G3d_plot_line(G3d_plot):
         self.set_yaxis()
 
     def set_yaxis( self ):
-        if self.args.if_lineout:
+        if not self.args.if_integrate:
             self.ylabel = gen_pretty_grid_name( self.g3d.name )
         else:
             self.ylabel = r'$k_p^2 \int \int$' + gen_pretty_grid_name( self.g3d.name )
@@ -539,7 +545,7 @@ class G3d_plot_line(G3d_plot):
             lout_idx = list(self.args.lout_idx)
 
         if 'z' == self.args.lineax:
-            if self.args.if_lineout:
+            if not self.args.if_integrate:
                 if self.args.lout_idx == None:
                     # Default: central lineout
                     idx1 = math.floor(self.g3d.nx[1]/2) - 1
@@ -560,7 +566,7 @@ class G3d_plot_line(G3d_plot):
                 self.line = self.g3d.read_integrate(ax1=True,ax2=True)
 
         elif 'x' == self.args.lineax:
-            if self.args.if_lineout:
+            if not self.args.if_integrate:
                 if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
                     # Default: central lineout
                     idx1 = math.floor(self.g3d.nx[0]/2) - 1
@@ -587,7 +593,7 @@ class G3d_plot_line(G3d_plot):
 
 
         elif 'y' == self.args.lineax:
-            if self.args.if_lineout:
+            if not self.args.if_integrate:
                 if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
                     # Default: central lineout
                     idx1 = math.floor(self.g3d.nx[0]/2) - 1
@@ -630,10 +636,10 @@ class G3d_plot_line(G3d_plot):
         else:
             sg_str = ''   
 
-        if self.args.if_lineout:
-            integral_str = ''
+        if self.args.if_integrate:
+            integral_str = '_int'
         else:
-            integral_str = '_int'  
+            integral_str = ''
 
         savename = "%s%s_%s%s%s.%s" % (fileprefix, \
                                        sg_str, \
