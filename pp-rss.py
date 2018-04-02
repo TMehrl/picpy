@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # This script may be executed like this:
-# nohup raw-slice-series.py DATA 1> rss.out 2> rss.err &
+# nohup pp-rss.py DATA 1> rss.out 2> rss.err &
 
 import os
 import sys
@@ -16,7 +16,7 @@ from matplotlib.colors import LogNorm
 import pp_defs
 from pp_h5dat import HiRAW
 from pp_h5dat import H5FList
-import pp_PSana
+import pp_raw_ana
 import h5py
 
 # Parse defaults/definitions
@@ -150,14 +150,14 @@ def main():
 
     if args.Nbins == None and args.zeta_range == None:
         zeta_range = None
-        slices = pp_PSana.Slices(raw)          
+        slices = pp_raw_ana.Slices(raw)          
         Nbins = slices.nbins
     elif args.Nbins != None and args.zeta_range == None:
         Nbins = args.Nbins
         zeta_range = None
     elif args.Nbins == None and args.zeta_range != None:
         zeta_range = args.zeta_range
-        slices = pp_PSana.Slices(raw, zrange=zeta_range)          
+        slices = pp_raw_ana.Slices(raw, zrange=zeta_range)          
         Nbins = slices.nbins
     else:
         Nbins = args.Nbins
@@ -231,7 +231,7 @@ def main():
         raw.read_data()
 
         time_array[i] = raw.time
-        slices = pp_PSana.Slices(raw, nbins=Nbins, zrange=zeta_range)
+        slices = pp_raw_ana.Slices(raw, nbins=Nbins, zrange=zeta_range)
 
         slices.calc_moments(order = mom_order, crossterms=crossterms)
         charge[i,:] = slices.charge

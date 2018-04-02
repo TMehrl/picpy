@@ -5,6 +5,7 @@ import math
 import argparse
 import numpy as np
 import matplotlib
+import itertools
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -30,6 +31,9 @@ class parsedefs:
         prefix = 'g3d_name'
         path = './plots'
 
+
+def flip(items, ncol):
+    return itertools.chain(*[items[i::ncol] for i in range(ncol)])
 
 def g3d_lvst_parser():
 
@@ -336,23 +340,26 @@ def cmp_plot_Wr(args,
                      figsize=(9, 7), 
                      dpi=80, 
                      facecolor='w', 
-                     edgecolor='k')
-    ax_half = plt.plot( x_array, x_array*0.5, 
-                        linestyle ='-',
-                        label=r'$k_p r/2$',
-                        color=[0.5, 0.5, 0.5])    
+                     edgecolor='k') 
     for i in range(0, Nsimlines):
         zeta_pos = zeta_pos_list[i]
         ax_sim = plt.plot( x_array, Wr_sim[:,i],
                            linestyle='-',
                            color=cmap(i),
-                           label=r'PIC, $k_p \zeta = %0.1f$' %  zeta_pos)
+                           label=r'PIC: $k_p \zeta = %0.1f$' %  zeta_pos)
         ax_theo = plt.plot( x_array, Wr_theo[:,i], 
                             linestyle ='--',
                             color=cmap(i),
-                            label=r'Theo, $k_p \zeta = %0.1f$' %  zeta_pos)
-    plt.legend()
+                            label=r'Theo: $k_p \zeta = %0.1f$' %  zeta_pos)
+    ax_half = plt.plot( x_array, x_array*0.5, 
+                        linestyle ='-',
+                        label=r'$k_p r/2$',
+                        color=[0.5, 0.5, 0.5])    
     ax = plt.gca()
+    handles, labels = ax.get_legend_handles_labels()
+    plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
+    #plt.legend()
+
     if args.rmax != None:
         xmax = args.rmax
         ymax = 1.2 * np.amax(Wr_sim[np.logical_and(x_array<xmax, x_array>0.0)])

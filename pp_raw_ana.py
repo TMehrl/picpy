@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# pp_PSana.py
+# pp_raw_ana.py
 
 import os
 import numpy as np

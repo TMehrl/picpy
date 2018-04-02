@@ -19,7 +19,7 @@ from matplotlib.colors import LogNorm
 import pp_defs
 from pp_h5dat import SliceMoms
 from pp_h5dat import mkdirs_if_nexist
-import pp_PSana
+import pp_raw_ana
 import h5py
 
 # Parse defaults/definitions

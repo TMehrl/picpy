@@ -14,7 +14,7 @@ import matplotlib.colors as colors
 from matplotlib.colors import LogNorm
 import pp_defs
 from pp_h5dat import RAW
-import pp_PSana
+import pp_raw_ana
 
 
 def main():
@@ -48,7 +48,7 @@ def main():
     fig.savefig(  './long_ps.png',
                   format='png')
 
-    slices = pp_PSana.SLICES(raw, nbins=256)
+    slices = pp_raw_ana.SLICES(raw, nbins=256)
     slices.calc_moments()
     fig = plt.figure()
     plt.plot(slices.centers, np.sqrt(slices.avgx2sq))
