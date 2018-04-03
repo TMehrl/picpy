@@ -15,6 +15,7 @@ import scipy.constants as constants
 import mpmath
 from pp_h5dat import Grid3d
 from pp_h5dat import H5FList
+from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
 
 # Parse defaults/definitions
@@ -60,7 +61,7 @@ def g3d_lvst_parser():
                           metavar="PATH",
                           default=parsedefs.save.path + '/g3d-line-vs-theo',
                           help = """Path to which generated files will be saved.
-                              (Default: './')""")
+                              (Default: %(default)s)""")
     parser.add_argument(  "-f", "--format",
                           action='store',
                           dest="file_format",
@@ -69,7 +70,12 @@ def g3d_lvst_parser():
                                     'pdf',
                                     'eps',],
                           default='eps',
-                          help= """Format of output file (Default: eps).""")
+                          help= """Format of output file (Default: %(default)s).""")
+    parser.add_argument(  "--h5",
+                          dest = "h5plot",
+                          action="store_true",
+                          default=True,
+                          help = "Save plot as hdf5 file (Default: %(default)s).")    
     parser.add_argument(  "--ion-Z",
                           action='store',
                           dest="ion_Z",
@@ -336,6 +342,7 @@ def cmp_plot_Wr(args,
 
     cmap = cm.tab10
 
+
     fig = plt.figure(num=None, 
                      figsize=(9, 7), 
                      dpi=80, 
@@ -343,22 +350,27 @@ def cmp_plot_Wr(args,
                      edgecolor='k') 
     for i in range(0, Nsimlines):
         zeta_pos = zeta_pos_list[i]
+        label_sim = r'PIC: $k_p \zeta = %0.1f$' %  zeta_pos
         ax_sim = plt.plot( x_array, Wr_sim[:,i],
                            linestyle='-',
                            color=cmap(i),
-                           label=r'PIC: $k_p \zeta = %0.1f$' %  zeta_pos)
+                           label=label_sim)    
+        
+        label_theo = r'Theo: $k_p \zeta = %0.1f$' %  zeta_pos
         ax_theo = plt.plot( x_array, Wr_theo[:,i], 
                             linestyle ='--',
                             color=cmap(i),
-                            label=r'Theo: $k_p \zeta = %0.1f$' %  zeta_pos)
+                            label=label_theo)
+
+    label_half = r'$k_p r/2$'
     ax_half = plt.plot( x_array, x_array*0.5, 
                         linestyle ='-',
-                        label=r'$k_p r/2$',
-                        color=[0.5, 0.5, 0.5])    
+                        label=label_half,
+                        color=[0.5, 0.5, 0.5])
+
     ax = plt.gca()
     handles, labels = ax.get_legend_handles_labels()
     plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
-    #plt.legend()
 
     if args.rmax != None:
         xmax = args.rmax
@@ -389,9 +401,33 @@ def cmp_plot_Wr(args,
 
     fig.savefig(  savepath + '/' + savename,
                       format=saveformat)
-    if args.verbose: print('Saved "' + savename + '" at: ' + args.savepath)
+    
+    if args.h5plot: 
+        h5lp = H5Plot()
+        h5lp.inherit_matplotlib_line_plots(ax)
+        h5lp.write(savepath + '/' + fileprefix + filesuffix + '.h5')
 
+    if args.verbose: print('Saved "' + savename + '" at: ' + args.savepath)
+    
     plt.close(fig)
+
+    # TESTING #
+    h5lp.read(savepath + '/' + fileprefix + filesuffix + '.h5')    
+    fig = plt.figure()
+    for (x, y, label) in h5lp.get_line_plots():
+        plt.plot(x, y, label=label)
+    ax = plt.gca()
+    ax.set_ylabel(h5lp.get_xlab(), fontsize=14)
+    ax.set_xlabel(h5lp.get_ylab(), fontsize=14)    
+    ax.set_xlim([0,xmax])
+    ax.set_ylim([0,ymax])
+    handles, labels = ax.get_legend_handles_labels()
+    plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)           
+    fig.savefig(  savepath + '/' + 'h5_' + savename ,
+                      format=saveformat)
+    plt.close(fig)
+    ##############
+
 
 def set_plasma( args ):
     plasma = Plasma(n = args.plasma_n, 

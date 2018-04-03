@@ -428,6 +428,82 @@ class SliceMoms(H5File):
                 self.avgx3p3 = np.array(hf.get( 'avgx3p3' ))
 
 
+            
+
+class H5Plot:
+    def __init__(self):
+        self.__xlab_key = u'xlab'
+        self.__ylab_key = u'ylab'
+        self.__xlab = u'$x$'
+        self.__ylab = u'$y$'
+
+        self.__lp_key = u'line_plots'
+        self.__lp_label_key = u'label'        
+        self.__lp_x_key = u'x'
+        self.__lp_y_key = u'y'
+        self.__lp_labels = []
+        self.__lp_X = []
+        self.__lp_Y = []
+        self.__N_lp = 0
+
+    def set_ax_labels(xlab, ylab):
+        self.__xlab = np.string_(xlab)
+        self.__ylab = np.string_(ylab)        
+
+    def get_xlab(self):
+        return self.__xlab 
+
+    def get_ylab(self):
+        return self.__ylab        
+
+    def inherit_matplotlib_line_plots(self, ax):
+        self.__N_lp = len(ax.lines)
+        self.__xlab = ax.xaxis.get_label_text()
+        self.__ylab = ax.yaxis.get_label_text()
+        for i in range(0,self.__N_lp):
+            line = ax.lines[i]
+            self.__lp_X.append(line.get_xdata())
+            self.__lp_Y.append(line.get_ydata())
+            self.__lp_labels.append(line.get_label())
+
+    def append_line_plot(self, x, y, label):
+        self.__N_lp += 1
+        self.__lp_X.append(x)
+        self.__lp_Y.append(y)
+        self.__lp_labels.append(np.string_(label))
+
+    def write(self, path):
+        h5f = h5py.File(path, "w")
+        if self.__N_lp > 0:
+            lp_grp = h5f.create_group(self.__lp_key)
+            lp_grp.attrs[self.__xlab_key] = self.__xlab
+            lp_grp.attrs[self.__ylab_key] = self.__ylab
+            subgrps = []
+            for i in range(0,self.__N_lp):
+                subgrps.append(lp_grp.create_group(u'line_%02d' % i))
+                subgrps[i].attrs[self.__lp_label_key] = self.__lp_labels[i]
+                subgrps[i].create_dataset( self.__lp_x_key, data = self.__lp_X[i])
+                subgrps[i].create_dataset( self.__lp_y_key, data = self.__lp_Y[i])
+        h5f.close()
+
+    def read(self, path):
+        self.__init__()
+        h5f = h5py.File(path, "r")
+        self.__xlab = h5f[self.__lp_key].attrs[self.__xlab_key]
+        self.__ylab = h5f[self.__lp_key].attrs[self.__ylab_key]
+        subgrps = [] 
+        for key in h5f[self.__lp_key].keys():
+            self.__N_lp += 1
+            i = self.__N_lp - 1
+            subgrps.append(h5f[self.__lp_key].get(key))
+            self.__lp_X.append(np.array(subgrps[i].get(self.__lp_x_key)))
+            self.__lp_Y.append(np.array(subgrps[i].get(self.__lp_y_key)))
+            self.__lp_labels.append(subgrps[i].attrs[self.__lp_label_key])        
+        h5f.close()
+
+    def get_line_plots(self):
+        return zip(self.__lp_X, self.__lp_Y, self.__lp_labels)
+
 
 class H5FList():
     def __init__(self, paths, h5ftype=None):
