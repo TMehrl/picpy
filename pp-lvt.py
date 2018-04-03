@@ -414,8 +414,8 @@ def cmp_plot_Wr(args,
     # TESTING #
     h5lp.read(savepath + '/' + fileprefix + filesuffix + '.h5')    
     fig = plt.figure()
-    for (x, y, label) in h5lp.get_line_plots():
-        plt.plot(x, y, label=label)
+    for (x, y, label, linestyle, color) in h5lp.get_line_plots():
+        plt.plot(x, y, label=label, linestyle=linestyle, color=color)
     ax = plt.gca()
     ax.set_ylabel(h5lp.get_xlab(), fontsize=14)
     ax.set_xlabel(h5lp.get_ylab(), fontsize=14)    

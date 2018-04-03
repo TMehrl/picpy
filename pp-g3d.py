@@ -16,6 +16,7 @@ from matplotlib import cm
 import pp_defs
 from pp_h5dat import Grid3d
 from pp_h5dat import H5FList
+from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
 
 # Parse defaults/definitions
@@ -80,7 +81,12 @@ def g3d_parser():
                           dest = "if_integrate",
                           action = "store_true",
                           default=False,                          
-                          help = "Plot integrated quantity (default: %(default)s).")      
+                          help = "Plot integrated quantity (default: %(default)s).")
+    parser.add_argument(  "--h5",
+                          dest = "h5plot",
+                          action="store_true",
+                          default=True,
+                          help = "Save plot as hdf5 file (Default: %(default)s).")                                
     return parser
 
 def g3d_slice_subparser(subparsers, parent_parser):
@@ -641,12 +647,11 @@ class G3d_plot_line(G3d_plot):
         else:
             integral_str = ''
 
-        savename = "%s%s_%s%s%s.%s" % (fileprefix, \
+        savename = "%s%s_%s%s%s" % (fileprefix, \
                                        sg_str, \
                                        self.args.lineax, \
                                        integral_str, \
-                                       filesuffix, \
-                                       saveformat)
+                                       filesuffix)
 
         fig = plt.figure()
         cax = plt.plot( self.x_array,
@@ -673,14 +678,19 @@ class G3d_plot_line(G3d_plot):
         mkdirs_if_nexist(self.args.savepath)
 
         if saveformat==parsedefs.file_format.png:
-            fig.savefig(  self.args.savepath + '/' + savename,
+            fig.savefig(  self.args.savepath + '/' + savename + '.' + saveformat,
                       format=saveformat,
                       dpi=600)
         else:
-            fig.savefig(  self.args.savepath + '/' + savename,
+            fig.savefig(  self.args.savepath + '/' + savename + '+' + saveformat,
                           format=saveformat)
         if self.args.verbose:
-            print('Saved "' + savename + '" at: ' + self.args.savepath)
+            print('Saved "' + savename + '.' + saveformat + '" at: ' + self.args.savepath)
+
+        if self.args.h5plot: 
+            h5lp = H5Plot()
+            h5lp.inherit_matplotlib_line_plots(ax)
+            h5lp.write(self.args.savepath + '/' + savename + '.h5')
 
         if self.args.ifshow: plt.show()
         plt.close(fig)

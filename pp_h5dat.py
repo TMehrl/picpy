@@ -428,8 +428,6 @@ class SliceMoms(H5File):
                 self.avgx3p3 = np.array(hf.get( 'avgx3p3' ))
 
 
-            
-
 class H5Plot:
     def __init__(self):
         self.__xlab_key = u'xlab'
@@ -438,13 +436,18 @@ class H5Plot:
         self.__ylab = u'$y$'
 
         self.__lp_key = u'line_plots'
-        self.__lp_label_key = u'label'        
+        self.__lp_label_key = u'label'  
+        self.__lp_linestyle_key = u'linestyle'
+        self.__lp_color_key = u'color'        
         self.__lp_x_key = u'x'
         self.__lp_y_key = u'y'
-        self.__lp_labels = []
+
+        self.__N_lp = 0
         self.__lp_X = []
         self.__lp_Y = []
-        self.__N_lp = 0
+        self.__lp_linestyles = []
+        self.__lp_colors = []
+        self.__lp_labels = []
 
     def set_ax_labels(xlab, ylab):
         self.__xlab = np.string_(xlab)
@@ -457,14 +460,16 @@ class H5Plot:
         return self.__ylab        
 
     def inherit_matplotlib_line_plots(self, ax):
-        self.__N_lp = len(ax.lines)
         self.__xlab = ax.xaxis.get_label_text()
         self.__ylab = ax.yaxis.get_label_text()
+        self.__N_lp = len(ax.lines)
         for i in range(0,self.__N_lp):
             line = ax.lines[i]
             self.__lp_X.append(line.get_xdata())
             self.__lp_Y.append(line.get_ydata())
             self.__lp_labels.append(line.get_label())
+            self.__lp_linestyles.append(line.get_linestyle())
+            self.__lp_colors.append(line.get_color())
 
     def append_line_plot(self, x, y, label):
         self.__N_lp += 1
@@ -482,6 +487,8 @@ class H5Plot:
             for i in range(0,self.__N_lp):
                 subgrps.append(lp_grp.create_group(u'line_%02d' % i))
                 subgrps[i].attrs[self.__lp_label_key] = self.__lp_labels[i]
+                subgrps[i].attrs[self.__lp_linestyle_key] = self.__lp_linestyles[i]
+                subgrps[i].attrs[self.__lp_color_key] = self.__lp_colors[i]
                 subgrps[i].create_dataset( self.__lp_x_key, data = self.__lp_X[i])
                 subgrps[i].create_dataset( self.__lp_y_key, data = self.__lp_Y[i])
         h5f.close()
@@ -498,11 +505,13 @@ class H5Plot:
             subgrps.append(h5f[self.__lp_key].get(key))
             self.__lp_X.append(np.array(subgrps[i].get(self.__lp_x_key)))
             self.__lp_Y.append(np.array(subgrps[i].get(self.__lp_y_key)))
-            self.__lp_labels.append(subgrps[i].attrs[self.__lp_label_key])        
+            self.__lp_labels.append(subgrps[i].attrs[self.__lp_label_key])
+            self.__lp_linestyles.append(subgrps[i].attrs[self.__lp_linestyle_key])
+            self.__lp_colors.append(subgrps[i].attrs[self.__lp_color_key])       
         h5f.close()
 
     def get_line_plots(self):
-        return zip(self.__lp_X, self.__lp_Y, self.__lp_labels)
+        return zip(self.__lp_X, self.__lp_Y, self.__lp_labels, self.__lp_linestyles, self.__lp_colors)
 
 
 class H5FList():
