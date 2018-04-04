@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import os
 import math
 import argparse
 import numpy as np
@@ -90,7 +91,15 @@ def h5plot_parser():
                           type=int,                      
                           default=None,
                           nargs='+',
-                          help= """Selected line number for each provided file.""")  
+                          help= """Selected line number for each provided file.""")
+    parser.add_argument(  "--lab",
+                          action='store',
+                          dest="labels",
+                          metavar="LABELS",
+                          type=str,                      
+                          default=None,
+                          nargs='+',
+                          help= """Labels to be prepended for each provided file.""")    
     return parser
 
  
@@ -107,25 +116,30 @@ def main():
 
     fig = plt.figure()
 
-    h5lp = []
-    i = 0
-
     if (args.line_no != None) and (len(args.line_no) != len(args.paths)):
         print('ERROR: number of selected lines must be equal to the number of provided hdf5 files!')
         sys.exit(1)        
 
+    if (args.labels != None) and (len(args.labels) != len(args.paths)):
+        print('ERROR: number of prepend labels must be equal to the number of provided hdf5 files!')
+        sys.exit(1)  
+    
+    h5lp = []
+    i = 0
     for path in args.paths:
-      h5lp.append(H5Plot())
-      h5lp[i].read(path)
-      j = 0   
-      for (x, y, label, linestyle, color) in h5lp[i].get_line_plots():
-          if (args.line_no != None):
-              if args.line_no[i] == j:
-                plt.plot(x, y, label=label, linestyle=linestyle, color=color)
-          else:
-            plt.plot(x, y, label=label, linestyle=linestyle, color=color)      
-          j += 1
-      i += 1
+        h5lp.append(H5Plot())
+        h5lp[i].read(path)
+        j = 0   
+        for (x, y, label, linestyle, color) in h5lp[i].get_line_plots():
+            if args.labels != None:
+                label = args.labels[i] + ' ' + label          
+            if (args.line_no != None):
+                if args.line_no[i] == j:
+                    plt.plot(x, y, label=label, linestyle=linestyle)
+            else:
+                plt.plot(x, y, label=label, linestyle=linestyle, color=color)      
+            j += 1
+        i += 1
 
     ax = plt.gca()
     ax.set_ylabel(h5lp[0].get_xlab(), fontsize=14)
@@ -133,8 +147,9 @@ def main():
     handles, labels = ax.get_legend_handles_labels()
     plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)           
     plt.show()
-    # fig.savefig(  savepath + '/' + 'h5_' + savename ,
-    #                   format=saveformat)
+    fname, fext = os.path.splitext(args.paths[0])
+    fig.savefig(  fname + '_h5plot.' + args.file_format ,
+                      format=args.file_format)
     plt.close(fig)
 
 if __name__ == "__main__":
