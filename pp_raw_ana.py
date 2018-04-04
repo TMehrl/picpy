@@ -215,3 +215,8 @@ class Slices:
 
 
         self.if_moms_calc = True
+
+# Class to generate histograms
+class hist:
+    
+

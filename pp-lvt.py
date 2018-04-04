@@ -411,23 +411,6 @@ def cmp_plot_Wr(args,
     
     plt.close(fig)
 
-    # TESTING #
-    h5lp.read(savepath + '/' + fileprefix + filesuffix + '.h5')    
-    fig = plt.figure()
-    for (x, y, label, linestyle, color) in h5lp.get_line_plots():
-        plt.plot(x, y, label=label, linestyle=linestyle, color=color)
-    ax = plt.gca()
-    ax.set_ylabel(h5lp.get_xlab(), fontsize=14)
-    ax.set_xlabel(h5lp.get_ylab(), fontsize=14)    
-    ax.set_xlim([0,xmax])
-    ax.set_ylim([0,ymax])
-    handles, labels = ax.get_legend_handles_labels()
-    plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)           
-    fig.savefig(  savepath + '/' + 'h5_' + savename ,
-                      format=saveformat)
-    plt.close(fig)
-    ##############
-
 
 def set_plasma( args ):
     plasma = Plasma(n = args.plasma_n, 
