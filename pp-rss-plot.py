@@ -16,11 +16,14 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib import cm
 from matplotlib.colors import LogNorm
+from matplotlib.ticker import FormatStrFormatter
 import pp_defs
+import h5py
 from pp_h5dat import SliceMoms
+from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
 import pp_raw_ana
-import h5py
+
 
 # Parse defaults/definitions
 class parsedefs:
@@ -87,7 +90,11 @@ def ps_parseopts():
                         metavar="NFILES",
                         default=0,
                         help= """Number of files to analyze.""")
-
+    parser.add_argument(  "--h5",
+                          dest = "h5plot",
+                          action="store_true",
+                          default=True,
+                          help = "Save plot as hdf5 file (Default: %(default)s).")    
     return parser
 
 
@@ -149,7 +156,7 @@ def plot_save_slice_rms(slm, savepath):
                   dpi=600)
 
 
-def plot_save_proj_rms(slm, savepath):
+def plot_save_proj_rms(slm, savepath, h5plot=True):
     
     t = slm.time_array
     tot_charge = np.sum(slm.charge, axis=1)
@@ -162,35 +169,77 @@ def plot_save_proj_rms(slm, savepath):
     plt.plot(t, np.sqrt(xsq))
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
-    ax.set_ylabel(r'$k_p\sigma_x$', fontsize=14)    
+    ax.set_ylabel(r'$k_p\sigma_x$', fontsize=14)
+    if not (-3.0 < math.log(np.max(abs(np.sqrt(xsq))),10) < 3.0):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15) 
     fig_sx.savefig( savepath + '/sigma_x_proj.eps',
                   format='eps')
+    if h5plot: 
+        h5lp = H5Plot()
+        h5lp.inherit_matplotlib_line_plots(ax)
+        h5lp.write(savepath + '/sigma_x_proj.h5')
+    plt.close(fig_sx)
+
 
     fig_sp = plt.figure()    
     plt.plot(t, np.sqrt(psq))
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
     ax.set_ylabel(r'$\sigma_{p_x}/m_e c$', fontsize=14)
+    if not (-3.0 < math.log(np.max(abs(np.sqrt(psq))),10) < 3.0):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)  
     fig_sx.savefig( savepath + '/sigma_px_proj.eps',
                   format='eps')
+    if h5plot: 
+        h5lp = H5Plot()
+        h5lp.inherit_matplotlib_line_plots(ax)
+        h5lp.write(savepath + '/sigma_px_proj.h5')
+    plt.close(fig_sp)
 
 
     fig_xp = plt.figure()    
     plt.plot(t, xp)
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
-    ax.set_ylabel(r'$ k_p x\,p_x/m_e c$', fontsize=14)    
+    ax.set_ylabel(r'$ k_p x\,p_x/m_e c$', fontsize=14)
+    if not (-3.0 < math.log(np.max(abs(xp)),10) < 3.0):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)
     fig_xp.savefig( savepath + '/xpx_proj.eps',
                   format='eps')
+    if h5plot: 
+        h5lp = H5Plot()
+        h5lp.inherit_matplotlib_line_plots(ax)
+        h5lp.write(savepath + '/xpx_proj.h5')
+    plt.close(fig_xp)
+
 
     emittance = np.sqrt(xsq*psq-np.power(xp,2))
     fig_e = plt.figure()    
     plt.plot(t, emittance)
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
-    ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)    
+    ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
+    if not (-3.0 < math.log(np.max(abs(emittance)),10) < 3.0):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)  
     fig_e.savefig( savepath + '/emittance_proj.eps',
                   format='eps')
+    if h5plot: 
+        h5lp = H5Plot()
+        h5lp.inherit_matplotlib_line_plots(ax)
+        h5lp.write(savepath + '/emittance_proj.h5')
+    plt.close(fig_e)
 
 def plot_save_slice_centroids(slm, savepath):
 
@@ -271,7 +320,7 @@ def main():
 
     plot_save_slice_ene(slm, args.savepath)
 
-    plot_save_proj_rms(slm, args.savepath)
+    plot_save_proj_rms(slm, args.savepath, args.h5plot)
 
     # plot_save_slice_centroids(slm, args.savepath)
 

@@ -126,6 +126,7 @@ def main():
     
     h5lp = []
     i = 0
+    linestyles = ['-', '--', '-.', ':']
     for path in args.paths:
         h5lp.append(H5Plot())
         h5lp[i].read(path)
@@ -135,17 +136,23 @@ def main():
                 label = args.labels[i] + ' ' + label          
             if (args.line_no != None):
                 if args.line_no[i] == j:
-                    plt.plot(x, y, label=label, linestyle=linestyle)
+                    plt.plot(x, y, label=label, linestyle=linestyles[i])
             else:
-                plt.plot(x, y, label=label, linestyle=linestyle, color=color)      
+                #plt.plot(x, y, label=label, linestyle=linestyle, color=color)
+                plt.plot(x, y, label=label, linestyle=linestyles[i])      
             j += 1
         i += 1
 
     ax = plt.gca()
-    ax.set_ylabel(h5lp[0].get_xlab(), fontsize=14)
-    ax.set_xlabel(h5lp[0].get_ylab(), fontsize=14)    
+    ax.set_xlabel(h5lp[0].get_xlab(), fontsize=14)
+    ax.set_ylabel(h5lp[0].get_ylab(), fontsize=14)    
     handles, labels = ax.get_legend_handles_labels()
-    plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)           
+    plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
+    if not (-3.0 < math.log(np.max(abs(y)),10) < 3.0):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)              
     plt.show()
     fname, fext = os.path.splitext(args.paths[0])
     fig.savefig(  fname + '_h5plot.' + args.file_format ,
