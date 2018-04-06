@@ -49,7 +49,20 @@ def binSlab_parser():
                           metavar="SPATH",
                           default='./plots_debug/',
                           help = """Path to which generated files will be saved.
-                              (default: %(default)s)""")    
+                              (default: %(default)s)""")
+    parser.add_argument(  "-p", "--partition",
+                          help='Virtual topology partitioning',
+                          action='store',
+                          dest="partition",
+                          metavar=('NPROCX0', 'NPROCX1', 'NPROCX2'),
+                          nargs=3,
+                          type=int,
+                          default=(1,1,1))
+    parser.add_argument(  "--nohalo",
+                          dest = "nohalo",
+                          action="store_true",
+                          default=False,
+                          help = "If data is w/o halo (default: %(default)s).")                                                       
     return parser
 
 
@@ -59,8 +72,6 @@ def main():
     args = parser.parse_args()
 
     NHC=2
-    if_incl_halo=1
-    xoffset = 0.5
 
     #cblims = [-1e-1 1e-1];
 
@@ -79,35 +90,42 @@ def main():
 
     Nx_wo_halo = int(grid_info[1,2])
     Ny_wo_halo = int(grid_info[2,2])
-    
-    Nx_incl_halo = Nx_wo_halo + 2*NHC;
-    Ny_incl_halo = Ny_wo_halo + 2*NHC;
 
     dx=(grid_info[1,1] - grid_info[1,0]) / (Nx_wo_halo - 1)
     dy=(grid_info[2,1] - grid_info[2,0]) / (Ny_wo_halo - 1)
+
+    Nx_loc=np.int(Nx_wo_halo/args.partition[1])
+    Ny_loc=np.int(Ny_wo_halo/args.partition[2])
+
+    Nx_loc_incl_halo = Nx_loc + 2*NHC;
+    Ny_loc_incl_halo = Ny_loc + 2*NHC;
+
+    x_array_wo_halo=np.linspace(grid_info[1,0],grid_info[1,1],Nx_loc)
+    y_array_wo_halo=np.linspace(grid_info[2,0],grid_info[2,1],Ny_loc)
     
-    x_array_wo_halo=np.linspace(grid_info[1,0],grid_info[1,1],Nx_wo_halo)
-    y_array_wo_halo=np.linspace(grid_info[2,0],grid_info[2,1],Ny_wo_halo)
+    x_array_incl_halo = np.linspace(grid_info[1,0] - NHC*dx, 
+                                    grid_info[1,1] + NHC*dx,
+                                    Nx_loc_incl_halo)
+    y_array_incl_halo = np.linspace(grid_info[2,0] - NHC*dy,
+                                    grid_info[2,1] + NHC*dy,
+                                    Ny_loc_incl_halo)
     
-    x_array_incl_halo = np.linspace(grid_info[1,0]-2*dx,grid_info[1,1]+2*dx,Nx_incl_halo)
-    y_array_incl_halo = np.linspace(grid_info[2,0]-2*dy,grid_info[2,1]+2*dy,Ny_incl_halo)
-    
+
     for filepath in args.path:
 
-        if if_incl_halo == 1:
-            Nx=Nx_incl_halo
-            Ny=Ny_incl_halo
-
-            x_array=x_array_incl_halo
-            y_array=y_array_incl_halo
-
-        else:
-            Nx=Nx_wo_halo
-            Ny=Ny_wo_halo
+        if args.nohalo:
+            Nx=Nx_loc
+            Ny=Ny_loc
 
             x_array=x_array_wo_halo
             y_array=y_array_wo_halo
-        
+
+        else:
+            Nx=Nx_loc_incl_halo
+            Ny=Ny_loc_incl_halo
+
+            x_array=x_array_incl_halo
+            y_array=y_array_incl_halo
 
         M_1D = np.fromfile(filepath,dtype=np.float32)
         M = np.transpose(M_1D.reshape((Nx, Ny)))
