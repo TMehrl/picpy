@@ -694,7 +694,7 @@ class G3d_plot_line(G3d_plot):
                       format=saveformat,
                       dpi=600)
         else:
-            fig.savefig(  self.args.savepath + '/' + savename + '+' + saveformat,
+            fig.savefig(  self.args.savepath + '/' + savename + '.' + saveformat,
                           format=saveformat)
         if self.args.verbose:
             print('Saved "' + savename + '.' + saveformat + '" at: ' + self.args.savepath)

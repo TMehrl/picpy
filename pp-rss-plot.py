@@ -244,43 +244,86 @@ def plot_save_proj_rms(slm, savepath, h5plot=True):
 def plot_save_slice_centroids(slm, savepath):
 
     Xb0 = np.ones(slm.avgx2[0,:].shape)
+    Yb0 = np.ones(slm.avgx3[0,:].shape)
     for i in range(0,len(slm.zeta_array)):
         if (slm.avgx2[0,i] != 0):
             Xb0[i] = slm.avgx2[0,i]
+            Yb0[i] = slm.avgx3[0,i]
 
 
     Xb_norm = np.zeros( slm.avgx2.shape )
-    zeta_hseed = 1.0
+    Yb_norm = np.zeros( slm.avgx3.shape )
+    zeta_hseed = np.min(slm.zeta_array)
     idx_hseed = (np.abs(slm.zeta_array-zeta_hseed)).argmin()
 
     for i in range(0,len(slm.zeta_array)):
         if (slm.zeta_array[i] <= zeta_hseed):
             Xb_norm[:,i] = np.absolute( ( slm.avgx2[:,i] - slm.avgx2[:,idx_hseed])/Xb0[i] )
+            Yb_norm[:,i] = np.absolute( ( slm.avgx3[:,i] - slm.avgx3[:,idx_hseed])/Yb0[i] )
 
-    fig1 = plt.figure()
+    figXb = plt.figure()
     cax = plt.pcolormesh(   slm.zeta_array,
                             slm.time_array,
                             slm.avgx2,
                             cmap=cm.PuOr,
-                            vmin=-np.amax(abs(slm.avgx2)), vmax=np.amax(abs(slm.avgx2)))
-    cbar = fig1.colorbar(cax)
+                            vmin=-np.amax(abs(slm.avgx2)), 
+                            vmax=np.amax(abs(slm.avgx2)))
+    cbar = figXb.colorbar(cax)
     cbar.ax.set_ylabel('$k_p X_b$')
-    fig1.savefig( savepath + '/Xb_raw.png',
+    figXb.savefig( savepath + '/Xb_raw.png',
                   format='png',
                   dpi=600)
 
-    fig2 = plt.figure()
+    figYb = plt.figure()
+    cax = plt.pcolormesh(   slm.zeta_array,
+                            slm.time_array,
+                            slm.avgx3,
+                            cmap=cm.PuOr,
+                            vmin=-np.amax(abs(slm.avgx3)), 
+                            vmax=np.amax(abs(slm.avgx3)))
+    cbar = figYb.colorbar(cax)
+    cbar.ax.set_ylabel('$k_p X_b$')
+    figYb.savefig( savepath + '/Yb_raw.png',
+                  format='png',
+                  dpi=600)
+
+    figXbnorm = plt.figure()
     cax = plt.pcolormesh( Xb_norm )
-    cbar = fig2.colorbar(cax)
+    cbar = figXbnorm.colorbar(cax)
     cbar.ax.set_ylabel('$|X_b/X_{b,0}|$')
-    fig2.savefig( savepath + '/Xb.png',
+    figXbnorm.savefig( savepath + '/Xb.png',
                   format='png',
                   dpi=600)
 
-    fig3 = plt.figure()
+    figYbnorm = plt.figure()
+    cax = plt.pcolormesh( Yb_norm )
+    cbar = figYbnorm.colorbar(cax)
+    cbar.ax.set_ylabel('$|Y_b/Y_{b,0}|$')
+    figYbnorm.savefig( savepath + '/Yb.png',
+                  format='png',
+                  dpi=600)
+
+    figXb0 = plt.figure()
     plt.plot(slm.zeta_array, slm.avgx2[0,:])
-    fig3.savefig( savepath + '/Xb0.png',
-                  format='png')
+    figXb0.savefig( savepath + '/Xb0.eps',
+                  format='eps')
+
+
+    figYb0 = plt.figure()
+    plt.plot(slm.zeta_array, slm.avgx3[0,:])
+    figXb0.savefig( savepath + '/Yb0.eps',
+                  format='eps')
+
+
+    figXbtail = plt.figure()
+    plt.plot(slm.time_array, slm.avgx2[:,0])
+    figXbtail.savefig( savepath + '/Xb_tail.eps',
+                  format='eps')
+
+    figYbtail = plt.figure()
+    plt.plot(slm.time_array, slm.avgx3[:,0])
+    figYbtail.savefig( savepath + '/Yb_tail.eps',
+                  format='eps')
 
 
 def plot_save_slice_ene(slm, savepath):
@@ -322,7 +365,7 @@ def main():
 
     plot_save_proj_rms(slm, args.savepath, args.h5plot)
 
-    # plot_save_slice_centroids(slm, args.savepath)
+    plot_save_slice_centroids(slm, args.savepath)
 
 
 if __name__ == "__main__":
