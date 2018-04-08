@@ -99,6 +99,11 @@ def ps_parseargs():
                           nargs=2,
                           type=float,
                           default=None)
+    parser.add_argument(  '-t', '--timings',
+                          action='store_true',
+                          dest='timings',
+                          default=False,
+                          help = 'Generate and print timings (default: %(default)s).')
 
 #   parser.add_argument(  "-c", "--code",
 #                       type='choice',
@@ -233,7 +238,7 @@ def main():
         time_array[i] = raw.time
         slices = pp_raw_ana.Slices(raw, nbins=Nbins, zrange=zeta_range)
 
-        slices.calc_moments(order = mom_order, crossterms=crossterms)
+        slices.calc_moments(order = mom_order, crossterms=crossterms, timings=args.timings )
         charge[i,:] = slices.charge
         avgx1[i,:] = slices.avgx1
         avgx2[i,:] = slices.avgx2

@@ -48,30 +48,43 @@ def moments(array1, array2, weights, order=2, central=True, roots=False):
 class Slices:
     def __init__(self, raw, edges=[], nbins=0, zrange=None):
 
+        self.edges = edges
+        self.if_edges_eq_spaced = True
+        self.if_moms_calc = False
+
         dx0 = (raw.xmax[0] - raw.xmin[0])/raw.nx[0]
         self.raw = raw
         if nbins == 0:
             if (edges==[]) and (zrange == None):
                 self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(raw.nx[0]+1))
+                self.if_edges_eq_spaced = True
             elif (edges==[]) and (zrange != None):
                 self.edges = np.arange(start=zrange[0]-dx0/2,stop=zrange[1]+dx0/2,step=dx0,dtype=np.float32)
+                self.if_edges_eq_spaced = True
         elif nbins != 0:
             if zrange==None:
                 self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(nbins+1))
+                self.if_edges_eq_spaced = True
             else:
                 dx0_step = (zrange[1] - zrange[0])/nbins
                 self.edges = np.linspace(zrange[0]-dx0_step/2, zrange[1]+dx0_step/2, num=(nbins+1))
+                self.if_edges_eq_spaced = True
         else:
             self.edges = edges
+            self.if_edges_eq_spaced = False
 
+        if not np.all(np.diff(self.edges) > 0.0):
+            print('Error: Bin edges are not monotonically increasing!')
+            sys.exit()   
+
+        self.dx0 = self.edges[1] - self.edges[0]
         self.nbins = len(self.edges)-1
         self.centers = self.edges[0:-1] + np.diff(self.edges)/2
-        self.if_moms_calc = False
+
 
     def calc_moments(self, order=2, central=True, crossterms=False, timings=False):
 
         if timings: self.startcm_time = time.time()
-
 
         # Select subset of particles which are in range
         idx_part_in_range = np.logical_and(self.raw.x1 > self.edges[0], 
@@ -85,9 +98,14 @@ class Slices:
         q = self.raw.q[idx_part_in_range]
 
         # Assign each particle the index of the bin it is located in
-        # ( subtract 1 in order to get index '0'
-        # if particle is in interval [ edges[0] edges[1] ] etc. )
-        ibinpart = np.searchsorted(self.edges, x1) - 1
+        if self.if_edges_eq_spaced:
+            # If edges are equally spaced:
+            ibinpart = np.ndarray.astype((x1 - self.edges[0])/self.dx0, dtype='int32')
+        else:    
+            # If edges are not equally spaced: use np.searchsorted
+            # ( subtract 1 in order to get index '0'
+            # if particle is in interval [ edges[0] edges[1] ] etc. )
+            ibinpart = np.searchsorted(self.edges, x1) - 1
 
         self.npart = np.bincount(ibinpart, minlength=self.nbins)
         self.charge = np.bincount(ibinpart, weights=q, minlength=self.nbins)
