@@ -3,6 +3,7 @@
 
 import os
 import numpy as np
+import gc
 import h5py
 import pp_defs
 import sys
@@ -145,6 +146,16 @@ class Slices:
                 P2[ ibin, ipartbin ] = p2[i]
                 P3[ ibin, ipartbin ] = p3[i]
                 bincount[ibin] += 1
+
+            # Deleting unused arrays and releasing memory
+            del q 
+            del x1 
+            del x2 
+            del x3 
+            del p1 
+            del p2 
+            del p3    
+            gc.collect()
 
             if timings: self.cm_afsortingpart_time = time.time()
 
