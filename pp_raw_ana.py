@@ -319,6 +319,23 @@ class Slices:
 
                 if crossterms:
 
+                    self.avgx1x2 = np.zeros((self.nbins), dtype=np.float32)
+                    self.avgx3x1 = np.zeros((self.nbins), dtype=np.float32)
+                    self.avgx2x3 = np.zeros((self.nbins), dtype=np.float32)
+
+                    self.avgp1p2 = np.zeros((self.nbins), dtype=np.float32)
+                    self.avgp3p1 = np.zeros((self.nbins), dtype=np.float32)
+                    self.avgp2p3 = np.zeros((self.nbins), dtype=np.float32)
+
+                    self.avgx1p2 = np.zeros((self.nbins), dtype=np.float32)
+                    self.avgx1p3 = np.zeros((self.nbins), dtype=np.float32)
+
+                    self.avgx2p1 = np.zeros((self.nbins), dtype=np.float32)
+                    self.avgx2p3 = np.zeros((self.nbins), dtype=np.float32)
+
+                    self.avgx3p1 = np.zeros((self.nbins), dtype=np.float32)
+                    self.avgx3p2 = np.zeros((self.nbins), dtype=np.float32)                    
+
                     for ibin in range(0,self.nbins):
                         # Making sure sum of weights is not zero:
                         if  self.charge[ibin] != 0.0:
