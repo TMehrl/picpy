@@ -175,6 +175,14 @@ def g3d_line_subparser(subparsers, parent_parser):
                           type=float,    
                           default=None,
                           help= """Zeta-position at which lineout is generated (default: %(default)s).""")    
+    parser.add_argument(  '-r','--range',
+                          help='Range of lineout.',
+                          action='store',
+                          dest="range",
+                          metavar=('XMIN', 'XMAX'),
+                          nargs=2,
+                          type=float,
+                          default=None)  
     parser.add_argument(  "-s", "--save-path",
                           action="store",
                           dest="savepath",
@@ -189,15 +197,7 @@ def g3d_line_subparser(subparsers, parent_parser):
                                     'pdf',
                                     'eps',],
                           default='eps',
-                          help= """Format of output file (default: %(default)s).""")
-    parser.add_argument(  '-r','--range',
-                          help='Range of lineout.',
-                          action='store',
-                          dest="range",
-                          metavar=('XMIN', 'XMAX'),
-                          nargs=2,
-                          type=float,
-                          default=None)                       
+                          help= """Format of output file (default: %(default)s).""")                     
     return parser
 
 # Converting HDF strings of grid quantity namnes
@@ -668,6 +668,9 @@ class G3d_plot_line(G3d_plot):
         fig = plt.figure()
         cax = plt.plot( self.x_array,
                         self.line)
+
+        print('Q = %0.3e' % (np.sum(self.line) * (self.x_array[1] - self.x_array[0])))
+
         ax = plt.gca()
         ax.set_ylabel(self.ylabel, fontsize=14)
         ax.set_xlabel(self.xlabel, fontsize=14)

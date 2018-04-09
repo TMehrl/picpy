@@ -47,11 +47,12 @@ def moments(array1, array2, weights, order=2, central=True, roots=False):
 
 # Class for slice analysis
 class Slices:
-    def __init__(self, raw, edges=[], nbins=0, zrange=None):
+    def __init__(self, raw, edges=[], nbins=0, zrange=None, cellvol=1.0):
 
         self.edges = edges
         self.if_edges_eq_spaced = True
         self.if_moms_calc = False
+        self.cellvol = cellvol
 
         dx0 = (raw.xmax[0] - raw.xmin[0])/raw.nx[0]
         self.raw = raw
@@ -103,7 +104,7 @@ class Slices:
         p1 = self.raw.p1[idx_part_in_range]
         p2 = self.raw.p2[idx_part_in_range]
         p3 = self.raw.p3[idx_part_in_range]
-        q = self.raw.q[idx_part_in_range]
+        q = self.raw.q[idx_part_in_range] * self.cellvol
 
         # Assign each particle the index of the bin it is located in
         if self.if_edges_eq_spaced:

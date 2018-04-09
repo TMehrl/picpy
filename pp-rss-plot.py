@@ -282,7 +282,7 @@ def plot_save_slice_centroids(slm, savepath):
                             vmin=-np.amax(abs(slm.avgx3)), 
                             vmax=np.amax(abs(slm.avgx3)))
     cbar = figYb.colorbar(cax)
-    cbar.ax.set_ylabel('$k_p X_b$')
+    cbar.ax.set_ylabel('$k_p Y_b$')
     figYb.savefig( savepath + '/Yb_raw.png',
                   format='png',
                   dpi=600)
@@ -346,6 +346,23 @@ def plot_save_slice_ene(slm, savepath):
                   format='png',
                   dpi=600)
 
+def plot_curr_profile(slm, savepath):
+    fig = plt.figure()
+    dzeta = abs(slm.zeta_array[1] - slm.zeta_array[0]);
+    curr = slm.charge[0,:] / dzeta
+
+    print('Q = %0.3e' % (np.sum(curr) * dzeta ))
+
+    # I_A = 4 * pi * epsilon_0 * m * c^3 / e
+    # [slm.charge] = epsilon_0 * m * c^3 / e
+    # slm.charge * 4 * pi = I_b/I_A
+    plt.plot(slm.zeta_array, curr)
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$I_{b,0}/(mc^3/4\pi e)$', fontsize=14) 
+    fig.savefig( savepath + '/Ib0.eps',
+                  format='eps')
+
 
 def main():
 
@@ -358,6 +375,8 @@ def main():
     slm = SliceMoms(file)
 
     mkdirs_if_nexist(args.savepath)
+
+    plot_curr_profile(slm, args.savepath)
 
     plot_save_slice_rms(slm, args.savepath)
 

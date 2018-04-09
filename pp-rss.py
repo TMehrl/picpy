@@ -152,6 +152,7 @@ def main():
     # Getting file information
     raw = HiRAW(flist[0])
     raw.read_attrs()
+    cellvol = raw.get_dx(0) * raw.get_dx(1) * raw.get_dx(2)
 
     if args.Nbins == None and args.zeta_range == None:
         zeta_range = None
@@ -236,7 +237,7 @@ def main():
         raw.read_data()
 
         time_array[i] = raw.time
-        slices = pp_raw_ana.Slices(raw, nbins=Nbins, zrange=zeta_range)
+        slices = pp_raw_ana.Slices(raw, nbins=Nbins, zrange=zeta_range, cellvol=cellvol)
 
         slices.calc_moments(order = mom_order, crossterms=crossterms, timings=args.timings )
         charge[i,:] = slices.charge
