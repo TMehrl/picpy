@@ -669,8 +669,6 @@ class G3d_plot_line(G3d_plot):
         cax = plt.plot( self.x_array,
                         self.line)
 
-        print('Q = %0.3e' % (np.sum(self.line) * (self.x_array[1] - self.x_array[0])))
-
         ax = plt.gca()
         ax.set_ylabel(self.ylabel, fontsize=14)
         ax.set_xlabel(self.xlabel, fontsize=14)
