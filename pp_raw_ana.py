@@ -360,7 +360,40 @@ class Slices:
                 if timings: self.time.cm_afcalcsqavg = time.time()
 
             if order > 2:
-                print("order > 2: Not implemented yet!")
+                self.avgx1cube = np.zeros((self.nbins), dtype=np.float32)
+                self.avgx2cube = np.zeros((self.nbins), dtype=np.float32)
+                self.avgx3cube = np.zeros((self.nbins), dtype=np.float32)
+
+                self.avgp1cube = np.zeros((self.nbins), dtype=np.float32)
+                self.avgp2cube = np.zeros((self.nbins), dtype=np.float32)
+                self.avgp3cube = np.zeros((self.nbins), dtype=np.float32)
+
+                self.avgx1sqp1 = np.zeros((self.nbins), dtype=np.float32)
+                self.avgx2sqp2 = np.zeros((self.nbins), dtype=np.float32)
+                self.avgx3sqp3 = np.zeros((self.nbins), dtype=np.float32)
+
+                self.avgx1p1sq = np.zeros((self.nbins), dtype=np.float32)
+                self.avgx2p2sq = np.zeros((self.nbins), dtype=np.float32)
+                self.avgx3p3sq = np.zeros((self.nbins), dtype=np.float32)               
+
+                for ibin in range(0,self.nbins):
+                    # Making sure sum of weights is not zero:
+                    if  self.charge[ibin] != 0.0:
+                        self.avgx1cube[ibin] = np.ma.average(np.power( x1[i1[ibin]:i2[ibin]], 3), weights=q[i1[ibin]:i2[ibin]])
+                        self.avgx2cube[ibin] = np.ma.average(np.power( x2[i1[ibin]:i2[ibin]] ,3), weights=q[i1[ibin]:i2[ibin]])
+                        self.avgx3cube[ibin] = np.ma.average(np.power( x3[i1[ibin]:i2[ibin]] ,3), weights=q[i1[ibin]:i2[ibin]])
+
+                        self.avgp1cube[ibin] = np.ma.average(np.power( p1[i1[ibin]:i2[ibin]] ,3), weights=q[i1[ibin]:i2[ibin]])
+                        self.avgp2cube[ibin] = np.ma.average(np.power( p2[i1[ibin]:i2[ibin]] ,3), weights=q[i1[ibin]:i2[ibin]])
+                        self.avgp3cube[ibin] = np.ma.average(np.power( p3[i1[ibin]:i2[ibin]] ,3), weights=q[i1[ibin]:i2[ibin]])
+
+                        self.avgx1sqp1[ibin] = np.ma.average(np.multiply(np.power(x1[i1[ibin]:i2[ibin]],2),p1[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
+                        self.avgx2sqp2[ibin] = np.ma.average(np.multiply(np.power(x2[i1[ibin]:i2[ibin]],2),p2[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
+                        self.avgx3sqp3[ibin] = np.ma.average(np.multiply(np.power(x3[i1[ibin]:i2[ibin]],2),p3[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
+
+                        self.avgx1p1sq[ibin] = np.ma.average(np.multiply(x1[i1[ibin]:i2[ibin]],np.power(p1[i1[ibin]:i2[ibin]],2)), weights=q[i1[ibin]:i2[ibin]])
+                        self.avgx2p2sq[ibin] = np.ma.average(np.multiply(x2[i1[ibin]:i2[ibin]],np.power(p2[i1[ibin]:i2[ibin]],2)), weights=q[i1[ibin]:i2[ibin]])
+                        self.avgx3p3sq[ibin] = np.ma.average(np.multiply(x3[i1[ibin]:i2[ibin]],np.power(p3[i1[ibin]:i2[ibin]],2)), weights=q[i1[ibin]:i2[ibin]])
 
         if timings:
             # Timing stuff
