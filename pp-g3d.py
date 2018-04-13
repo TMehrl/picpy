@@ -127,6 +127,22 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           nargs=2,
                           type=float,
                           default=None)
+    parser.add_argument(  "--xlim",
+                          help='Customize x-axis limits',
+                          action='store',
+                          dest="xlim",
+                          metavar=('xmin', 'xmax'),
+                          type=float,
+                          nargs=2,
+                          default=None)  
+    parser.add_argument(  "--ylim",
+                          help='Customize y-axis limits',
+                          action='store',
+                          dest="ylim",
+                          metavar=('ymin', 'ymax'),
+                          type=float,
+                          nargs=2,
+                          default=None)   
     parser.add_argument(  "--save-path",
                           action="store",
                           dest="savepath",
@@ -491,6 +507,10 @@ class G3d_plot_slice(G3d_plot):
         ax.set_xlabel(self.xlabel, fontsize=14)
         cbar = fig.colorbar(cax)
         cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )
+        if self.args.xlim != None:
+            plt.xlim(self.args.xlim[0], self.args.xlim[1])
+        if self.args.ylim != None:
+            plt.ylim(self.args.ylim[0], self.args.ylim[1])
 
         axpos1 = ax.get_position() # get the original position 
         cbaxpos1 = cbar.ax.get_position() # get the original position 
@@ -687,6 +707,11 @@ class G3d_plot_line(G3d_plot):
             lims = ax.get_xlim()
             idx = np.where( (self.x_array >= lims[0]) & (self.x_array <= lims[1]) )[0]
             ax.set_ylim( self.line[idx].min(), self.line[idx].max() )
+
+        if self.args.xlim != None:
+            plt.xlim(self.args.xlim[0], self.args.xlim[1])
+        if self.args.ylim != None:
+            plt.ylim(self.args.ylim[0], self.args.ylim[1])
 
         mkdirs_if_nexist(self.args.savepath)
 

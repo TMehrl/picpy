@@ -240,7 +240,7 @@ def plot_save_proj_rms(slm, savepath, h5plot=True):
         h5lp.write(savepath + '/emittance_proj.h5')
     plt.close(fig_e)
 
-def plot_save_slice_centroids(slm, savepath):
+def plot_save_slice_centroids(slm, savepath, h5plot=True):
 
     Xb0 = np.ones(slm.avgx2[0,:].shape)
     Yb0 = np.ones(slm.avgx3[0,:].shape)
@@ -364,6 +364,10 @@ def plot_save_slice_centroids(slm, savepath):
         plt.gcf().subplots_adjust(left=0.15)
     figXbtail.savefig( savepath + '/Xb_tail.eps',
                   format='eps')
+    if h5plot: 
+        h5lp = H5Plot()
+        h5lp.inherit_matplotlib_line_plots(ax)
+        h5lp.write(savepath + '/Xb_tail.h5')    
 
     figYbtail = plt.figure()
     plt.plot(slm.time_array, slm.avgx3[:,0])
@@ -372,6 +376,10 @@ def plot_save_slice_centroids(slm, savepath):
     ax.set_ylabel(r'$Y_{b,\mathrm{tail}}$', fontsize=14) 
     figYbtail.savefig( savepath + '/Yb_tail.eps',
                   format='eps')
+    if h5plot: 
+        h5lp = H5Plot()
+        h5lp.inherit_matplotlib_line_plots(ax)
+        h5lp.write(savepath + '/Yb_tail.h5')     
 
 
 def plot_save_slice_ene(slm, savepath):
@@ -399,7 +407,7 @@ def plot_curr_profile(slm, savepath):
     dzeta = abs(slm.zeta_array[1] - slm.zeta_array[0]);
     curr = slm.charge[0,:] / dzeta
 
-    print('Q = %0.3e' % (np.sum(curr) * dzeta ))
+    # print('Q = %0.3e' % (np.sum(curr) * dzeta ))
 
     # I_A = 4 * pi * epsilon_0 * m * c^3 / e
     # [curr] = epsilon_0 * m * c^3 / e
@@ -432,7 +440,7 @@ def main():
 
     plot_save_proj_rms(slm, args.savepath, args.h5plot)
 
-    plot_save_slice_centroids(slm, args.savepath)
+    plot_save_slice_centroids(slm, args.savepath, args.h5plot)
 
 
 if __name__ == "__main__":
