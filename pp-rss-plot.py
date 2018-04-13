@@ -5,8 +5,7 @@
 import os
 import sys
 import argparse
-from optparse import OptionParser
-#from optparse import OptionGroup
+
 import math
 import numpy as np
 import matplotlib
@@ -246,20 +245,20 @@ def plot_save_slice_centroids(slm, savepath):
     Xb0 = np.ones(slm.avgx2[0,:].shape)
     Yb0 = np.ones(slm.avgx3[0,:].shape)
     for i in range(0,len(slm.zeta_array)):
-        if (slm.avgx2[0,i] != 0):
+        if (slm.avgx2[0,i] != 0.0):
             Xb0[i] = slm.avgx2[0,i]
             Yb0[i] = slm.avgx3[0,i]
 
 
     Xb_norm = np.zeros( slm.avgx2.shape )
     Yb_norm = np.zeros( slm.avgx3.shape )
-    zeta_hseed = np.min(slm.zeta_array)
-    idx_hseed = (np.abs(slm.zeta_array-zeta_hseed)).argmin()
+#    zeta_hseed = np.min(slm.zeta_array)
+#    idx_hseed = (np.abs(slm.zeta_array-zeta_hseed)).argmin()
 
     for i in range(0,len(slm.zeta_array)):
-        if (slm.zeta_array[i] <= zeta_hseed):
-            Xb_norm[:,i] = np.absolute( ( slm.avgx2[:,i] - slm.avgx2[:,idx_hseed])/Xb0[i] )
-            Yb_norm[:,i] = np.absolute( ( slm.avgx3[:,i] - slm.avgx3[:,idx_hseed])/Yb0[i] )
+#        if (slm.zeta_array[i] <= zeta_hseed):
+        Xb_norm[:,i] = np.absolute( slm.avgx2[:,i]/Xb0[i] )
+        Yb_norm[:,i] = np.absolute( slm.avgx3[:,i]/Yb0[i] )
 
     figXb = plt.figure()
     cax = plt.pcolormesh(   slm.zeta_array,
@@ -268,8 +267,11 @@ def plot_save_slice_centroids(slm, savepath):
                             cmap=cm.PuOr,
                             vmin=-np.amax(abs(slm.avgx2)), 
                             vmax=np.amax(abs(slm.avgx2)))
-    cbar = figXb.colorbar(cax)
-    cbar.ax.set_ylabel('$k_p X_b$')
+    cbar = figXb.colorbar(cax)   
+    cbar.ax.set_ylabel('$k_p X_b$', fontsize=14)
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$\omega_p t$', fontsize=14)     
     figXb.savefig( savepath + '/Xb_raw.png',
                   format='png',
                   dpi=600)
@@ -282,46 +284,92 @@ def plot_save_slice_centroids(slm, savepath):
                             vmin=-np.amax(abs(slm.avgx3)), 
                             vmax=np.amax(abs(slm.avgx3)))
     cbar = figYb.colorbar(cax)
-    cbar.ax.set_ylabel('$k_p Y_b$')
+    cbar.ax.set_ylabel('$k_p Y_b$', fontsize=14)
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$\omega_p t$', fontsize=14)     
     figYb.savefig( savepath + '/Yb_raw.png',
                   format='png',
                   dpi=600)
 
     figXbnorm = plt.figure()
-    cax = plt.pcolormesh( Xb_norm )
+    cax = plt.pcolormesh(   slm.zeta_array,
+                            slm.time_array,
+                            Xb_norm,
+                            cmap=cm.Blues,
+                            vmin=0, 
+                            vmax=np.amax(Xb_norm))
     cbar = figXbnorm.colorbar(cax)
-    cbar.ax.set_ylabel('$|X_b/X_{b,0}|$')
+    cbar.ax.set_ylabel('$|X_b/X_{b,0}|$', fontsize=14)
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$\omega_p t$', fontsize=14)     
     figXbnorm.savefig( savepath + '/Xb.png',
                   format='png',
                   dpi=600)
 
     figYbnorm = plt.figure()
-    cax = plt.pcolormesh( Yb_norm )
+    cax = plt.pcolormesh(   slm.zeta_array,
+                            slm.time_array,
+                            Yb_norm,
+                            cmap=cm.Blues,
+                            vmin=0, 
+                            vmax=np.amax(Yb_norm))
     cbar = figYbnorm.colorbar(cax)
-    cbar.ax.set_ylabel('$|Y_b/Y_{b,0}|$')
+    cbar.ax.set_ylabel('$|Y_b/Y_{b,0}|$', fontsize=14)
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$\omega_p t$', fontsize=14)       
     figYbnorm.savefig( savepath + '/Yb.png',
                   format='png',
                   dpi=600)
 
     figXb0 = plt.figure()
-    plt.plot(slm.zeta_array, slm.avgx2[0,:])
+    plt.plot(slm.zeta_array, Xb0)
+    ax = plt.gca()
+    ymin, ymax = ax.get_ylim()
+    if ymin > 0 and ymax > 0:
+        plt.ylim(0, ymax*1.2)
+    elif ymin < 0 and ymax < 0:
+        plt.ylim(ymin*1.2, 0)        
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$k_p X_{b,0}$', fontsize=14)       
     figXb0.savefig( savepath + '/Xb0.eps',
                   format='eps')
 
 
     figYb0 = plt.figure()
-    plt.plot(slm.zeta_array, slm.avgx3[0,:])
-    figXb0.savefig( savepath + '/Yb0.eps',
+    plt.plot(slm.zeta_array, Yb0)
+    ax = plt.gca()
+    ymin, ymax = ax.get_ylim()
+    if ymin > 0 and ymax > 0:
+        plt.ylim(0, ymax*1.2)
+    elif ymin < 0 and ymax < 0:
+        plt.ylim(ymin*1.2, 0)    
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$k_p Y_{b,0}$', fontsize=14)     
+    figYb0.savefig( savepath + '/Yb0.eps',
                   format='eps')
 
 
     figXbtail = plt.figure()
     plt.plot(slm.time_array, slm.avgx2[:,0])
+    ax = plt.gca()
+    ax.set_xlabel(r'$\omega_p t$', fontsize=14)
+    ax.set_ylabel(r'$X_{b,\mathrm{tail}}$', fontsize=14)
+    if not (-3.0 < math.log(np.max(abs(slm.avgx2[:,0])),10) < 3.0):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)
     figXbtail.savefig( savepath + '/Xb_tail.eps',
                   format='eps')
 
     figYbtail = plt.figure()
     plt.plot(slm.time_array, slm.avgx3[:,0])
+    ax = plt.gca()
+    ax.set_xlabel(r'$\omega_p t$', fontsize=14)
+    ax.set_ylabel(r'$Y_{b,\mathrm{tail}}$', fontsize=14) 
     figYbtail.savefig( savepath + '/Yb_tail.eps',
                   format='eps')
 
@@ -354,12 +402,12 @@ def plot_curr_profile(slm, savepath):
     print('Q = %0.3e' % (np.sum(curr) * dzeta ))
 
     # I_A = 4 * pi * epsilon_0 * m * c^3 / e
-    # [slm.charge] = epsilon_0 * m * c^3 / e
-    # slm.charge * 4 * pi = I_b/I_A
-    plt.plot(slm.zeta_array, curr)
+    # [curr] = epsilon_0 * m * c^3 / e
+    # curr * 4 * pi = I_b/I_A
+    plt.plot(slm.zeta_array, curr/(4 * math.pi))
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-    ax.set_ylabel(r'$I_{b,0}/(mc^3/4\pi e)$', fontsize=14) 
+    ax.set_ylabel(r'$I_{b,0}/I_A$', fontsize=14) 
     fig.savefig( savepath + '/Ib0.eps',
                   format='eps')
 
