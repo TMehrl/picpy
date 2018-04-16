@@ -82,6 +82,28 @@ def g3d_parser():
                           action = "store_true",
                           default=False,                          
                           help = "Plot integrated quantity (default: %(default)s).")
+    parser.add_argument(  "--avgax",
+                          action='store',
+                          dest="avgax",
+                          choices=[ 'x', 'y', 'z'],
+                          default=None,
+                          help= """Axis-position averaged for (default: %(default)s).""")    
+    parser.add_argument(  "--xlim",
+                          help='Customize x-axis limits',
+                          action='store',
+                          dest="xlim",
+                          metavar=('xmin', 'xmax'),
+                          type=float,
+                          nargs=2,
+                          default=None)  
+    parser.add_argument(  "--ylim",
+                          help='Customize y-axis limits',
+                          action='store',
+                          dest="ylim",
+                          metavar=('ymin', 'ymax'),
+                          type=float,
+                          nargs=2,
+                          default=None)     
     parser.add_argument(  "--h5",
                           dest = "h5plot",
                           action="store_true",
@@ -126,23 +148,7 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           metavar=('CBMIN', 'CBMAX'),
                           nargs=2,
                           type=float,
-                          default=None)
-    parser.add_argument(  "--xlim",
-                          help='Customize x-axis limits',
-                          action='store',
-                          dest="xlim",
-                          metavar=('xmin', 'xmax'),
-                          type=float,
-                          nargs=2,
                           default=None)  
-    parser.add_argument(  "--ylim",
-                          help='Customize y-axis limits',
-                          action='store',
-                          dest="ylim",
-                          metavar=('ymin', 'ymax'),
-                          type=float,
-                          nargs=2,
-                          default=None)   
     parser.add_argument(  "--save-path",
                           action="store",
                           dest="savepath",
@@ -190,7 +196,7 @@ def g3d_line_subparser(subparsers, parent_parser):
                           metavar="LOUT-ZETA-POS",
                           type=float,    
                           default=None,
-                          help= """Zeta-position at which lineout is generated (default: %(default)s).""")    
+                          help= """Zeta-position at which lineout is generated (default: %(default)s).""")
     parser.add_argument(  '-r','--range',
                           help='Range of lineout.',
                           action='store',
@@ -371,7 +377,9 @@ class G3d_plot_slice(G3d_plot):
         # read slice
         if 'z' in self.args.plane:
             if 'x' in self.args.plane:
-                if not self.args.if_integrate:
+                if self.args.if_integrate:
+                    self.slice = self.g3d.read_integrate(ax2=True)
+                else:
                     if (self.args.plane_index == None) and (self.args.plane_pos == None):
                         index = math.floor(self.g3d.nx[2]/2) - 1
                         self.slice = self.g3d.read(i2=index)
@@ -383,12 +391,12 @@ class G3d_plot_slice(G3d_plot):
                         self.slice = self.g3d.read(x2=self.args.plane_pos)
                     else:
                         print('ERROR: plane-index can''t be used in conjunction with plane-position!')
-                        sys.exit(1)
-                else:
-                    self.slice = self.g3d.read_integrate(ax2=True)
+                        sys.exit(1)                    
 
             elif 'y' in self.args.plane:
-                if not self.args.if_integrate:
+                if self.args.if_integrate:
+                    self.slice = self.g3d.read_integrate(ax1=True)
+                else:    
                     if (self.args.plane_index == None) and (self.args.plane_pos == None):
                         index = math.floor(self.g3d.nx[1]/2) - 1
                         self.slice = self.g3d.read(i1=index)
@@ -400,12 +408,12 @@ class G3d_plot_slice(G3d_plot):
                         self.slice = self.g3d.read(x1=self.args.plane_pos)                    
                     else:
                         print('ERROR: plane-index can''t be used in conjunction with plane-position!')
-                        sys.exit(1)
-                else:
-                    self.slice = self.g3d.read_integrate(ax1=True)
+                        sys.exit(1)                    
 
         elif ('x' in self.args.plane) and ('y' in self.args.plane):
-            if not self.args.if_integrate:
+            if self.args.if_integrate:
+                self.slice = self.g3d.read_integrate(ax0=True)
+            else:
                 if (self.args.plane_index == None) and (self.args.plane_pos == None):
                     index = math.floor(self.g3d.nx[0]/2) - 1
                     self.slice = self.g3d.read(i0=index)
@@ -417,9 +425,7 @@ class G3d_plot_slice(G3d_plot):
                     self.slice = self.g3d.read(x0=self.args.plane_pos) 
                 else:
                     print('ERROR: plane-index can''t be used in conjunction with plane-position!')
-                    sys.exit(1)
-            else:
-                self.slice = self.g3d.read_integrate(ax0=True)                      
+                    sys.exit(1)                               
 
         if self.args.plane in ['xy','zx','zy']:
             self.slice = np.transpose( self.slice )
@@ -552,9 +558,7 @@ class G3d_plot_line(G3d_plot):
         self.set_yaxis()
 
     def set_yaxis( self ):
-        if not self.args.if_integrate:
-            self.ylabel = gen_pretty_grid_name( self.g3d.name )
-        else:
+        if self.args.if_integrate:
             self.ylabel = r'$k_p^2 \int \int$' + gen_pretty_grid_name( self.g3d.name )
             if self.args.lineax == 'z':
                 self.ylabel = self.ylabel + r'$\,dx dy$'
@@ -562,6 +566,8 @@ class G3d_plot_line(G3d_plot):
                 self.ylabel = self.ylabel + r'$\,dy dz$'
             if self.args.lineax == 'y':
                 self.ylabel = self.ylabel + r'$\,dx dz$'
+        else:
+            self.ylabel = gen_pretty_grid_name( self.g3d.name )
         ylim = [0.0, 0.0]
         # define axis labels and arrays
         if self.g3d.type == pp_defs.hipace.h5.g3dtypes.density:
@@ -583,7 +589,17 @@ class G3d_plot_line(G3d_plot):
             lout_idx = list(self.args.lout_idx)
 
         if 'z' == self.args.lineax:
-            if not self.args.if_integrate:
+            if self.args.if_integrate:
+                self.line = self.g3d.read_integrate(ax1=True,ax2=True)
+            elif self.args.avgax != None:
+                if self.args.avgax == 'x':
+                    self.line = self.g3d.read_avgx(dim=1,ax2=True)
+                elif self.args.avgax == 'y':
+                    self.line = self.g3d.read_avgx(dim=2,ax1=True)
+                else:
+                    print('ERROR: Cannot average along plotted axis!')
+                    sys.exit(1)                                              
+            else:
                 if self.args.lout_idx == None:
                     # Default: central lineout
                     idx1 = math.floor(self.g3d.nx[1]/2) - 1
@@ -600,11 +616,19 @@ class G3d_plot_line(G3d_plot):
                         self.line = ( self.line + self.g3d.read(i1=idx1+1, i2=idx2) )/2
                 else:
                     self.line = self.g3d.read(i1=lout_idx[0], i2=lout_idx[1])
-            else:
-                self.line = self.g3d.read_integrate(ax1=True,ax2=True)
 
         elif 'x' == self.args.lineax:
-            if not self.args.if_integrate:
+            if self.args.if_integrate:
+                self.line = self.g3d.read_integrate(ax0=True,ax2=True)
+            elif self.args.avgax != None:
+                if self.args.avgax == 'y':
+                    self.line = self.g3d.read_avgx(dim=2,ax0=True)
+                elif self.args.avgax == 'z':
+                    self.line = self.g3d.read_avgx(dim=0,ax2=True)
+                else:
+                    print('ERROR: Cannot average along plotted axis!')
+                    sys.exit(1)                 
+            else:
                 if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
                     # Default: central lineout
                     idx1 = math.floor(self.g3d.nx[0]/2) - 1
@@ -625,13 +649,20 @@ class G3d_plot_line(G3d_plot):
                     self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x2=0.0)
                 else:
                     print('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
-                    sys.exit(1)
-            else:
-                self.line = self.g3d.read_integrate(ax0=True,ax2=True)
-
+                    sys.exit(1)                
 
         elif 'y' == self.args.lineax:
-            if not self.args.if_integrate:
+            if self.args.if_integrate:
+                self.line = self.g3d.read_integrate(ax0=True,ax1=True)
+            elif self.args.avgax != None:
+                if self.args.avgax == 'x':
+                    self.line = self.g3d.read_avgx(dim=1,ax0=True)
+                elif self.args.avgax == 'z':
+                    self.line = self.g3d.read_avgx(dim=0,ax1=True)
+                else:
+                    print('ERROR: Cannot average along plotted axis!')
+                    sys.exit(1)                 
+            else:                
                 if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
                     # Default: central lineout
                     idx1 = math.floor(self.g3d.nx[0]/2) - 1
@@ -652,9 +683,7 @@ class G3d_plot_line(G3d_plot):
                     self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x1=0.0)
                 else:
                     print('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
-                    sys.exit(1)
-            else:
-                self.line = self.g3d.read_integrate(ax0=True,ax1=True)                                
+                    sys.exit(1)                                               
 
         if self.is_number_density():
             self.line = np.abs(self.line)
@@ -675,14 +704,16 @@ class G3d_plot_line(G3d_plot):
             sg_str = ''   
 
         if self.args.if_integrate:
-            integral_str = '_int'
+            app_str = '_int'
+        elif self.args.avgax != None:
+            app_str = '_avg' + self.args.avgax
         else:
-            integral_str = ''
+            app_str = ''
 
         savename = "%s%s_%s%s%s" % (fileprefix, \
                                        sg_str, \
                                        self.args.lineax, \
-                                       integral_str, \
+                                       app_str, \
                                        filesuffix)
 
         fig = plt.figure()

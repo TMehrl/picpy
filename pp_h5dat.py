@@ -394,6 +394,66 @@ class Grid3d(HiFile):
         return np.sum(data,axis=axtup) * dx
 
 
+    def read_avgx(self, dim, ax0=False, 
+                             ax1=False, 
+                             ax2=False):
+        # read and find avg position in dim and integrate along 
+        # specified axes 
+        data = self.read_3D()            
+
+        axtup = ()
+        dx = 1
+        if dim == 0:
+            sumx = np.dot( np.transpose(data,(1,2,0)),\
+                           self.get_x_arr(0) )
+            if ax0:
+                print('Error:\tIntegration dimension must be '
+                        'different from averaging dimension!')
+                sys.exit(1)  
+            if ax1:
+                axtup += (0,)
+                dx *= self.get_dx(1)
+            if ax2:
+                axtup += (1,)
+                dx *= self.get_dx(2)  
+                                            
+        elif dim == 1:
+            sumx = np.dot( np.transpose(data,(0,2,1)),\
+                           self.get_x_arr(1) ) 
+            if ax0:
+                axtup += (0,)
+                dx *= self.get_dx(0)
+            if ax1:
+                print('Error:\tIntegration dimension must be '
+                        'different from averaging dimension!')
+                sys.exit(1)                  
+            if ax2:
+                axtup += (1,)
+                dx *= self.get_dx(2) 
+
+        elif dim == 2:
+            sumx = np.dot( np.transpose(data,(0,1,2)),\
+                           self.get_x_arr(2) )
+            if ax0:
+                axtup += (0,)
+                dx *= self.get_dx(0)
+            if ax1:
+                axtup += (1,)
+                dx *= self.get_dx(1)                 
+            if ax2:
+                print('Error:\tIntegration dimension must be '
+                        'different from averaging dimension!')
+                sys.exit(1)                              
+        else:
+            print('Error:\tdim must be 0, 1 or 2!')
+            sys.exit(1)                  
+        
+        norm = np.sum(data,axis=dim) * self.get_dx(dim)
+        norm[np.where(norm == 0)] = 1.0
+
+        return np.sum(np.divide(sumx,norm),axis=axtup)
+
+
 class SliceMoms(H5File):
     def __init__(self, file):
 

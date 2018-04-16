@@ -99,7 +99,7 @@ def h5plot_parser():
                           type=str,                      
                           default=None,
                           nargs='+',
-                          help= """Labels to be prepended for each provided file.""")    
+                          help= """Labels for each selected line.""")    
     return parser
 
  
@@ -133,7 +133,8 @@ def main():
         j = 0   
         for (x, y, label, linestyle, color) in h5lp[i].get_line_plots():
             if args.labels != None:
-                label = args.labels[i] + ' ' + label          
+                # label = args.labels[i] + ' ' + label 
+                label = args.labels[i]
             if (args.line_no != None):
                 if args.line_no[i] == j:
                     plt.plot(x, y, label=label, linestyle=linestyles[i])
