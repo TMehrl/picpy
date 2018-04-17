@@ -205,7 +205,7 @@ def g3d_line_subparser(subparsers, parent_parser):
                           nargs=2,
                           type=float,
                           default=None) 
-    parser.add_argument(  "--absylog",
+    parser.add_argument(  "--ylog",
                           dest = "absylog",
                           action="store_true",
                           default=False,
@@ -697,6 +697,7 @@ class G3d_plot_line(G3d_plot):
         if self.args.verbose: print('Generating line plot')
         saveformat = self.args.file_format
         filesuffix = '_%06.f' % (np.floor(self.g3d.time))
+        app_str = ''
 
         if self.args.save_prefix != parsedefs.save.prefix:
             fileprefix = self.args.save_prefix
@@ -704,25 +705,20 @@ class G3d_plot_line(G3d_plot):
             fileprefix = self.g3d.name
 
         if self.g3d.is_subgrid():
-            sg_str = '_subgrid'
-        else:
-            sg_str = ''   
+            app_str += '_subgrid_' 
 
         if self.args.if_integrate:
-            app_str = '_int'
+            app_str += '_int'
         elif self.args.avgax != None:
-            app_str = '_avg' + self.args.avgax
-        else:
-            app_str = ''
+            app_str += '_avg' + self.args.avgax
 
         if self.args.absylog:
             app_str += '_absylog'
 
-        savename = "%s%s_%s%s%s" % (fileprefix, \
-                                       sg_str, \
-                                       self.args.lineax, \
-                                       app_str, \
-                                       filesuffix)
+        savename = "%s_%s%s%s" % (  fileprefix, \
+                                   self.args.lineax, \
+                                   app_str, \
+                                   filesuffix)
 
         fig = plt.figure()
         if self.args.absylog:

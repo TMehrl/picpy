@@ -448,10 +448,10 @@ class Grid3d(HiFile):
             print('Error:\tdim must be 0, 1 or 2!')
             sys.exit(1)                  
         
-        norm = np.sum(data,axis=dim) * self.get_dx(dim)
+        norm = np.sum(data,axis=dim)
         norm[np.where(norm == 0)] = 1.0
 
-        return np.sum(np.divide(sumx,norm),axis=axtup)
+        return np.divide(np.sum(sumx,axis=axtup),np.sum(norm,axis=axtup))
 
 
 class SliceMoms(H5File):
