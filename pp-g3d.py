@@ -204,7 +204,12 @@ def g3d_line_subparser(subparsers, parent_parser):
                           metavar=('XMIN', 'XMAX'),
                           nargs=2,
                           type=float,
-                          default=None)  
+                          default=None) 
+    parser.add_argument(  "--absylog",
+                          dest = "absylog",
+                          action="store_true",
+                          default=False,
+                          help = "Plot abs log of y-data (default: %(default)s).")                           
     parser.add_argument(  "-s", "--save-path",
                           action="store",
                           dest="savepath",
@@ -710,6 +715,9 @@ class G3d_plot_line(G3d_plot):
         else:
             app_str = ''
 
+        if self.args.absylog:
+            app_str += '_absylog'
+
         savename = "%s%s_%s%s%s" % (fileprefix, \
                                        sg_str, \
                                        self.args.lineax, \
@@ -717,8 +725,12 @@ class G3d_plot_line(G3d_plot):
                                        filesuffix)
 
         fig = plt.figure()
-        cax = plt.plot( self.x_array,
-                        self.line)
+        if self.args.absylog:
+            plt.semilogy( self.x_array,
+                          abs(self.line) + 1e-16)
+        else:    
+            plt.plot( self.x_array,
+                      self.line)
 
         ax = plt.gca()
         ax.set_ylabel(self.ylabel, fontsize=14)
@@ -743,6 +755,8 @@ class G3d_plot_line(G3d_plot):
             plt.xlim(self.args.xlim[0], self.args.xlim[1])
         if self.args.ylim != None:
             plt.ylim(self.args.ylim[0], self.args.ylim[1])
+
+        plt.title(savename)
 
         mkdirs_if_nexist(self.args.savepath)
 
