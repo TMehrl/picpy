@@ -726,8 +726,9 @@ class G3d_plot_line(G3d_plot):
 
         fig = plt.figure()
         if self.args.absylog:
-            plt.semilogy( self.x_array,
-                          abs(self.line) + 1e-16)
+            nonzero_idx = np.where( abs(self.line) > 0.0 )
+            plt.semilogy( self.x_array[nonzero_idx],
+                          abs(self.line[nonzero_idx]))
         else:    
             plt.plot( self.x_array,
                       self.line)
