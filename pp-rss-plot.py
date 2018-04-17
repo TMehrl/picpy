@@ -97,6 +97,10 @@ def ps_parseopts():
     return parser
 
 
+def magn_check(x):
+    return not (-3.0 < math.log(1e-14 + np.max(abs(x)),10) < 3.0)    
+
+
 def plot_save_slice_rms(slm, savepath):
 
     x = slm.zeta_array
@@ -169,7 +173,7 @@ def plot_save_proj_rms(slm, savepath, h5plot=True):
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
     ax.set_ylabel(r'$k_p\sigma_x$', fontsize=14)
-    if not (-3.0 < math.log(np.max(abs(np.sqrt(xsq))),10) < 3.0):
+    if magn_check(np.sqrt(xsq)):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
@@ -188,7 +192,7 @@ def plot_save_proj_rms(slm, savepath, h5plot=True):
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
     ax.set_ylabel(r'$\sigma_{p_x}/m_e c$', fontsize=14)
-    if not (-3.0 < math.log(np.max(abs(np.sqrt(psq))),10) < 3.0):
+    if magn_check(np.sqrt(psq)):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
@@ -206,8 +210,8 @@ def plot_save_proj_rms(slm, savepath, h5plot=True):
     plt.plot(t, xp)
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
-    ax.set_ylabel(r'$ k_p x\,p_x/m_e c$', fontsize=14)
-    if not (-3.0 < math.log(np.max(abs(xp)),10) < 3.0):
+    ax.set_ylabel(r'$ k_p \left \langle x\,p_x \right\rangle/m_e c$', fontsize=14)
+    if magn_check(xp):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
@@ -227,7 +231,7 @@ def plot_save_proj_rms(slm, savepath, h5plot=True):
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
     ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
-    if not (-3.0 < math.log(np.max(abs(emittance)),10) < 3.0):
+    if magn_check(emittance):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
@@ -357,7 +361,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14)
     ax.set_ylabel(r'$X_{b,\mathrm{tail}}$', fontsize=14)
-    if not (-3.0 < math.log(np.max(abs(slm.avgx2[:,0])),10) < 3.0):
+    if magn_check(slm.avgx2[:,0]):    
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
