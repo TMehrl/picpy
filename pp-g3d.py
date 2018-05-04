@@ -136,11 +136,11 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           default=None,
                           type=float,
                           help= """Position of plane.""")    
-    parser.add_argument(  "--cscale",
-                          default="lin",
-                          dest="cscale",
-                          choices=[ "lin", "log",],
-                          help= "z-axis type (default: %(default)s).")
+    parser.add_argument(  "--clog",
+                          dest = "clog",
+                          action = "store_true",
+                          default = False,
+                          help = "Log color scale (default: %(default)s).")
     parser.add_argument(  '--cblim',
                           help='Colorbar axis limits',
                           action='store',
@@ -163,12 +163,12 @@ def g3d_slice_subparser(subparsers, parent_parser):
                                     'pdf',
                                     'eps',],
                           default='png',
-                          help= """Format of output file (default: %(default)s).""")    
-    parser.add_argument(  "--cmesh",
-                          dest = "pcm",
-                          action="store_true",
-                          default=False,
-                          help = "Plot pcolormesh instead of contourf (default: %(default)s).")
+                          help= """Format of output file (default: %(default)s).""")
+    parser.add_argument(  "--ptype",
+                          default="pcolor",
+                          dest="ptype",
+                          choices=[ "pcolor", "pcolormesh", "imshow", "pcolorfast", "contourf"],
+                          help= "Plot color type (default: %(default)s).")                        
     return parser
 
 
@@ -226,6 +226,8 @@ def g3d_line_subparser(subparsers, parent_parser):
                           default='eps',
                           help= """Format of output file (default: %(default)s).""")                     
     return parser
+
+
 
 # Converting HDF strings of grid quantity namnes
 # to LaTeX strings
@@ -294,6 +296,7 @@ class G3d_plot:
     def __init__(self, file, args):
         self.args = args
         self.file = file
+        self.app_str = ''
 
         # Reading hdf5 attributes:
         if self.args.verbose:  print('Getting attributes of ', file)
@@ -439,8 +442,6 @@ class G3d_plot_slice(G3d_plot):
             self.slice = np.abs(self.slice)
 
     def set_cmap( self ):
-        if self.args.cscale == "log":
-            self.slice = np.log(abs(self.slice))
 
         cblim = [0.0, 0.0]
 
@@ -475,6 +476,15 @@ class G3d_plot_slice(G3d_plot):
                 cblim[0] = -1.0
                 cblim[1] = 1.0 
 
+        if self.args.clog:
+            self.app_str += '_log'
+            min_nonzero = np.min(abs(self.slice[np.where(self.slice != 0.0)]))
+            self.slice[np.where(self.slice == 0)] = min_nonzero
+            self.slice = abs(self.slice)
+            self.colormap = cm.Greys
+            cblim[0] = min_nonzero
+            cblim[1] = np.max(self.slice)
+
         if self.args.cblim != None:
             cblim = list(self.args.cblim)
 
@@ -491,28 +501,40 @@ class G3d_plot_slice(G3d_plot):
             fileprefix = self.g3d.name
 
         if self.g3d.is_subgrid():
-            sg_str = '_subgrid'
-        else:
-            sg_str = ''   
+            self.app_str += '_subgrid'
 
-        savename = "%s%s_%s%s.%s" % (fileprefix, sg_str, self.args.plane, filesuffix, saveformat)
-
-        levels = MaxNLocator(nbins=256).tick_values(self.cblim[0], self.cblim[1])
 
         fig = plt.figure()
-        if self.args.pcm:
+        if self.args.ptype == 'pcolormesh':
             cax = plt.pcolormesh(self.x_array,
                                  self.y_array,
                                  self.slice,
-                                 vmin=self.cblim[0], vmax=self.cblim[1],
-                                 cmap=self.colormap)
-        else:
+                                 vmin=self.cblim[0], vmax=self.cblim[1])
+        elif self.args.ptype == 'contourf':
+            levels = MaxNLocator(nbins=256).tick_values(self.cblim[0], self.cblim[1])
             cax = plt.contourf( self.x_array,
                                 self.y_array,
                                 self.slice,
                                 levels=levels,
                                 vmin=self.cblim[0], vmax=self.cblim[1],
                                 cmap=self.colormap)
+        elif self.args.ptype == 'pcolor':
+            cax = plt.pcolor( self.x_array,
+                                self.y_array,
+                                self.slice,
+                                vmin=self.cblim[0], vmax=self.cblim[1])            
+        elif self.args.ptype == 'imshow':
+            print('ERROR: imshow not implemented yet!')
+            sys.exit(1)  
+        elif self.args.ptype == 'pcolorfast':    
+            print('ERROR: pcolorfast not implemented yet!')
+            sys.exit(1)     
+
+        cax.cmap = self.colormap
+
+        if self.args.clog:
+            cax.norm = matplotlib.colors.LogNorm()
+
         ax = plt.gca()
         ax.set_ylabel(self.ylabel, fontsize=14)
         ax.set_xlabel(self.xlabel, fontsize=14)
@@ -538,6 +560,13 @@ class G3d_plot_slice(G3d_plot):
         cbar.ax.set_position(cbaxpos2)
 
         mkdirs_if_nexist(self.args.savepath)
+
+
+        savename = "%s_%s%s%s.%s" % (  fileprefix, \
+                                       self.args.plane, \
+                                       self.app_str, \
+                                       filesuffix, \
+                                       saveformat )
 
         if saveformat==parsedefs.file_format.png:
             fig.savefig(  self.args.savepath + '/' + savename,
@@ -697,7 +726,6 @@ class G3d_plot_line(G3d_plot):
         if self.args.verbose: print('Generating line plot')
         saveformat = self.args.file_format
         filesuffix = '_%06.f' % (np.floor(self.g3d.time))
-        app_str = ''
 
         if self.args.save_prefix != parsedefs.save.prefix:
             fileprefix = self.args.save_prefix
@@ -705,23 +733,16 @@ class G3d_plot_line(G3d_plot):
             fileprefix = self.g3d.name
 
         if self.g3d.is_subgrid():
-            app_str += '_subgrid_' 
+            self.app_str += '_subgrid_' 
 
         if self.args.if_integrate:
-            app_str += '_int'
+            self.app_str += '_int'
         elif self.args.avgax != None:
-            app_str += '_avg' + self.args.avgax
-
-        if self.args.absylog:
-            app_str += '_absylog'
-
-        savename = "%s_%s%s%s" % (  fileprefix, \
-                                   self.args.lineax, \
-                                   app_str, \
-                                   filesuffix)
+            self.app_str += '_avg' + self.args.avgax
 
         fig = plt.figure()
         if self.args.absylog:
+            self.app_str += '_absylog'
             nonzero_idx = np.where( abs(self.line) > 0.0 )
             plt.semilogy( self.x_array[nonzero_idx],
                           abs(self.line[nonzero_idx]))
@@ -752,6 +773,11 @@ class G3d_plot_line(G3d_plot):
             plt.xlim(self.args.xlim[0], self.args.xlim[1])
         if self.args.ylim != None:
             plt.ylim(self.args.ylim[0], self.args.ylim[1])
+
+        savename = "%s_%s%s%s" % (  fileprefix, \
+                                   self.args.lineax, \
+                                   self.app_str, \
+                                   filesuffix)
 
         plt.title(savename)
 
