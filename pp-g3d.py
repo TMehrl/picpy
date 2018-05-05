@@ -533,7 +533,7 @@ class G3d_plot_slice(G3d_plot):
         cax.cmap = self.colormap
 
         if self.args.clog:
-            cax.norm = matplotlib.colors.LogNorm()
+            cax.norm = matplotlib.colors.LogNorm(vmin=self.cblim[0], vmax=self.cblim[1])
 
         ax = plt.gca()
         ax.set_ylabel(self.ylabel, fontsize=14)
