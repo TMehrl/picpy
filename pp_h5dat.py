@@ -519,7 +519,11 @@ class H5Plot:
     def get_ylab(self):
         return self.__ylab        
 
+    def get_ax(self):
+        return self.__ax 
+
     def inherit_matplotlib_line_plots(self, ax):
+        self.__ax = ax
         self.__xlab = ax.xaxis.get_label_text()
         self.__ylab = ax.yaxis.get_label_text()
         self.__N_lp = len(ax.lines)

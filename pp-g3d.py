@@ -108,7 +108,14 @@ def g3d_parser():
                           dest = "h5plot",
                           action="store_true",
                           default=True,
-                          help = "Save plot as hdf5 file (Default: %(default)s).")                                
+                          help = "Save plot as hdf5 file (Default: %(default)s).")
+    parser.add_argument(  "-s", "--save-path",
+                          action="store",
+                          dest="savepath",
+                          metavar="PATH",
+                          default=None,
+                          help = """Path to which generated files will be saved.
+                              (default: %(default)s)""")                                                        
     return parser
 
 def g3d_slice_subparser(subparsers, parent_parser):
@@ -149,13 +156,6 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           nargs=2,
                           type=float,
                           default=None)  
-    parser.add_argument(  "--save-path",
-                          action="store",
-                          dest="savepath",
-                          metavar="PATH",
-                          default=parsedefs.save.path + '/g3d-slice',
-                          help = """Path to which generated files will be saved.
-                              (default: %(default)s)""")
     parser.add_argument(  "-f", "--format",
                           action='store',
                           dest="file_format",
@@ -186,7 +186,7 @@ def g3d_line_subparser(subparsers, parent_parser):
                           help='Indices for which lineout is taken.',
                           action='store',
                           dest="lout_idx",
-                          metavar=('idx0', 'idx1'),
+                          metavar=('IDX0', 'IDX1'),
                           nargs=2,
                           type=int,
                           default=None)
@@ -210,13 +210,6 @@ def g3d_line_subparser(subparsers, parent_parser):
                           action="store_true",
                           default=False,
                           help = "Plot abs log of y-data (default: %(default)s).")                           
-    parser.add_argument(  "-s", "--save-path",
-                          action="store",
-                          dest="savepath",
-                          metavar="PATH",
-                          default=parsedefs.save.path + '/g3d-line',
-                          help = """Path to which generated files will be saved.
-                              (default: %(default)s)""")
     parser.add_argument(  "-f", "--format",
                           action='store',
                           dest="file_format",
@@ -297,6 +290,7 @@ class G3d_plot:
         self.args = args
         self.file = file
         self.app_str = ''
+        self.root_savepath = './plots'
 
         # Reading hdf5 attributes:
         if self.args.verbose:  print('Getting attributes of ', file)
@@ -348,6 +342,8 @@ class G3d_plot:
 class G3d_plot_slice(G3d_plot):
     def __init__(self, file, args):
         G3d_plot.__init__(self, file, args)
+
+        self.__relsavepath = '/g3d-slice'
 
         self.set_xaxis( self.args.plane[0] )
         self.set_yaxis( self.args.plane[1] )
@@ -559,7 +555,12 @@ class G3d_plot_slice(G3d_plot):
   
         cbar.ax.set_position(cbaxpos2)
 
-        mkdirs_if_nexist(self.args.savepath)
+        if self.args.savepath == None:
+            savepath = self.root_savepath + self.__relsavepath
+        else:
+            savepath = self.args.savepath + self.__relsavepath
+
+        mkdirs_if_nexist(savepath)
 
 
         savename = "%s_%s%s%s.%s" % (  fileprefix, \
@@ -569,13 +570,13 @@ class G3d_plot_slice(G3d_plot):
                                        saveformat )
 
         if saveformat==parsedefs.file_format.png:
-            fig.savefig(  self.args.savepath + '/' + savename,
+            fig.savefig( savepath + '/' + savename,
                       format=saveformat,
                       dpi=600)
         else:
-            fig.savefig(  self.args.savepath + '/' + savename,
+            fig.savefig(  savepath + '/' + savename,
                           format=saveformat)
-        if self.args.verbose: print('Saved "' + savename + '" at: ' + self.args.savepath)
+        if self.args.verbose: print('Saved "' + savename + '" at: ' + savepath)
 
         if self.args.ifshow: plt.show()
         plt.close(fig)
@@ -585,11 +586,14 @@ class G3d_plot_line(G3d_plot):
     def __init__(self, file, args):
         G3d_plot.__init__(self, file, args)
 
+        self.__relsavepath = '/g3d-line'
+
         self.set_xaxis( self.args.lineax )
         if self.args.verbose: print('Reading data...')
         self.read()
         if self.args.verbose: print('Read-in completed.')
         self.set_yaxis()
+
 
     def set_yaxis( self ):
         if self.args.if_integrate:
@@ -781,22 +785,27 @@ class G3d_plot_line(G3d_plot):
 
         plt.title(savename)
 
-        mkdirs_if_nexist(self.args.savepath)
+        if self.args.savepath == None:
+            savepath = self.root_savepath + self.__relsavepath
+        else:
+            savepath = self.args.savepath + self.__relsavepath
+
+        mkdirs_if_nexist(savepath)
 
         if saveformat==parsedefs.file_format.png:
-            fig.savefig(  self.args.savepath + '/' + savename + '.' + saveformat,
+            fig.savefig( savepath + '/' + savename + '.' + saveformat,
                       format=saveformat,
                       dpi=600)
         else:
-            fig.savefig(  self.args.savepath + '/' + savename + '.' + saveformat,
+            fig.savefig( savepath + '/' + savename + '.' + saveformat,
                           format=saveformat)
         if self.args.verbose:
-            print('Saved "' + savename + '.' + saveformat + '" at: ' + self.args.savepath)
+            print('Saved "' + savename + '.' + saveformat + '" at: ' + savepath)
 
         if self.args.h5plot: 
             h5lp = H5Plot()
             h5lp.inherit_matplotlib_line_plots(ax)
-            h5lp.write(self.args.savepath + '/' + savename + '.h5')
+            h5lp.write(savepath + '/' + savename + '.h5')
 
         if self.args.ifshow: plt.show()
         plt.close(fig)

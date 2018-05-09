@@ -14,19 +14,6 @@ from pp_h5dat import H5FList
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
 
-# Parse defaults/definitions
-class parsedefs:
-    class file_format:
-        png = 'png'
-        eps = 'eps'
-        pdf = 'pdf'
-    class zax:
-        zeta = 'zeta'
-        z = 'z'
-        xi = 'xi'
-    class save:
-        prefix = 'g3d_name'
-        path = './plots'
 
 
 def flip(items, ncol):
@@ -72,7 +59,7 @@ def h5plot_parser():
                           action="store",
                           dest="savepath",
                           metavar="PATH",
-                          default=parsedefs.save.path + '/g3d-line-vs-theo',
+                          default='plots/g3d-line-vs-theo',
                           help = """Path to which generated files will be saved.
                               (Default: %(default)s)""")
     parser.add_argument(  "-f", "--format",
@@ -99,7 +86,12 @@ def h5plot_parser():
                           type=str,                      
                           default=None,
                           nargs='+',
-                          help= """Labels for each selected line.""")    
+                          help= """Labels for each selected line.""")
+    parser.add_argument(  "--ylog",
+                          dest = "absylog",
+                          action="store_true",
+                          default=False,
+                          help = "Plot abs log of y-data (default: %(default)s).")                           
     return parser
 
  
@@ -133,14 +125,23 @@ def main():
         j = 0   
         for (x, y, label, linestyle, color) in h5lp[i].get_line_plots():
             if args.labels != None:
-                # label = args.labels[i] + ' ' + label 
                 label = args.labels[i]
+
+            if label == '_line0':
+                label = path
+
             if (args.line_no != None):
                 if args.line_no[i] == j:
-                    plt.plot(x, y, label=label, linestyle=linestyles[i])
+                    if args.absylog:
+                        plt.semilogy( x, y, label=label, linestyle=linestyles[i%len(linestyles)])                        
+                    else:
+                        plt.plot(x, y, label=label, linestyle=linestyles[i%len(linestyles)])
             else:
-                #plt.plot(x, y, label=label, linestyle=linestyle, color=color)
-                plt.plot(x, y, label=label, linestyle=linestyles[i])      
+                if args.absylog:
+                    plt.semilogy( x, y, label=label, linestyle=linestyles[i%len(linestyles)])
+                else:    
+                    #plt.plot(x, y, label=label, linestyle=linestyle, color=color)
+                    plt.plot(x, y, label=label, linestyle=linestyles[i%len(linestyles)])      
             j += 1
         i += 1
 
@@ -148,7 +149,8 @@ def main():
     ax.set_xlabel(h5lp[0].get_xlab(), fontsize=14)
     ax.set_ylabel(h5lp[0].get_ylab(), fontsize=14)    
     handles, labels = ax.get_legend_handles_labels()
-    plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
+    #plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
+    plt.legend()
     if not (-3.0 < math.log(np.max(abs(y)),10) < 3.0):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
@@ -159,6 +161,7 @@ def main():
     fig.savefig(  fname + '_h5plot.' + args.file_format ,
                       format=args.file_format)
     plt.close(fig)
+
 
 if __name__ == "__main__":
     main()
