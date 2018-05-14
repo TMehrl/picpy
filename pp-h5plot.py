@@ -119,7 +119,14 @@ def main():
     h5lp = []
     i = 0
     linestyles = ['-', '--', '-.', ':']
+
+    
+  
     for path in args.paths:
+        if not os.path.isfile(path):
+            print('ERROR: File %s does not exist!' % path)
+            sys.exit(1)             
+
         h5lp.append(H5Plot())
         h5lp[i].read(path)
         j = 0   
