@@ -72,6 +72,7 @@ def main():
     args = parser.parse_args()
 
     NHC=2
+    slID_str = 'slID_'
 
     #cblims = [-1e-1 1e-1];
 
@@ -88,57 +89,78 @@ def main():
 
     print(grid_info)
 
-    Nx_wo_halo = int(grid_info[1,2])
-    Ny_wo_halo = int(grid_info[2,2])
+    Nx = int(grid_info[1,2])
+    Ny = int(grid_info[2,2])
 
-    dx=(grid_info[1,1] - grid_info[1,0]) / (Nx_wo_halo - 1)
-    dy=(grid_info[2,1] - grid_info[2,0]) / (Ny_wo_halo - 1)
+    dx=(grid_info[1,1] - grid_info[1,0]) / (Nx - 1) # Check this!!!!
+    dy=(grid_info[2,1] - grid_info[2,0]) / (Ny - 1) # Check this!!!!
 
-    Nx_loc=np.int(Nx_wo_halo/args.partition[1])
-    Ny_loc=np.int(Ny_wo_halo/args.partition[2])
+    Nx_incl_halo = Nx + 2*NHC;
+    Ny_incl_halo = Ny + 2*NHC;
 
-    Nx_loc_incl_halo = Nx_loc + 2*NHC;
-    Ny_loc_incl_halo = Ny_loc + 2*NHC;
 
-    x_array_wo_halo=np.linspace(grid_info[1,0],grid_info[1,1],Nx_loc)
-    y_array_wo_halo=np.linspace(grid_info[2,0],grid_info[2,1],Ny_loc)
     
-    x_array_incl_halo = np.linspace(grid_info[1,0] - NHC*dx, 
-                                    grid_info[1,1] + NHC*dx,
-                                    Nx_loc_incl_halo)
-    y_array_incl_halo = np.linspace(grid_info[2,0] - NHC*dy,
-                                    grid_info[2,1] + NHC*dy,
-                                    Ny_loc_incl_halo)
-    
-
     for filepath in args.path:
 
         if args.nohalo:
-            Nx=Nx_loc
-            Ny=Ny_loc
-
-            x_array=x_array_wo_halo
-            y_array=y_array_wo_halo
-
+            nhc = 0
         else:
-            Nx=Nx_loc_incl_halo
-            Ny=Ny_loc_incl_halo
+            nhc = NHC
 
-            x_array=x_array_incl_halo
-            y_array=y_array_incl_halo
+        slID = np.int(filepath[(filepath.find(slID_str)+len(slID_str)):len(filepath)])
+
+        IDx = np.int(np.floor(slID/args.partition[2]))
+        IDy = slID - args.partition[2] * IDx
+
+        ix_start = np.int((Nx * IDx/args.partition[1]))
+        ix_end = np.int((Nx * (IDx+1)/args.partition[1]))
+
+        iy_start = np.int((Ny * IDy/args.partition[2]))
+        iy_end = np.int((Ny * (IDy+1)/args.partition[2]))
+
+        my_Nx=np.int(Nx/args.partition[1] + 2*nhc )
+        my_Ny=np.int(Ny/args.partition[2] + 2*nhc )
+    
+        my_x_array = np.linspace( grid_info[1,0] + ix_start*dx - nhc*dx, 
+                                  grid_info[1,0] + ix_end*dx + nhc*dx,
+                                  my_Nx)
+        my_y_array = np.linspace( grid_info[2,0] + iy_start*dy - nhc*dy,
+                                  grid_info[2,0] + iy_end*dy + nhc*dy,
+                                  my_Ny)
 
         M_1D = np.fromfile(filepath,dtype=np.float32)
-        M = np.transpose(M_1D.reshape((Nx, Ny)))
+        M = np.transpose(M_1D.reshape((my_Nx, my_Ny)))
+
+        cblim = [0.0, 0.0]
+
+        if np.amin(M) < 0 and np.amax(M) > 0:
+            cblim[0] = -max(abs(np.amin(M)),np.amax(M))
+            cblim[1] = max(abs(np.amin(M)),np.amax(M))
+            colormap = cm.BrBG
+        elif np.amin(M) < 0 and np.amax(M) <= 0:
+            cblim[0] = np.amin(M)
+            cblim[1] = 0
+            colormap = cm.gist_yarg
+        elif np.amin(M) >= 0 and np.amax(M) > 0:
+            cblim[0] = 0
+            cblim[1] = np.amax(M)
+            colormap = cm.gist_gray
+        else:
+            cblim[0] = np.amin(M)
+            cblim[1] = np.amax(M)
+            colormap = cm.PuBu          
 
         fig = plt.figure()
-        cax = plt.pcolormesh( x_array,
-                              y_array,
+        cax = plt.pcolormesh( my_x_array,
+                              my_y_array,
                               M,
-                              cmap=cm.PuBu)
+                              vmin=cblim[0], vmax=cblim[1],                              
+                              cmap=colormap)
 
         ax = plt.gca()
         ax.set_ylabel(r'$k_p y$', fontsize=14)
         ax.set_xlabel(r'$k_p x$', fontsize=14)
+        ax.set_aspect('equal')
         cbar = fig.colorbar(cax)
         #cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )
         if args.ifshow:
