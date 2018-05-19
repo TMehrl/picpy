@@ -78,6 +78,9 @@ def moving_average(data_set, periods=3):
     weights = np.ones(periods) / periods
     return np.convolve(data_set, weights, mode='same')
 
+def f_rho(r_array,rb,rho_peak,delta_rho):
+    return rho_peak * np.exp(-(r_array-rb)/delta_rho)
+
 
 class Blowout():
     def __init__(self, g3d, args):
@@ -130,12 +133,17 @@ class Blowout():
 
     def plot_r_lines(self):
 
+        if not 'self.r_z_slice_model' in locals():
+          self.gen_model_sheath()
+            
         z_inds = np.int16(np.linspace(0,self.Nzeta-1,10))
 
         fig = plt.figure()
         for z_ind in z_inds:
-            plt.plot(self.r_array,
-                self.r_z_slice[:,z_ind])
+            p = plt.plot(self.r_array, self.r_z_slice[:,z_ind])
+            p[0].get_color()
+            plt.plot(self.r_array, self.r_z_slice_model[:,z_ind],color = p[0].get_color(),linestyle='dashed')
+            
 
         ax = plt.gca()
         ax.set_ylabel(r'$\rho$', fontsize=14)
@@ -162,7 +170,7 @@ class Blowout():
 
 
 
-    def set_plot_rb(self):
+    def calc_rb(self):
 
         idx_max = np.argmax(self.r_z_slice, axis=0)
 
@@ -190,12 +198,22 @@ class Blowout():
             
         slope = moving_average(np.asarray(slope), 50)
 
-        self.rb = rb * (1.0 - np.exp(-0.5* np.power(slope/0.05,6)))
+        fig = plt.figure()
+        plt.plot(self.zeta_array,slope)
+        ax = plt.gca()
+        ax.set_ylabel('slope', fontsize=14)
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)           
+        plt.show()
+
+        #self.rb = rb * (1.0 - np.exp(-0.5* np.power(slope/0.05,6))) 
+        self.rb = rb 
+        self.rb_maxrho = self.r_array[idx_max]       
+
+    def plot_rb(self):
 
         fig = plt.figure()
-        plt.plot(self.zeta_array,rb)
         plt.plot(self.zeta_array,self.rb)
-        plt.plot(self.zeta_array,self.r_array[idx_max])
+        plt.plot(self.zeta_array,self.rb_maxrho)
 
         ax = plt.gca()
         ax.set_ylabel(r'$k_p r_b$', fontsize=14)
@@ -221,13 +239,6 @@ class Blowout():
 
         if self.args.verbose: print('Saved "' + savename + '" at: ' + self.args.savepath)
 
-        fig = plt.figure()
-        plt.plot(self.zeta_array,slope)
-        ax = plt.gca()
-        ax.set_ylabel('slope', fontsize=14)
-        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)           
-        plt.show()
-
     def calc_deltarho_rhomax_sheathcharge(self):
 
         def f_delta_rho(Q,rho_peak,rb):
@@ -236,7 +247,6 @@ class Blowout():
             else:
                 delta_rho = 0.01;
             return delta_rho
-
 
         idx_max = np.argmax(self.r_z_slice, axis=0)
 
@@ -259,6 +269,12 @@ class Blowout():
         ########################## JUST TESTING, need to improve estimate for delta_rho!!
 
     def plot_deltarho_rhomax_sheathcharge(self):
+
+        if not 'self.rb' in locals():
+          self.calc_rb()
+
+        if not 'self.rho_max' in locals():
+          self.calc_deltarho_rhomax_sheathcharge()
 
         fig_charge = plt.figure()
         plt.plot(self.zeta_array, self.charge)
@@ -316,25 +332,30 @@ class Blowout():
             h5lp.inherit_matplotlib_line_plots(ax_deltarho)
             h5lp.write(savepath + '/' + deltarho_fileprefix + filesuffix + '.h5')
 
-       
-
-
-
-
-
         plt.show()
 
     def gen_model_sheath(self):
-        r_z_slice_model = -1*np.ones(self.r_z_slice.shape,dtype=np.float32)
+
+        if not 'self.rb' in locals():
+          self.calc_rb()
+
+        if not 'self.rho_max' in locals():
+          self.calc_deltarho_rhomax_sheathcharge()
+
+        self.r_z_slice_model = -1*np.ones(self.r_z_slice.shape,dtype=np.float32)
         for i in range(0,self.Nzeta):
             ridx = np.where(self.r_array > self.rb[i])
-            r_z_slice_model[ridx,i] = self.rho_max[i] * np.exp(-(self.r_array[ridx] - self.rb[i])/self.delta_rho[i])
+            self.r_z_slice_model[ridx,i] = f_rho(self.r_array[ridx],self.rb[i],self.rho_max[i],self.delta_rho[i])
 
+    def plot_model_sheath(self):
 
+        if not 'self.r_z_slice_model' in locals():
+          self.gen_model_sheath()
+            
         fig = plt.figure() 
         cax = plt.pcolormesh(self.zeta_array,
                              self.r_array,
-                             r_z_slice_model)
+                             self.r_z_slice_model)
 
         ax = plt.gca()
         ax.set_ylabel(r'$k_p r$', fontsize=14)
@@ -370,10 +391,10 @@ def main():
             blowout = Blowout(g3d, args)
             blowout.plot_r_z_plane()
             blowout.plot_r_lines()
-            blowout.set_plot_rb()
+            blowout.plot_rb()
             blowout.calc_deltarho_rhomax_sheathcharge()
             blowout.plot_deltarho_rhomax_sheathcharge()
-            blowout.gen_model_sheath()
+            blowout.plot_model_sheath()
 
         else:
             print('ERROR: HDF5 file must contain a plasma_charge dataset!')
