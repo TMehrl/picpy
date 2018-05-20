@@ -4,6 +4,7 @@ import sys
 import math
 import argparse
 import numpy as np
+import scipy.signal as ssignal
 import matplotlib
 import itertools
 # Force matplotlib to not use any Xwindows backend.
@@ -82,6 +83,23 @@ def f_rho(r_array,rb,rho_peak,delta_rho):
     return rho_peak * np.exp(-(r_array-rb)/delta_rho)
 
 
+def floc_max(array, width):
+    lm = ssignal.argrelmax(array, order=width)
+    if lm[0].any():
+        flm = lm[0][0]
+    else:
+        flm = 0
+    return flm    
+
+
+def fidx_loc_max(array, width):
+    idx_lm = ssignal.find_peaks_cwt(array, np.arange(1,width))
+    if idx_lm.size > 0:
+        fidx_lm = idx_lm[0]
+    else:
+        fidx_lm = 0
+    return fidx_lm  
+
 class Blowout():
     def __init__(self, g3d, args):
       self.g3d = g3d
@@ -102,6 +120,7 @@ class Blowout():
         self.Nr = len(idx_gtr0)
         self.r_z_slice = slice[idx_gtr0,:]
         self.dr = self.g3d.get_dx(1)
+        self.mm_width = 20
 
     def plot_r_z_plane(self):
 
@@ -141,13 +160,12 @@ class Blowout():
         fig = plt.figure()
         for z_ind in z_inds:
             p = plt.plot(self.r_array, self.r_z_slice[:,z_ind])
-            p[0].get_color()
-            plt.plot(self.r_array, self.r_z_slice_model[:,z_ind],color = p[0].get_color(),linestyle='dashed')
-            
+            plt.plot(self.r_array, self.r_z_slice_model[:,z_ind],color = p[0].get_color(),linestyle='--') 
+            plt.plot(self.r_array, self.r_z_slice_model_flocmax[:,z_ind],color = p[0].get_color(),linestyle='-.')            
 
         ax = plt.gca()
         ax.set_ylabel(r'$\rho$', fontsize=14)
-        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_xlabel(r'$k_p r$', fontsize=14)
 
         filesuffix = '_t_%06.f' % (np.floor(self.g3d.time))
         fileprefix = 'plasma_charge_r'
@@ -196,7 +214,7 @@ class Blowout():
 
             rb[i] = self.r_array[idx_gtr0-1] + self.dr * ratio /(1.0+ratio)
             
-        slope = moving_average(np.asarray(slope), 50)
+        slope = moving_average(np.asarray(slope), self.mm_width)
 
         fig = plt.figure()
         plt.plot(self.zeta_array,slope)
@@ -248,25 +266,39 @@ class Blowout():
                 delta_rho = 0.01;
             return delta_rho
 
+        # Index of absolute maximum
         idx_max = np.argmax(self.r_z_slice, axis=0)
 
         charge = np.zeros(self.Nzeta,dtype=np.float32)
         rho_max = np.zeros(self.Nzeta,dtype=np.float32)
+        rho_flocmax = np.zeros(self.Nzeta,dtype=np.float32)        
         delta_rho = np.zeros(self.Nzeta,dtype=np.float32)
+        delta_rho_flocmax = np.zeros(self.Nzeta,dtype=np.float32)
+
+        width = 5
 
         for i in range(0,self.Nzeta):
             temp_array = self.r_array - self.rb[i]
             temp_array[temp_array<0] = np.amax(self.r_array)
             idx = (temp_array).argmin()
-            charge[i] = np.sum(self.r_z_slice[idx:-1,i],axis=0)
+            
+            # Compute charge in sheath
+            charge[i] = np.dot(self.r_z_slice[idx:-1,i], self.r_array[idx:-1]) *  self.dr
             rho_max[i] = self.r_z_slice[idx_max[i],i]
             delta_rho[i] = f_delta_rho(Q=charge[i],rho_peak=rho_max[i],rb=self.rb[i])
+            
+            # Indices of first local maxima
+            fidx_lm = fidx_loc_max(self.r_z_slice[idx-width:-1,i], width)
+            rho_flocmax[i] = self.r_z_slice[idx-width+fidx_lm,i]
+            delta_rho_flocmax[i] = f_delta_rho(Q=charge[i],rho_peak=rho_flocmax[i],rb=self.rb[i])
+            # rho_flocmax[i] = floc_max(self.r_z_slice[idx-width:-1,i], width)
+            # delta_rho_flocmax[i] = f_delta_rho(Q=charge[i],rho_peak=rho_flocmax[i],rb=self.rb[i])
 
-        self.rho_max = moving_average(rho_max,4)
-        self.charge = charge
-        ########################## JUST TESTING:
-        self.delta_rho = moving_average(delta_rho, 4) * 0.1
-        ########################## JUST TESTING, need to improve estimate for delta_rho!!
+        self.rho_max = moving_average(rho_max, self.mm_width)
+        self.rho_flocmax = moving_average(rho_flocmax, self.mm_width)
+        self.charge = moving_average(charge, self.mm_width)
+        self.delta_rho = moving_average(delta_rho, self.mm_width)
+        self.delta_rho_flocmax = moving_average(delta_rho_flocmax, self.mm_width)
 
     def plot_deltarho_rhomax_sheathcharge(self):
 
@@ -285,6 +317,7 @@ class Blowout():
 
         fig_rhomax= plt.figure()
         plt.plot(self.zeta_array, self.rho_max)
+        plt.plot(self.zeta_array, self.rho_flocmax)
         ax_rhomax = plt.gca()
         ax_rhomax.set_ylabel(r'$\rho_\mathrm{max}$', fontsize=14)
         ax_rhomax.set_xlabel(r'$k_p \zeta$', fontsize=14) 
@@ -292,6 +325,7 @@ class Blowout():
 
         fig_deltarho = plt.figure()
         plt.plot(self.zeta_array, self.delta_rho)
+        plt.plot(self.zeta_array, self.delta_rho_flocmax)
         ax_deltarho = plt.gca()
         ax_deltarho.set_ylabel(r'$\Delta_\rho$', fontsize=14)
         ax_deltarho.set_xlabel(r'$k_p \zeta$', fontsize=14) 
@@ -343,9 +377,11 @@ class Blowout():
           self.calc_deltarho_rhomax_sheathcharge()
 
         self.r_z_slice_model = -1*np.ones(self.r_z_slice.shape,dtype=np.float32)
+        self.r_z_slice_model_flocmax = -1*np.ones(self.r_z_slice.shape,dtype=np.float32)
         for i in range(0,self.Nzeta):
             ridx = np.where(self.r_array > self.rb[i])
             self.r_z_slice_model[ridx,i] = f_rho(self.r_array[ridx],self.rb[i],self.rho_max[i],self.delta_rho[i])
+            self.r_z_slice_model_flocmax[ridx,i] = f_rho(self.r_array[ridx],self.rb[i],self.rho_flocmax[i],self.delta_rho_flocmax[i])
 
     def plot_model_sheath(self):
 
@@ -368,6 +404,30 @@ class Blowout():
         savepath = self.args.savepath
 
         mkdirs_if_nexist(savepath)
+
+        savename = fileprefix + filesuffix + '.' + saveformat
+
+        fig.savefig( savepath + '/' + savename,
+          format=saveformat,
+          dpi=600)
+
+        if self.args.verbose: print('Saved "' + savename + '" at: ' + self.args.savepath)
+
+
+        fig = plt.figure() 
+        cax = plt.pcolormesh(self.zeta_array,
+                             self.r_array,
+                             self.r_z_slice_model_flocmax)
+
+        ax = plt.gca()
+        ax.set_ylabel(r'$k_p r$', fontsize=14)
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        cbar = fig.colorbar(cax)
+
+        filesuffix = '_t_%06.f' % (np.floor(self.g3d.time))
+        fileprefix = 'plasma_charge_model_flocmax'
+        saveformat = 'png'
+        savepath = self.args.savepath
 
         savename = fileprefix + filesuffix + '.' + saveformat
 
