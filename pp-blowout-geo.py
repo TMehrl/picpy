@@ -105,7 +105,7 @@ class Blowout():
       self.g3d = g3d
       self.args = args
       self.get_set_r_z_plane()
-
+      self.mm_width = 10
 
     def get_set_r_z_plane(self):
 
@@ -120,7 +120,6 @@ class Blowout():
         self.Nr = len(idx_gtr0)
         self.r_z_slice = slice[idx_gtr0,:]
         self.dr = self.g3d.get_dx(1)
-        self.mm_width = 20
 
     def plot_r_z_plane(self):
 
@@ -257,7 +256,7 @@ class Blowout():
 
         if self.args.verbose: print('Saved "' + savename + '" at: ' + self.args.savepath)
 
-    def calc_deltarho_rhomax_sheathcharge(self):
+    def calc_deltarho_rhomax_sheathcharge(self,zeta_avg_region=[-3.0, 0.0]):
 
         def f_delta_rho(Q,rho_peak,rb):
             if Q > 0 and rho_peak > 0:
@@ -299,6 +298,20 @@ class Blowout():
         self.charge = moving_average(charge, self.mm_width)
         self.delta_rho = moving_average(delta_rho, self.mm_width)
         self.delta_rho_flocmax = moving_average(delta_rho_flocmax, self.mm_width)
+
+        if zeta_avg_region != [] and len(zeta_avg_region) == 2:
+            region_idx = np.where((self.zeta_array >= zeta_avg_region[0]) & (self.zeta_array < zeta_avg_region[1]))
+            avg_rho_max = np.mean(self.rho_max[region_idx])
+            avg_rho_flocmax = np.mean(self.rho_flocmax[region_idx])
+            avg_charge = np.mean(self.charge[region_idx])
+            avg_delta_rho = np.mean(self.delta_rho[region_idx])
+            avg_delta_rho_flocmax = np.mean(self.delta_rho_flocmax[region_idx])
+            print('Zeta region: [%0.2f, %0.2f]' % (zeta_avg_region[0], zeta_avg_region[1]))
+            print('Avg rho_max: %0.3f' % avg_rho_max) 
+            print('Avg first local rho_max: %0.3f' % avg_rho_flocmax) 
+            print('Avg charge: %0.3f' % avg_charge) 
+            print('Avg Delta_rho: %0.3f' % avg_delta_rho)
+            print('Avg Delta_rho using first local max: %0.3f' % avg_delta_rho_flocmax) 
 
     def plot_deltarho_rhomax_sheathcharge(self):
 
