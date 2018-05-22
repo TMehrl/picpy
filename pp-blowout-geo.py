@@ -126,12 +126,15 @@ class Blowout():
         fig = plt.figure() 
         cax = plt.pcolormesh(self.zeta_array,
                              self.r_array,
-                             self.r_z_slice)
+                             self.r_z_slice,
+                             cmap=plt.get_cmap('magma'))
+
+        cbar = fig.colorbar(cax)
+        cbar.ax.set_ylabel(r'$\rho$', fontsize=14 )
 
         ax = plt.gca()
         ax.set_ylabel(r'$k_p r$', fontsize=14)
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-        cbar = fig.colorbar(cax)
 
         filesuffix = '_t_%06.f' % (np.floor(self.g3d.time))
         fileprefix = 'plasma_charge'
@@ -151,7 +154,7 @@ class Blowout():
 
     def plot_r_lines(self):
 
-        if not 'self.r_z_slice_model' in locals():
+        if not hasattr(self,'r_z_slice_model'):
           self.gen_model_sheath()
             
         z_inds = np.int16(np.linspace(0,self.Nzeta-1,10))
@@ -188,7 +191,7 @@ class Blowout():
 
 
     def calc_rb(self):
-
+        print('Calculating rb...')
         idx_max = np.argmax(self.r_z_slice, axis=0)
 
         rb = np.zeros(self.Nzeta,dtype=np.float32)
@@ -235,7 +238,7 @@ class Blowout():
         ax = plt.gca()
         ax.set_ylabel(r'$k_p r_b$', fontsize=14)
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)    
-
+        ax.legend([r'$r_b$ from zero crossing', r'$r_b$ from global maximum'])
 
         filesuffix = '_t_%06.f' % (np.floor(self.g3d.time))
         fileprefix = 'plasma_charge_rb'
@@ -315,16 +318,16 @@ class Blowout():
 
     def plot_deltarho_rhomax_sheathcharge(self):
 
-        if not 'self.rb' in locals():
+        if not hasattr(self,'rb'):
           self.calc_rb()
 
-        if not 'self.rho_max' in locals():
+        if not hasattr(self,'rho_max'):            
           self.calc_deltarho_rhomax_sheathcharge()
 
         fig_charge = plt.figure()
         plt.plot(self.zeta_array, self.charge)
         ax_charge = plt.gca()
-        ax_charge.set_ylabel(r'$Q$', fontsize=14)
+        ax_charge.set_ylabel(r'$\lambda=\int_{r_b}^\infty r \rho(r) dr$', fontsize=14)
         ax_charge.set_xlabel(r'$k_p \zeta$', fontsize=14)    
         charge_fileprefix = 'charge'
 
@@ -332,6 +335,7 @@ class Blowout():
         plt.plot(self.zeta_array, self.rho_max)
         plt.plot(self.zeta_array, self.rho_flocmax)
         ax_rhomax = plt.gca()
+        ax_rhomax.legend([r'using global maximum', r'using first local maximum'])
         ax_rhomax.set_ylabel(r'$\rho_\mathrm{max}$', fontsize=14)
         ax_rhomax.set_xlabel(r'$k_p \zeta$', fontsize=14) 
         rhomax_fileprefix = 'rho_max'
@@ -340,6 +344,7 @@ class Blowout():
         plt.plot(self.zeta_array, self.delta_rho)
         plt.plot(self.zeta_array, self.delta_rho_flocmax)
         ax_deltarho = plt.gca()
+        ax_deltarho.legend([r'using global maximum', r'using first local maximum'])
         ax_deltarho.set_ylabel(r'$\Delta_\rho$', fontsize=14)
         ax_deltarho.set_xlabel(r'$k_p \zeta$', fontsize=14) 
         deltarho_fileprefix = 'delta_rho'
@@ -383,10 +388,10 @@ class Blowout():
 
     def gen_model_sheath(self):
 
-        if not 'self.rb' in locals():
+        if not hasattr(self,'rb'):             
           self.calc_rb()
 
-        if not 'self.rho_max' in locals():
+        if not hasattr(self,'rho_max'):
           self.calc_deltarho_rhomax_sheathcharge()
 
         self.r_z_slice_model = -1*np.ones(self.r_z_slice.shape,dtype=np.float32)
@@ -398,18 +403,20 @@ class Blowout():
 
     def plot_model_sheath(self):
 
-        if not 'self.r_z_slice_model' in locals():
+        if not hasattr(self,'r_z_slice_model'):          
           self.gen_model_sheath()
             
         fig = plt.figure() 
         cax = plt.pcolormesh(self.zeta_array,
                              self.r_array,
-                             self.r_z_slice_model)
+                             self.r_z_slice_model,
+                             cmap=plt.get_cmap('magma'))
 
         ax = plt.gca()
         ax.set_ylabel(r'$k_p r$', fontsize=14)
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         cbar = fig.colorbar(cax)
+        cbar.ax.set_ylabel(r'$\rho$', fontsize=14 )
 
         filesuffix = '_t_%06.f' % (np.floor(self.g3d.time))
         fileprefix = 'plasma_charge_model'
@@ -430,12 +437,14 @@ class Blowout():
         fig = plt.figure() 
         cax = plt.pcolormesh(self.zeta_array,
                              self.r_array,
-                             self.r_z_slice_model_flocmax)
+                             self.r_z_slice_model_flocmax,
+                             cmap=plt.get_cmap('magma'))
 
         ax = plt.gca()
         ax.set_ylabel(r'$k_p r$', fontsize=14)
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         cbar = fig.colorbar(cax)
+        cbar.ax.set_ylabel(r'$\rho$', fontsize=14 )
 
         filesuffix = '_t_%06.f' % (np.floor(self.g3d.time))
         fileprefix = 'plasma_charge_model_flocmax'
