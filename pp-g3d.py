@@ -148,10 +148,10 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           action = "store_true",
                           default = False,
                           help = "Log color scale (default: %(default)s).")
-    parser.add_argument(  '--cblim',
+    parser.add_argument(  '--clim',
                           help='Colorbar axis limits',
                           action='store',
-                          dest="cblim",
+                          dest="clim",
                           metavar=('CBMIN', 'CBMAX'),
                           nargs=2,
                           type=float,
@@ -439,38 +439,38 @@ class G3d_plot_slice(G3d_plot):
 
     def set_cmap( self ):
 
-        cblim = [0.0, 0.0]
+        clim = [0.0, 0.0]
 
         if self.g3d.type == pp_defs.hipace.h5.g3dtypes.density:
             if self.is_number_density():
                 self.colormap = cm.PuBu;
-                cblim[0] = np.amin(self.slice)
-                cblim[1] = np.amax(self.slice)
-                if (cblim[0] == 0.0) and (cblim[1] == 0.0):
-                    cblim[0] = 0.0
-                    cblim[1] = 1.0
+                clim[0] = np.amin(self.slice)
+                clim[1] = np.amax(self.slice)
+                if (clim[0] == 0.0) and (clim[1] == 0.0):
+                    clim[0] = 0.0
+                    clim[1] = 1.0
             else:
                 self.colormap = cm.RdGy;
-                cblim[0] = -np.amax(abs(self.slice))
-                cblim[1] = np.amax(abs(self.slice))              
-                if (cblim[0] == 0.0) and (cblim[1] == 0.0):
-                    cblim[0] = -1.0
-                    cblim[1] = 1.0
+                clim[0] = -np.amax(abs(self.slice))
+                clim[1] = np.amax(abs(self.slice))              
+                if (clim[0] == 0.0) and (clim[1] == 0.0):
+                    clim[0] = -1.0
+                    clim[1] = 1.0
 
         elif self.g3d.type == pp_defs.hipace.h5.g3dtypes.field:
             self.colormap = cm.RdBu
-            cblim[0] = -np.amax(abs(self.slice))
-            cblim[1] = np.amax(abs(self.slice))
-            if (cblim[0] == 0.0) and (cblim[1] == 0.0):
-                cblim[0] = -1.0
-                cblim[1] = 1.0            
+            clim[0] = -np.amax(abs(self.slice))
+            clim[1] = np.amax(abs(self.slice))
+            if (clim[0] == 0.0) and (clim[1] == 0.0):
+                clim[0] = -1.0
+                clim[1] = 1.0            
         elif self.g3d.type == pp_defs.hipace.h5.g3dtypes.current:
             self.colormap = cm.PuOr
-            cblim[0] = -np.amax(abs(self.slice))
-            cblim[1] = np.amax(abs(self.slice))
-            if (cblim[0] == 0.0) and (cblim[1] == 0.0):
-                cblim[0] = -1.0
-                cblim[1] = 1.0 
+            clim[0] = -np.amax(abs(self.slice))
+            clim[1] = np.amax(abs(self.slice))
+            if (clim[0] == 0.0) and (clim[1] == 0.0):
+                clim[0] = -1.0
+                clim[1] = 1.0 
 
         if self.args.clog:
             self.app_str += '_log'
@@ -478,13 +478,13 @@ class G3d_plot_slice(G3d_plot):
             self.slice[np.where(self.slice == 0)] = min_nonzero
             self.slice = abs(self.slice)
             self.colormap = cm.Greys
-            cblim[0] = min_nonzero
-            cblim[1] = np.max(self.slice)
+            clim[0] = min_nonzero
+            clim[1] = np.max(self.slice)
 
-        if self.args.cblim != None:
-            cblim = list(self.args.cblim)
+        if self.args.clim != None:
+            clim = list(self.args.clim)
 
-        self.cblim = cblim
+        self.clim = clim
 
     def plot( self, ifsave=True ):
         if self.args.verbose: print('Generating slice plot')
@@ -505,20 +505,20 @@ class G3d_plot_slice(G3d_plot):
             cax = plt.pcolormesh(self.x_array,
                                  self.y_array,
                                  self.slice,
-                                 vmin=self.cblim[0], vmax=self.cblim[1])
+                                 vmin=self.clim[0], vmax=self.clim[1])
         elif self.args.ptype == 'contourf':
-            levels = MaxNLocator(nbins=256).tick_values(self.cblim[0], self.cblim[1])
+            levels = MaxNLocator(nbins=256).tick_values(self.clim[0], self.clim[1])
             cax = plt.contourf( self.x_array,
                                 self.y_array,
                                 self.slice,
                                 levels=levels,
-                                vmin=self.cblim[0], vmax=self.cblim[1],
+                                vmin=self.clim[0], vmax=self.clim[1],
                                 cmap=self.colormap)
         elif self.args.ptype == 'pcolor':
             cax = plt.pcolor( self.x_array,
                                 self.y_array,
                                 self.slice,
-                                vmin=self.cblim[0], vmax=self.cblim[1])            
+                                vmin=self.clim[0], vmax=self.clim[1])            
         elif self.args.ptype == 'imshow':
             print('ERROR: imshow not implemented yet!')
             sys.exit(1)  
@@ -529,7 +529,7 @@ class G3d_plot_slice(G3d_plot):
         cax.cmap = self.colormap
 
         if self.args.clog:
-            cax.norm = matplotlib.colors.LogNorm(vmin=self.cblim[0], vmax=self.cblim[1])
+            cax.norm = matplotlib.colors.LogNorm(vmin=self.clim[0], vmax=self.clim[1])
 
         ax = plt.gca()
         ax.set_ylabel(self.ylabel, fontsize=14)
