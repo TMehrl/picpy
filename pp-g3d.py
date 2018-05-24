@@ -293,7 +293,10 @@ class G3d_plot:
         self.root_savepath = './plots'
 
         # Reading hdf5 attributes:
-        if self.args.verbose:  print('Getting attributes of ', file)
+        if self.args.verbose:  
+            sys.stdout.write('Getting attributes of ', file)
+            sys.stdout.flush()
+
         self.g3d = Grid3d(file)
         if self.args.verbose:
             self.g3d.print_datasets()
@@ -312,7 +315,8 @@ class G3d_plot:
                 self.x_array = self.g3d.get_xi_arr()
                 self.xlabel = r'$k_p \xi$'
             else:
-                print('Error: No/wrong z-axis option selected!')
+                sys.stdout.write('Error: No/wrong z-axis option selected!')
+                sys.stdout.flush()
                 sys.exit()
         elif xax_str == 'x':
             self.x_array = self.g3d.get_x_arr(1)
@@ -321,7 +325,8 @@ class G3d_plot:
             self.x_array = self.g3d.get_x_arr(2)
             self.xlabel = r'$k_p y$'
         else:
-            print('Error: Wrong x-axis string!')
+            sys.stdout.write('Error: Wrong x-axis string!')
+            sys.stdout.flush()
             sys.exit()
 
     def is_number_density( self ):
@@ -347,9 +352,13 @@ class G3d_plot_slice(G3d_plot):
 
         self.set_xaxis( self.args.plane[0] )
         self.set_yaxis( self.args.plane[1] )
-        if self.args.verbose: print('Reading data...')
+        if self.args.verbose: 
+            sys.stdout.write('Reading data...')
+            sys.stdout.flush()
         self.read()
-        if self.args.verbose: print('Read-in completed.')
+        if self.args.verbose: 
+            sys.stdout.write('Read-in completed.')
+            sys.stdout.flush()
         self.set_cmap()
 
     def set_yaxis(self, yax_str):
@@ -365,7 +374,8 @@ class G3d_plot_slice(G3d_plot):
                 self.y_array = self.g3d.get_xi_arr()
                 self.ylabel = r'$k_p \xi$'
             else:
-                print('Error: No/wrong z-axis option selected!')
+                sys.stdout.write('Error: No/wrong z-axis option selected!')
+                sys.stdout.flush()
                 sys.exit()
         elif yax_str == 'x':
             self.y_array = self.g3d.get_x_arr(1)
@@ -374,7 +384,8 @@ class G3d_plot_slice(G3d_plot):
             self.y_array = self.g3d.get_x_arr(2)
             self.ylabel = r'$k_p y$'
         else:
-            print('Error: Wrong y-axis string!')
+            sys.stdout.write('Error: Wrong y-axis string!')
+            sys.stdout.flush()
             sys.exit()
 
     def read( self ):
@@ -394,7 +405,8 @@ class G3d_plot_slice(G3d_plot):
                     elif (self.args.plane_index == None) and (self.args.plane_pos != None): 
                         self.slice = self.g3d.read(x2=self.args.plane_pos)
                     else:
-                        print('ERROR: plane-index can''t be used in conjunction with plane-position!')
+                        sys.stdout.write('ERROR: plane-index can''t be used in conjunction with plane-position!')
+                        sys.stdout.flush()
                         sys.exit(1)                    
 
             elif 'y' in self.args.plane:
@@ -411,7 +423,8 @@ class G3d_plot_slice(G3d_plot):
                     elif (self.args.plane_index == None) and (self.args.plane_pos != None): 
                         self.slice = self.g3d.read(x1=self.args.plane_pos)                    
                     else:
-                        print('ERROR: plane-index can''t be used in conjunction with plane-position!')
+                        sys.stdout.write('ERROR: plane-index can''t be used in conjunction with plane-position!')
+                        sys.stdout.flush()
                         sys.exit(1)                    
 
         elif ('x' in self.args.plane) and ('y' in self.args.plane):
@@ -428,7 +441,8 @@ class G3d_plot_slice(G3d_plot):
                 elif (self.args.plane_index == None) and (self.args.plane_pos != None):    
                     self.slice = self.g3d.read(x0=self.args.plane_pos) 
                 else:
-                    print('ERROR: plane-index can''t be used in conjunction with plane-position!')
+                    sys.stdout.write('ERROR: plane-index can''t be used in conjunction with plane-position!')
+                    sys.stdout.flush()
                     sys.exit(1)                               
 
         if self.args.plane in ['xy','zx','zy']:
@@ -487,7 +501,9 @@ class G3d_plot_slice(G3d_plot):
         self.clim = clim
 
     def plot( self, ifsave=True ):
-        if self.args.verbose: print('Generating slice plot')
+        if self.args.verbose: 
+            sys.stdout.write('Generating slice plot')
+            sys.stdout.flush()
         saveformat = self.args.file_format
         filesuffix = '_%06.f' % (np.floor(self.g3d.time))
 
@@ -520,10 +536,12 @@ class G3d_plot_slice(G3d_plot):
                                 self.slice,
                                 vmin=self.clim[0], vmax=self.clim[1])            
         elif self.args.ptype == 'imshow':
-            print('ERROR: imshow not implemented yet!')
+            sys.stdout.write('ERROR: imshow not implemented yet!')
+            sys.stdout.flush()
             sys.exit(1)  
         elif self.args.ptype == 'pcolorfast':    
-            print('ERROR: pcolorfast not implemented yet!')
+            sys.stdout.write('ERROR: pcolorfast not implemented yet!')
+            sys.stdout.flush()
             sys.exit(1)     
 
         cax.cmap = self.colormap
@@ -576,7 +594,9 @@ class G3d_plot_slice(G3d_plot):
         else:
             fig.savefig(  savepath + '/' + savename,
                           format=saveformat)
-        if self.args.verbose: print('Saved "' + savename + '" at: ' + savepath)
+        if self.args.verbose: 
+            sys.stdout.write('Saved "' + savename + '" at: ' + savepath)
+            sys.stdout.flush()
 
         if self.args.ifshow: plt.show()
         plt.close(fig)
@@ -589,9 +609,13 @@ class G3d_plot_line(G3d_plot):
         self.__relsavepath = '/g3d-line'
 
         self.set_xaxis( self.args.lineax )
-        if self.args.verbose: print('Reading data...')
+        if self.args.verbose: 
+            sys.stdout.write('Reading data...')
+            sys.stdout.flush()
         self.read()
-        if self.args.verbose: print('Read-in completed.')
+        if self.args.verbose: 
+            sys.stdout.write('Read-in completed.')
+            sys.stdout.flush()
         self.set_yaxis()
 
 
@@ -635,7 +659,8 @@ class G3d_plot_line(G3d_plot):
                 elif self.args.avgax == 'y':
                     self.line = self.g3d.read_avgx(dim=2,ax1=True)
                 else:
-                    print('ERROR: Cannot average along plotted axis!')
+                    sys.stdout.write('ERROR: Cannot average along plotted axis!')
+                    sys.stdout.flush()
                     sys.exit(1)                                              
             else:
                 if self.args.lout_idx == None:
@@ -664,7 +689,8 @@ class G3d_plot_line(G3d_plot):
                 elif self.args.avgax == 'z':
                     self.line = self.g3d.read_avgx(dim=0,ax2=True)
                 else:
-                    print('ERROR: Cannot average along plotted axis!')
+                    sys.stdout.write('ERROR: Cannot average along plotted axis!')
+                    sys.stdout.flush()
                     sys.exit(1)                 
             else:
                 if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
@@ -686,7 +712,8 @@ class G3d_plot_line(G3d_plot):
                 elif (self.args.lout_idx == None) and (self.args.lout_zeta_pos != None):
                     self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x2=0.0)
                 else:
-                    print('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
+                    sys.stdout.write('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
+                    sys.stdout.flush()
                     sys.exit(1)                
 
         elif 'y' == self.args.lineax:
@@ -698,7 +725,8 @@ class G3d_plot_line(G3d_plot):
                 elif self.args.avgax == 'z':
                     self.line = self.g3d.read_avgx(dim=0,ax1=True)
                 else:
-                    print('ERROR: Cannot average along plotted axis!')
+                    sys.stdout.write('ERROR: Cannot average along plotted axis!')
+                    sys.stdout.flush()
                     sys.exit(1)                 
             else:                
                 if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
@@ -720,14 +748,17 @@ class G3d_plot_line(G3d_plot):
                 elif (self.args.lout_idx == None) and (self.args.lout_zeta_pos != None):
                     self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x1=0.0)
                 else:
-                    print('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
+                    sys.stdout.write('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!')
+                    sys.stdout.flush()
                     sys.exit(1)                                               
 
         if self.is_number_density():
             self.line = np.abs(self.line)
 
     def plot( self, ifsave=True ):
-        if self.args.verbose: print('Generating line plot')
+        if self.args.verbose: 
+            sys.stdout.write('Generating line plot')
+            sys.stdout.flush()
         saveformat = self.args.file_format
         filesuffix = '_%06.f' % (np.floor(self.g3d.time))
 
@@ -800,7 +831,8 @@ class G3d_plot_line(G3d_plot):
             fig.savefig( savepath + '/' + savename + '.' + saveformat,
                           format=saveformat)
         if self.args.verbose:
-            print('Saved "' + savename + '.' + saveformat + '" at: ' + savepath)
+            sys.stdout.write('Saved "' + savename + '.' + saveformat + '" at: ' + savepath)
+            sys.stdout.flush()
 
         if self.args.h5plot: 
             h5lp = H5Plot()
