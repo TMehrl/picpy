@@ -757,7 +757,7 @@ class G3d_plot_line(G3d_plot):
 
     def plot( self, ifsave=True ):
         if self.args.verbose: 
-            sys.stdout.write('Generating line plot\n')
+            sys.stdout.write('Generating line plot...\n')
             sys.stdout.flush()
         saveformat = self.args.file_format
         filesuffix = '_%06.f' % (np.floor(self.g3d.time))

@@ -91,7 +91,12 @@ def h5plot_parser():
                           dest = "absylog",
                           action="store_true",
                           default=False,
-                          help = "Plot abs log of y-data (default: %(default)s).")                           
+                          help = "Plot abs log of y-data (default: %(default)s).") 
+    parser.add_argument(  "--diff",
+                          dest = "diff",
+                          action="store_true",
+                          default=False,
+                          help = "Plot difference w.r.t. first line plot (default: %(default)s).")                                                     
     return parser
 
  
@@ -168,6 +173,9 @@ def main():
     fig.savefig(  fname + '_h5plot.' + args.file_format ,
                       format=args.file_format)
     plt.close(fig)
+
+    if args.diff:
+        print('DIFFERENCE PLOTS: TO BE IMPLEMENTED!!!')
 
 
 if __name__ == "__main__":
