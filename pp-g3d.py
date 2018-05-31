@@ -164,6 +164,12 @@ def g3d_slice_subparser(subparsers, parent_parser):
                                     'eps',],
                           default='png',
                           help= """Format of output file (default: %(default)s).""")
+    parser.add_argument(  "--dpi",
+                          action='store',
+                          dest="dpi",
+                          default=300,
+                          type=int,
+                          help= """Dots per inch for png output (default: %(default)s).""")    
     parser.add_argument(  "--ptype",
                           default="pcolor",
                           dest="ptype",
@@ -216,7 +222,7 @@ def g3d_line_subparser(subparsers, parent_parser):
                           choices=[ 'png',
                                     'pdf',
                                     'eps',],
-                          default='eps',
+                          default='pdf',
                           help= """Format of output file (default: %(default)s).""")                     
     return parser
 
@@ -590,7 +596,7 @@ class G3d_plot_slice(G3d_plot):
         if saveformat==parsedefs.file_format.png:
             fig.savefig( savepath + '/' + savename,
                       format=saveformat,
-                      dpi=600)
+                      dpi=300)
         else:
             fig.savefig(  savepath + '/' + savename,
                           format=saveformat)
@@ -826,7 +832,7 @@ class G3d_plot_line(G3d_plot):
         if saveformat==parsedefs.file_format.png:
             fig.savefig( savepath + '/' + savename + '.' + saveformat,
                       format=saveformat,
-                      dpi=600)
+                      dpi=self.args.dpi)
         else:
             fig.savefig( savepath + '/' + savename + '.' + saveformat,
                           format=saveformat)
