@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import csv
 import os
+import glob
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
@@ -50,14 +51,6 @@ def binSlab_parser():
                           default='./plots_debug/',
                           help = """Path to which generated files will be saved.
                               (default: %(default)s)""")
-    parser.add_argument(  "-p", "--partition",
-                          help='Virtual topology partitioning',
-                          action='store',
-                          dest="partition",
-                          metavar=('NPROCX0', 'NPROCX1', 'NPROCX2'),
-                          nargs=3,
-                          type=int,
-                          default=(1,1,1))
     parser.add_argument(  "--nohalo",
                           dest = "nohalo",
                           action="store_true",
@@ -105,7 +98,7 @@ def main():
         # else:
         #     nhc = NHC
 
-        i_slice = np.int(filepath[(filepath.find(slice_suffix_str)+len(slice_suffix_str)):len(filepath)])
+        i_sl = np.int(filepath[(filepath.find(slice_suffix_str)+len(slice_suffix_str)):len(filepath)])
 
         # IDx = np.int(np.floor(slID/args.partition[2]))
         # IDy = slID - args.partition[2] * IDx
@@ -126,14 +119,15 @@ def main():
         #                           grid_info[2,0] + iy_end*dy + nhc*dy,
         #                           my_Ny)
 
-        if i_slice == 0:
+        if i_sl == 0:
 
             filepath_base = filepath[0:(filepath.find(slice_suffix_str)+len(slice_suffix_str))]
+            Nsl = len(glob.glob(filepath_base + '*'))
 
-            array = np.fromfile(filepath,dtype=np.float32)
-            for i in range(1,args.partition[0]):
+            array = np.empty(0)
+            for i in range(0,Nsl):
                 filepath_slice = '%s%04d' % (filepath_base, i )
-                print(filepath_slice)
+                print('Reading: %s' % filepath_slice)
                 array = np.append(array,np.fromfile(filepath_slice,dtype=np.float32))
 
             fig = plt.figure()
@@ -148,7 +142,10 @@ def main():
 
             head, savename = os.path.split(filepath)
 
-            mkdirs_if_nexist(args.savepath)    
+            mkdirs_if_nexist(args.savepath)
+
+            print('Saving: ' + args.savepath + '/' + savename + '.eps')
+
             fig.savefig( args.savepath + '/' + savename + '.eps',
                     format='eps')    
 
