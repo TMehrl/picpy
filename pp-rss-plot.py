@@ -169,7 +169,7 @@ def plot_save_slice_rms(slm, savepath, verbose=True):
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
     cbar = fig_spx.colorbar( cax )
     cbar.ax.set_ylabel(r'$k_p \sigma_{p_x}$', fontsize=14)  
-    saveas_png(fig_sx, savepath, 'sigma_px')
+    saveas_png(fig_spx, savepath, 'sigma_px')
 
     emittance = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) 
                          - np.power(slm.avgx2p2,2) )
@@ -184,7 +184,7 @@ def plot_save_slice_rms(slm, savepath, verbose=True):
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
     cbar = fig_e.colorbar( cax )
     cbar.ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
-    saveas_png(fig_sx, savepath, 'slice_emittance_x')
+    saveas_png(fig_e, savepath, 'slice_emittance_x')
 
 
 def plot_save_proj_rms(slm, savepath, h5plot=True, verbose=True):
