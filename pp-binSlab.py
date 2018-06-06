@@ -128,8 +128,8 @@ def main():
                                   grid_info[2,0] + iy_end*dy + nhc*dy,
                                   my_Ny)
 
-        M_1D = np.fromfile(filepath,dtype=np.float32)
-        M = np.transpose(M_1D.reshape((my_Nx, my_Ny)))
+        array_flat = np.fromfile(filepath,dtype=np.float32)
+        M = np.transpose(array_flat.reshape((my_Nx, my_Ny)))
 
         cblim = [0.0, 0.0]
 

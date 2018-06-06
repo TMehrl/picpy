@@ -97,9 +97,13 @@ def ps_parseopts():
     return parser
 
 
-def saveas_eps(fig, savepath, savename, h5plot=True, verbose=True):
+def saveas_eps_pdf(fig, savepath, savename, h5plot=True, verbose=True, fformat='pdf'):
 
-    fformat = 'eps'
+    fformat_list = ['eps','pdf']
+
+    if fformat not in fformat_list:
+        print("Error: fformat must be one of: " + fformat_list)
+
     fig.savefig( savepath + '/' + savename + '.' + fformat,
                   format=fformat)
       
@@ -203,7 +207,7 @@ def plot_save_proj_rms(slm, savepath, h5plot=True, verbose=True):
     else:
         plt.gcf().subplots_adjust(left=0.15) 
     
-    saveas_eps(fig_sx, savepath, 'sigma_x_proj')                  
+    saveas_eps_pdf(fig_sx, savepath, 'sigma_x_proj')                  
     plt.close(fig_sx)
 
     fig_sp = plt.figure()    
@@ -217,7 +221,7 @@ def plot_save_proj_rms(slm, savepath, h5plot=True, verbose=True):
     else:
         plt.gcf().subplots_adjust(left=0.15)  
     
-    saveas_eps(fig_sp, savepath, 'sigma_px_proj')                  
+    saveas_eps_pdf(fig_sp, savepath, 'sigma_px_proj')                  
     plt.close(fig_sp)
 
 
@@ -232,7 +236,7 @@ def plot_save_proj_rms(slm, savepath, h5plot=True, verbose=True):
     else:
         plt.gcf().subplots_adjust(left=0.15)
     
-    saveas_eps(fig_xp, savepath, 'xpx_proj')   
+    saveas_eps_pdf(fig_xp, savepath, 'xpx_proj')   
     plt.close(fig_xp)
 
 
@@ -248,7 +252,7 @@ def plot_save_proj_rms(slm, savepath, h5plot=True, verbose=True):
     else:
         plt.gcf().subplots_adjust(left=0.15)  
     
-    saveas_eps(fig_e, savepath, 'emittance_proj')   
+    saveas_eps_pdf(fig_e, savepath, 'emittance_proj')   
     plt.close(fig_e)
 
 def plot_save_slice_centroids(slm, savepath, h5plot=True):
@@ -341,7 +345,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
         plt.ylim(ymin*1.2, 0)        
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$k_p X_{b,0}$', fontsize=14)
-    saveas_eps(figXb0, savepath, 'Xb0')
+    saveas_eps_pdf(figXb0, savepath, 'Xb0')
     plt.close(figXb0)
 
     figYb0 = plt.figure()
@@ -354,7 +358,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
         plt.ylim(ymin*1.2, 0)    
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$k_p Y_{b,0}$', fontsize=14)     
-    saveas_eps(figYb0, savepath, 'Yb0')
+    saveas_eps_pdf(figYb0, savepath, 'Yb0')
     plt.close(figYb0)
 
     figXbtail = plt.figure()
@@ -367,7 +371,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
         plt.gcf().subplots_adjust(left=0.18)
     else:
         plt.gcf().subplots_adjust(left=0.15)
-    saveas_eps(figXbtail, savepath, 'Xb_tail')    
+    saveas_eps_pdf(figXbtail, savepath, 'Xb_tail')    
     plt.close(figXbtail)
 
     figYbtail = plt.figure()
@@ -375,7 +379,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14)
     ax.set_ylabel(r'$Y_{b,\mathrm{tail}}$', fontsize=14) 
-    saveas_eps(figYbtail, savepath, 'Yb_tail')   
+    saveas_eps_pdf(figYbtail, savepath, 'Yb_tail')   
     plt.close(figYbtail)  
 
 
@@ -412,7 +416,7 @@ def plot_curr_profile(slm, savepath):
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$I_{b,0}/I_A$', fontsize=14)
-    saveas_png(fig, savepath, 'Ib0')
+    saveas_eps_pdf(fig, savepath, 'Ib0')
     plt.close(fig)    
 
 def main():
