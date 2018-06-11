@@ -287,7 +287,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$\omega_p t$', fontsize=14) 
-    saveas_png(figXb, savepath, 'Xb_raw')
+    saveas_png(figXb, savepath, 'Xb')
     plt.close(figXb)
 
     figYb = plt.figure()
@@ -302,7 +302,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)     
-    saveas_png(figYb, savepath, 'Yb_raw')
+    saveas_png(figYb, savepath, 'Yb')
     plt.close(figYb)
 
     figXbnorm = plt.figure()
@@ -317,7 +317,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)  
-    saveas_png(figXbnorm, savepath, 'Xb')
+    saveas_png(figXbnorm, savepath, 'Xb_rel')
     plt.close(figXbnorm)
 
     figYbnorm = plt.figure()
@@ -332,7 +332,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)
-    saveas_png(figYbnorm, savepath, 'Yb')
+    saveas_png(figYbnorm, savepath, 'Yb_rel')
     plt.close(figYbnorm)
 
     figXb0 = plt.figure()

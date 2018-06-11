@@ -69,7 +69,7 @@ def h5plot_parser():
                           choices=[ 'png',
                                     'pdf',
                                     'eps',],
-                          default='eps',
+                          default='pdf',
                           help= """Format of output file (Default: %(default)s).""")
     parser.add_argument(  "-l", "--line-no",
                           action='store',
