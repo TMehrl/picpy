@@ -187,14 +187,25 @@ def plot_save_slice_rms(slm, savepath, verbose=True):
     saveas_png(fig_e, savepath, 'slice_emittance_x')
 
 
-def plot_save_proj_rms(slm, savepath, h5plot=True, verbose=True):
+def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True):
     
     t = slm.time_array
     tot_charge = np.sum(slm.charge, axis=1)
-    xsq = np.divide(np.sum(np.multiply(slm.avgx2sq, slm.charge), axis=1),tot_charge)
-    psq = np.divide(np.sum(np.multiply(slm.avgp2sq, slm.charge), axis=1),tot_charge)
-    xp = np.divide(np.sum(np.multiply(slm.avgx2p2, slm.charge), axis=1),tot_charge)
 
+    if axdir == 2:
+        xsq = np.divide(np.sum(np.multiply(slm.avgx2sq, slm.charge), axis=1),tot_charge)
+        psq = np.divide(np.sum(np.multiply(slm.avgp2sq, slm.charge), axis=1),tot_charge)
+        xp = np.divide(np.sum(np.multiply(slm.avgx2p2, slm.charge), axis=1),tot_charge)
+        emittance_all_slices = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) - np.power(slm.avgx2p2,2) )
+        emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.charge), axis=1),tot_charge)
+        # Also define labels and savenames here!    
+    elif axdir == 3:
+        xsq = np.divide(np.sum(np.multiply(slm.avgx3sq, slm.charge), axis=1),tot_charge)
+        psq = np.divide(np.sum(np.multiply(slm.avgp3sq, slm.charge), axis=1),tot_charge)
+        xp = np.divide(np.sum(np.multiply(slm.avgx3p3, slm.charge), axis=1),tot_charge)
+        emittance_all_slices = np.sqrt( np.multiply(slm.avgx3sq, slm.avgp3sq) - np.power(slm.avgx3p3,2) )
+        emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.charge), axis=1),tot_charge)
+        # Also define labels and savenames here!           
 
     fig_sx = plt.figure()    
     plt.plot(t, np.sqrt(xsq))
@@ -240,13 +251,13 @@ def plot_save_proj_rms(slm, savepath, h5plot=True, verbose=True):
     plt.close(fig_xp)
 
 
-    emittance = np.sqrt(xsq*psq-np.power(xp,2))
+    emittance_proj = np.sqrt(xsq*psq-np.power(xp,2))
     fig_e = plt.figure()    
-    plt.plot(t, emittance)
+    plt.plot(t, emittance_proj, label='projected emittance') 
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
     ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
-    if magn_check(emittance):
+    if magn_check(emittance_proj):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
@@ -254,6 +265,36 @@ def plot_save_proj_rms(slm, savepath, h5plot=True, verbose=True):
     
     saveas_eps_pdf(fig_e, savepath, 'emittance_proj')   
     plt.close(fig_e)
+
+    fig_esl = plt.figure()    
+    plt.plot(t, emittance_sliced, label='sliced emittance') 
+    ax = plt.gca()
+    ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_ylabel(r'$k_p \epsilon_{x,\mathrm{sliced}}$', fontsize=14)
+    if magn_check(emittance_sliced):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)  
+    
+    saveas_eps_pdf(fig_esl, savepath, 'emittance_sliced')   
+    plt.close(fig_esl)
+
+    fig_e_slpr = plt.figure()    
+    epp = plt.plot(t, emittance_proj, label='projected')
+    esp = plt.plot(t, emittance_sliced, color = epp[0].get_color(), linestyle='--', label='sliced')    
+    ax = plt.gca()
+    ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
+    ax.legend()
+    if magn_check(emittance_proj):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)  
+    
+    saveas_eps_pdf(fig_e_slpr, savepath, 'emittance_sl_proj')   
+    plt.close(fig_e_slpr)
 
 def plot_save_slice_centroids(slm, savepath, h5plot=True):
 
@@ -437,9 +478,9 @@ def main():
 
     plot_save_slice_ene(slm, args.savepath)
 
-    plot_save_proj_rms(slm, args.savepath, args.h5plot)
+    plot_save_proj_rms(slm, args.savepath, h5plot=args.h5plot)
 
-    plot_save_slice_centroids(slm, args.savepath, args.h5plot)
+    plot_save_slice_centroids(slm, args.savepath, h5plot=args.h5plot)
 
 
 if __name__ == "__main__":
