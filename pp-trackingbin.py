@@ -107,9 +107,9 @@ def main():
         
         i_sl = np.int(filepath[(filepath.find(proc_suffix_str)+len(proc_suffix_str)):(len(filepath)-len(bin_fending))])
         #print(i_sl)
-        
+
         if i_sl == 0:
-        
+            print('I AM ALIVE')
             filepath_base = filepath[0:(filepath.find(proc_suffix_str)+len(proc_suffix_str))]
             #print(filepath_base)
             Nsl = len(glob.glob(filepath_base + '*'))
@@ -120,7 +120,17 @@ def main():
                 filepath_slice = '%s%d%s' % (filepath_base, i, bin_fending )
                 print('Reading: %s' % filepath_slice)
                 array = np.append(array,np.fromfile(filepath_slice,dtype=np.float32))
+
+
+            # array = np.empty(0)
+            # 
+            # filepath_slice = '%s%d%s' % (filepath_base, 1, bin_fending )
+            # print('Reading: %s' % filepath_slice)
+            # array = np.append(array,np.fromfile(filepath_slice,dtype=np.float32))
         
+            # filepath_slice = '%s%d%s' % (filepath_base, 1, bin_fending )
+            # print('Reading: %s' % filepath_slice)
+            # array = np.append(array,np.fromfile(filepath_slice,dtype=np.float32))
             # filepath_base = filepath
             # array = np.empty(0)
             # for files in glob.glob(filepath_base + '/*'):
@@ -130,7 +140,7 @@ def main():
         
             ''' reshape the binary data to a matrix with particle
             tag information in each row'''
-            array = np.reshape(array, (int(len(array)/10),10))
+            array = np.reshape(array, (int(len(array)/11),11))
             print(np.shape(array))
             ''' set up figure for 3D plotting '''
         
@@ -158,12 +168,13 @@ def main():
         
                 ''' Splitting the array into each particle trajectory by proc tag'''
                 d= np.split(w[k], np.where(np.diff(w[k][:, 7]) != 0)[0]+1) 
-        
+
                 for i in range(len(d)):
         
                     ''' Splitting the array into each particle trajectory by part tag'''
                     e = np.split(d[i], np.where(np.diff(d[i][:, 6]) != 0)[0]+1) 
-        
+                    #print(np.shape(e))
+                    #print('particle tags %i (always look at 1 and ignore 0) %i'% (i, e[16][1, 6]))
                     for j in range(len(e)):
                         x=e[j][:,0]
                         y=e[j][:,1]
