@@ -63,19 +63,19 @@ def ps_parseopts():
                           default=parsedefs.save.path + '/raw-slice-series',
                           help = """Path to which generated files will be saved.
                               (default: %(default)s)""")
-    parser.add_argument(  "-n", "--name-prefix",
+    parser.add_argument("-n", "--name-prefix",
                         dest="save_prefix",
                         metavar="NAME",
                         default=parsedefs.save.prefix,
                         help = """Define customized prefix of output filename.""")
-    parser.add_argument(  "-c", "--code",
+    parser.add_argument("-c", "--code",
                         action='store',
                         dest="piccode",
                         metavar="CODE",
                         choices = [pp_defs.code.hipace, pp_defs.code.osiris,],
                         default = pp_defs.code.hipace,
                         help= "PIC code which was used to generate files (default: %(default)s).")
-    parser.add_argument(  "-d", "--dim",
+    parser.add_argument("-d", "--dim",
                         action='store',
                         dest="dimensionality",
                         metavar="DIM",
@@ -83,12 +83,20 @@ def ps_parseopts():
                         default=3,
                         help= """Dimensionality of PIC simulation
                               (default: %(default)s).""")
-    parser.add_argument(  "-N", "--number-of-files",
+    parser.add_argument("-N", "--number-of-files",
                         action='store',
                         dest="Nfiles",
                         metavar="NFILES",
                         default=0,
                         help= """Number of files to analyze.""")
+    parser.add_argument(  '--zeta-range',
+                          help='zeta range',
+                          action='store',
+                          dest="zeta_range",
+                          metavar=('ZETA_MIN', 'ZETA_MAX'),
+                          nargs=2,
+                          type=float,
+                          default=None)    
     parser.add_argument(  "--h5",
                           dest = "h5plot",
                           action="store_true",
@@ -468,7 +476,11 @@ def main():
 
     file = args.path
 
-    slm = SliceMoms(file)
+    slm = SliceMoms()
+    slm.read(file)
+
+    if args.zeta_range != None:
+        slm.truncate_zeta_region(args.zeta_range[0], args.zeta_range[1])
 
     mkdirs_if_nexist(args.savepath)
 
