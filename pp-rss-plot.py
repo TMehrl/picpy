@@ -89,6 +89,13 @@ def ps_parseopts():
                         metavar="NFILES",
                         default=0,
                         help= """Number of files to analyze.""")
+    parser.add_argument(  '-t', '--time',
+                          help='time for which rms plots are to be generated',
+                          action='store',
+                          dest="time",
+                          nargs=1,
+                          type=float,
+                          default=None)  
     parser.add_argument(  '--zeta-range',
                           help='zeta range',
                           action='store',
@@ -101,7 +108,8 @@ def ps_parseopts():
                           dest = "h5plot",
                           action="store_true",
                           default=True,
-                          help = "Save plot as hdf5 file (Default: %(default)s).")    
+                          help = "Save plot as hdf5 file (Default: %(default)s).") 
+
     return parser
 
 
@@ -304,6 +312,52 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True):
     saveas_eps_pdf(fig_e_slpr, savepath, 'emittance_sl_proj')   
     plt.close(fig_e_slpr)
 
+
+def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
+
+    if time == None:
+        tidx = [0,-1];
+    else:
+        tidx = [(np.abs(slm.time_array - time)).argmin()]
+
+    for i in tidx:
+
+        if axdir == 2:
+            sigma_xy = np.sqrt(slm.avgx2sq[i,:])
+            sigma_xy_lab = r'$k_p \sigma_{x}$'
+            sigma_xy_savename = 'sigma_x'
+            sigma_pxy = np.sqrt(slm.avgp2sq[i,:])
+            sigma_pxy_lab = r'$\sigma_{p_x}/mc$'
+            sigma_pxy_savename = 'sigma_px'
+            # Also define labels and savenames here!    
+        elif axdir == 3:
+            sigma_xy = np.sqrt(slm.avgx3sq[i,:])
+            sigma_xy_lab = r'$k_p \sigma_{y}$'
+            sigma_xy_savename = 'sigma_y'
+            sigma_pxy = np.sqrt(slm.avgp3sq[i,:])
+            sigma_pxy_lab = r'$\sigma_{p_y}/mc$'
+            sigma_pxy_savename = 'sigma_py'
+
+        fig_sigma_xy = plt.figure()
+        plt.plot( slm.zeta_array,
+                  sigma_xy)
+        ax = plt.gca()
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(sigma_xy_lab, fontsize=14)     
+        saveas_eps_pdf(fig_sigma_xy, savepath, ('%s_time_%0.f' % (sigma_xy_savename, slm.time_array[i])))
+        plt.close(fig_sigma_xy)
+
+
+        fig_sigma_pxy = plt.figure()
+        plt.plot( slm.zeta_array,
+                  sigma_pxy)
+        ax = plt.gca()
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(sigma_xy_lab, fontsize=14)     
+        saveas_eps_pdf(fig_sigma_pxy, savepath, ('%s_time_%0.f' % (sigma_pxy_savename, slm.time_array[i])))
+        plt.close(fig_sigma_pxy)
+
+
 def plot_save_slice_centroids(slm, savepath, h5plot=True):
 
     Xb0 = np.ones(slm.avgx2[0,:].shape)
@@ -494,6 +548,7 @@ def main():
 
     plot_save_slice_centroids(slm, args.savepath, h5plot=args.h5plot)
 
+    plot_save_slice_rms_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
 
 if __name__ == "__main__":
     main()
