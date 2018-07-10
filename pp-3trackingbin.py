@@ -92,6 +92,40 @@ def display_cmap(cmap):
     # plt.axis('off')
     # plt.show()
 
+def calc_ion_rate( elec_field,
+                   Z,
+                   ion_pot,
+                   ion_pot_zero,
+                   l,
+                   abs_m): 
+    #print('Z = %f' % Z)
+    #print('ion_pot = %f' % ion_pot)
+    #print('U_h = %f' % HYDROGEN_IONIZATION_ENERGIE_EV)
+    omega_alpha               =    4.13e16; # [s^-1]
+    E_alpha                   =    5.1e11; 
+    HYDROGEN_IONIZATION_ENERGIE_EV = 13.659843449
+    n_eff = Z * np.sqrt(HYDROGEN_IONIZATION_ENERGIE_EV/ion_pot)
+    l_eff = np.sqrt(HYDROGEN_IONIZATION_ENERGIE_EV/ion_pot_zero) - 1
+    C_2 =  2**(2*n_eff)/(n_eff *scipy.special.gamma(n_eff + l_eff + 1) * scipy.special.gamma(n_eff - l_eff) ) ## approx 1/(2*np.pi*n_eff) * (2/n_eff)**(2*n_eff)#
+    quant_prefactor = ((2*l + 1)*scipy.math.factorial(l+abs_m)) / ( 2**abs_m * scipy.math.factorial(abs_m) * scipy.math.factorial(l - abs_m))
+                              
+    value = 0
+    # print('n_eff = %f' % n_eff)
+    # print('C_2 = %f' % C_2)
+    # print('Quant_factor = %f' % quant_prefactor)
+    value1 = 0;
+    value2 = 0;
+    value3 = 0;
+    elec_field = np.abs(elec_field)
+    if (elec_field/E_alpha > 1e-3):
+        # print('hier bin ich richtig')
+        value1 = omega_alpha * quant_prefactor * C_2 * ion_pot/ (2* HYDROGEN_IONIZATION_ENERGIE_EV)
+        value2 = (2*E_alpha/elec_field * (ion_pot/ HYDROGEN_IONIZATION_ENERGIE_EV)**1.5)**(2*n_eff -1) 
+        value3 = np.exp(-2.0/3.0 * E_alpha/elec_field * (ion_pot/ HYDROGEN_IONIZATION_ENERGIE_EV)**1.5 )
+        # print('value 1 : %f' %value1)
+        # print('value 2 : %f' %value2)
+        # print('value 3 : %f' %value3)
+    return value1*value2*value3 
 
 def plot_3D_colourline(x,y,z,c, minc, maxc):
     
@@ -264,8 +298,111 @@ def calc_v3_m(r, c, int_const_1):
     
     return v
 
+def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch):
+    ELECTRON_CHARGE_IN_COUL   =    1.60217657e-19
+    ELECTRON_MASS_IN_KG       =    9.10938291e-31
+    VAC_PERMIT_FARAD_PER_M    =    8.854187817e-12
+    SPEED_OF_LIGHT_IN_M_PER_S =    299792458
+    omega_alpha               =    4.13e16; # [s^-1]
+    E_alpha                   =    5.1e11; # [V/m]
+    elec_density              =    1e+23 # [1/m^3]
+    omega_p = np.sqrt(4* np.pi * elec_density * (ELECTRON_CHARGE_IN_COUL**2)/ (VAC_PERMIT_FARAD_PER_M * ELECTRON_MASS_IN_KG));
+    E_0 = omega_p * ELECTRON_MASS_IN_KG * SPEED_OF_LIGHT_IN_M_PER_S / ELECTRON_CHARGE_IN_COUL;     
+    #Use zeta array in order to calculate delta t
+    
+    bunch_array = np.arange(0, lbunch+lbunch/10, lbunch/10)
+    bunch_array_sum = np.cumsum(bunch_array)
+    
+    deltat = np.abs(bunch_array_sum) / omega_p
+
+    vcalc_ion_rate = np.vectorize(calc_ion_rate)
+
+    r_array = np.arange(0, r_max+r_max/nx, r_max/nx)
+
+    
+    c1prime = -1/2* nb 
+    c3prime = -1/2*rbunch**2*(nb)
+
+    
+    
+    E = np.zeros(shape = np.shape(r_array))
+    for i in range(len(r_array)):
+        if(r_array[i] <= rbunch):
+            E[i] = np.real(c1prime) * r_array[i] * E_0
+        else:
+            E[i] = np.real(c3prime) / r_array[i] * E_0
+    
+    #use zeta array for shaping the elctric field to get the same spacing etc.
+    #print(Earray)
+    
+    ionization_rate =np.zeros(shape=np.shape(r_array))
+    ionization_rate[:] = vcalc_ion_rate(E, 1, 13.659843449,13.659843449, 0,0 ) # complete formulae for hydrogen
+    #print(ionization_rate[1])
+    
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    #print('Deltat is %0.3e' %deltat)
+    #computing the ionization probability
+    ion_probability = np.zeros(shape=(len(bunch_array) -1, len(ionization_rate)))
+    for i in range(1,len(bunch_array)):
+        ion_probability[i-1,:] = 1.0 - np.exp(-ionization_rate[:] * deltat[i] )
+        ax.plot(r_array, ion_probability[i-1,:], label=('prob at lb: ' + str(np.around(bunch_array[i], decimals = 1) ) ) )
+        ax.legend()
+    plt.show()
+
+
+
+def calc_ionization_length(start_r_array, c, rbunch, zeta_array):
+    ELECTRON_CHARGE_IN_COUL   =    1.60217657e-19
+    ELECTRON_MASS_IN_KG       =    9.10938291e-31
+    VAC_PERMIT_FARAD_PER_M    =    8.854187817e-12
+    SPEED_OF_LIGHT_IN_M_PER_S =    299792458
+    omega_alpha               =    4.13e16; # [s^-1]
+    E_alpha                   =    5.1e11; # [V/m]
+    elec_density              =    1e+23 # [1/m^3]
+    omega_p = np.sqrt(4* np.pi * elec_density * (ELECTRON_CHARGE_IN_COUL**2)/ (VAC_PERMIT_FARAD_PER_M * ELECTRON_MASS_IN_KG));
+    E_0 = omega_p * ELECTRON_MASS_IN_KG * SPEED_OF_LIGHT_IN_M_PER_S / ELECTRON_CHARGE_IN_COUL;     
+    #Use zeta array in order to calculate delta t
+    deltat = np.abs(zeta_array[1] -zeta_array[0]) / omega_p
+    
+    vcalc_ion_rate = np.vectorize(calc_ion_rate)
+    
+    if(start_r_array <= rbunch):
+        E = np.real(c) * start_r_array * E_0
+    else:
+        E = np.real(c) / start_r_array * E_0
+    
+    #use zeta array for shaping the elctric field to get the same spacing etc.
+    Earray = np.zeros(shape=np.shape(zeta_array))
+    Earray[:] = E
+    #print(Earray)
+    
+    ionization_rate =np.zeros(shape=np.shape(zeta_array))
+    ionization_rate[:] = calc_ion_rate(Earray[1], 1, 13.659843449,13.659843449, 0,0 ) # complete formulae for hydrogen
+    #print(ionization_rate[1])
+    
+    #print('Deltat is %0.3e' %deltat)
+    #computing the ionization probability
+    ion_probability = 1.0 - np.exp(-ionization_rate * deltat )
+    
+    #print(ion_probability[1])
+    
+    cum_prob = (1 - np.cumprod(1-ion_probability[::-1]))
+
+    # print('cum prob')
+    # print(cum_prob)
+
+    k = -1
+    for i in range(len(cum_prob)):
+        if cum_prob[i]>0:
+            k = i
+            break
+    
+    return k
+    
 def calc_analytical_solution(start_r_array, nb, ni, lbunch, zeta_end, rbunch):
-        shielding_factor = 1#(1-start_r_array**2/rbunch**2)
+        shielding_factor = (1-start_r_array**2/rbunch**2)
         #forcing numpy to use complex squareroot
         c1 = 1/2*(shielding_factor*ni - nb) + 0j # 1/2*((1-start_r_array**2/rbunch**2) * ni - nb) + 0j ##
         c2 = 1/2*ni*shielding_factor + 0j # 1/2*((1-start_r_array**2/rbunch**2) *ni) + 0j # 
@@ -276,40 +413,56 @@ def calc_analytical_solution(start_r_array, nb, ni, lbunch, zeta_end, rbunch):
         vcalc_int_const_1 = np.vectorize(calc_int_const_1)
         vcalc_int_const_2 = np.vectorize(calc_int_const_2_vm)
         vcalc_v = np.vectorize(calc_v2_p) #used vm here
+        vcalc_ion_length = np.vectorize(calc_ionization_length)
         
         #calculate integration constant 1 within the bunch at zeta = 0, v = 0:
         int_const_1 = vcalc_int_const_1(start_r_array, c1, 0)
         int_const_2 = vcalc_int_const_2(0, start_r_array, c1, int_const_1)
-
         #create zeta array:
         zeta_array = -np.arange(0, lbunch+0.01, 0.01)
         zeta_array_2 = -np.arange(lbunch, zeta_end, 0.01)
         
-
-        final_r_array = np.zeros(len(zeta_array))
         
+        
+        
+        if start_r_array<=rbunch:
+            ion_length = calc_ionization_length(start_r_array, c1, rbunch, zeta_array)
+        else:
+            ion_length = calc_ionization_length(start_r_array, c3, rbunch, zeta_array)
+        print('ion length:')
+        print(ion_length)
+        final_r_array = np.zeros(len(zeta_array))
+    
         #start calculating the radius with along the zeta array
-        for i in range(len(zeta_array)):
+        if ion_length < 0:
+            zeta_array = np.append(zeta_array, zeta_array_2)
+            r_array2 = np.zeros(len(zeta_array_2))
+            final_r_array = np.append(final_r_array,r_array2 )
+            return zeta_array, np.real(final_r_array)
             
-            #Check, if we are still in the linear regime or if we have to switch to the 1/r potential
-            if np.real(calc_r2_vm(zeta_array[i], c1, int_const_1, (int_const_2))) < rbunch :
-                #print('linear field case')
-                final_r_array[i] = np.real(calc_r2_vm(zeta_array[i], c1, int_const_1, (int_const_2)))
+        for i in range(len(zeta_array)):
+            if i<= ion_length:
+                final_r_array[i] = 0 #start_r_array
             else:
-                #print("1/r field case")
-                if i == 0:
-                    print('error particle starts outside rbunch!')
+            #Check, if we are still in the linear regime or if we have to switch to the 1/r potential
+                if np.real(calc_r2_vm(zeta_array[i-ion_length], c1, int_const_1, (int_const_2))) < rbunch :
+                    #print('linear field case')
+                    final_r_array[i] = np.real(calc_r2_vm(zeta_array[i-ion_length], c1, int_const_1, (int_const_2)))
+                else:
+                    #print("1/r field case")
+                    final_r_array[i] = np.real(calc_r2_vm(zeta_array[i-ion_length], c1, int_const_1, (int_const_2)))
+                    if i == 0:
+                        print('error particle starts outside rbunch!')
+                        break
+                    w = i
+                    #calc v and the integration constants
+                    v = calc_v2_p(final_r_array[w-1], c1, int_const_1)
+                    int_const_1 = calc_int_const_1_withlog(final_r_array[w-1], c3, v )
+                    int_const_2 = calc_int_const_2_withlog_p(zeta_array[w-1-ion_length], final_r_array[w-1], (c3), int_const_1 )
+                    #Finish the rest of the bunch in the 1/r field regime
+                    for j in range(w+1, len(zeta_array)):
+                        final_r_array[j] = np.real(calc_r3_vm(zeta_array[j-ion_length], (c3), (int_const_1), (int_const_2) ) )
                     break
-                
-                w = i
-                #calc v and the integration constants
-                v = calc_v2_p(final_r_array[w-1], c1, int_const_1)
-                int_const_1 = calc_int_const_1_withlog(final_r_array[w-1], c3, v )
-                int_const_2 = calc_int_const_2_withlog_p(zeta_array[w-1], final_r_array[w-1], (c3), int_const_1 )
-                #Finish the rest of the bunch in the 1/r field regime
-                for j in range(w-1, len(zeta_array)):
-                    final_r_array[j] = np.real(calc_r3_vm(zeta_array[j], (c3), (int_const_1), (int_const_2) ) )
-                break
         
         # extend the r array for behind the beam
         r_array2 = np.zeros(len(zeta_array_2))
@@ -318,20 +471,21 @@ def calc_analytical_solution(start_r_array, nb, ni, lbunch, zeta_end, rbunch):
         #pick the right regime, depending on the starting position
         
         #case we are still in the linear regime
-        if final_r_array[len(zeta_array)-1 ] < rbunch:
+        if final_r_array[len(zeta_array)-1 ] < rbunch and final_r_array[len(zeta_array)-1 ]>0:
             #calc v
             v = calc_v2_p(final_r_array[len(zeta_array)-1 ], c1, int_const_1)
-
             # calc new int_const_1 with v at the end of the bunch:
             int_const_1 = calc_int_const_1(final_r_array[len(zeta_array)-1 ], c2, np.abs(v) )
             int_const_2 = calc_int_const_2_vm(-lbunch, final_r_array[len(zeta_array)-1 ], c2, int_const_1)
-            
+        
             for i in range(len(zeta_array_2)):
                 
                 # Again, check in which regime the particle is and adapt accordingly
                 if np.real(calc_r2_vm(zeta_array_2[i], c2, int_const_1, (int_const_2))) < rbunch :
                     #print('linear field regime')
                     final_r_array[len(zeta_array)+ i] = np.real(calc_r2_vm(zeta_array_2[i], c2, int_const_1, (int_const_2)))
+                    v = calc_v2_p(final_r_array[len(zeta_array)+ i], c2, int_const_1)
+                
                 else:
                     #print("1/r field regime")
                     w = i
@@ -357,15 +511,15 @@ def calc_analytical_solution(start_r_array, nb, ni, lbunch, zeta_end, rbunch):
 
         else: # <- case were we transition in the 1/r regime behind the bunch
             v = calc_v3_p(final_r_array[len(zeta_array)-1 ], c3, int_const_1)
-            print("v wert bei transition: %f " %v)
+            #print("v wert bei transition: %f " %v)
             int_const_1 = calc_int_const_1_withlog(final_r_array[len(zeta_array)-1 ], c4, np.abs(v) )
             int_const_2 = calc_int_const_2_withlog_m(-lbunch, final_r_array[len(zeta_array)-1 ], c4, int_const_1)
-            print('r wert bei transition:  %f' %(np.real(calc_r3_vm(zeta_array_2[0], (c4), (int_const_1), (int_const_2) ) )) )
+            #print('r wert bei transition:  %f' %(np.real(calc_r3_vm(zeta_array_2[0], (c4), (int_const_1), (int_const_2) ) )) )
             for i in range(len(zeta_array_2)):
                 # check if the particle is coming back into the linear field regime 
                 if np.real(calc_r3_vm(zeta_array_2[i], (c4), (int_const_1), (int_const_2) ) ) > rbunch: # or j==0:
                     final_r_array[len(zeta_array)+ i] = np.real(calc_r3_vm(zeta_array_2[i], (c4), (int_const_1), (int_const_2) ) )
-                elif ((np.real(calc_r3_vm(zeta_array_2[i], (c4), (int_const_1), (int_const_2) ) ) < rbunch) and (np.real(calc_r3_vm(zeta_array_2[i-1], (c4), (int_const_1), (int_const_2) ) ) > rbunch and (j>=1 ))):
+                elif ((np.real(calc_r3_vm(zeta_array_2[i], (c4), (int_const_1), (int_const_2) ) ) < rbunch) and (np.real(calc_r3_vm(zeta_array_2[i-1], (c4), (int_const_1), (int_const_2) ) ) > rbunch and (i>=1 ))):
             
                     k = i
                     v = calc_v3_m(final_r_array[len(zeta_array) + k-1 ], c4, int_const_1)
@@ -379,12 +533,14 @@ def calc_analytical_solution(start_r_array, nb, ni, lbunch, zeta_end, rbunch):
                     print('something went wrong in the case, where the particle was in the 1/r regime in and behind the beam and tried to come back to the linear regime')
             # 
         zeta_array = np.append(zeta_array, zeta_array_2)
+        
         return zeta_array, np.real(final_r_array)
 
 
 
 def main():
-
+    
+    modnum = 3
     getcontext().prec = 36
     basic_cols=['#75b765', '#808080', '#ffd700']
     basic_cols=['#2020ff' ,'#808080', '#ff2020']
@@ -400,7 +556,15 @@ def main():
     ppart_track_str = 'ppart_track'
     bin_fending = '.bin'
     
-    zeta_array = np.arange(-8, 4, 12/300)
+    
+    zeta_min = -12
+    #zeta_min = -12
+    zeta_max = 4
+    zeta_gridpoints = 1200
+    # zeta_min = -8
+    # zeta_max = 4
+    # zeta_gridpoints = 300
+    zeta_array = np.arange(zeta_min, zeta_max, abs(zeta_max - zeta_min)/zeta_gridpoints)
     numerical_data = np.load("/Users/diederse/desy/PIC-sim/HiPACE/tests/return_of_e2/rp_1_rb_1_2/data_numerical.npz")
     print(numerical_data.files)
     datan_zeta = numerical_data['arr_0']
@@ -486,66 +650,69 @@ def main():
                 e = np.split(d[i], np.where(np.diff(d[i][:, 6]) != 0)[0]+1) 
                 #print(np.shape(e))
                 #print('particle tags %i (always look at 1 and ignore 0) %i'% (i, e[16][1, 6]))
-                for j in range(len(e)):
-                    x=e[j][:,0]
-                    starting_positions.append(x[299])
-                    y=e[j][:,1]
-                    z=e[j][:,5] # IN CASE OF UNIONIZED PLASMA USE THIS TERM
-                    z=zeta_array[300-len(y):] # IN CASE OF preionized PLASMA USE THIS TERM
+                for j in range(int(np.floor(len(e)/modnum))):
+                    x=e[modnum*j][:,0]
+                    y=e[modnum*j][:,1]
+                    z=e[modnum*j][:,5] # IN CASE OF UNIONIZED PLASMA USE THIS TERM
+                    #starting_positions.append(x[ zeta_gridpoints -1]) #799])#
+                    z=zeta_array[zeta_gridpoints-len(y):] # IN CASE OF preionized PLASMA USE THIS TERM
+                    z=zeta_array[:len(y)]
                     if args.track_color == "u_tot":
-                        c=e[j][:,8]
+                        c=e[modnum*j][:,8]
                     elif args.track_color == "beta_z":
-                        c=e[j][:,4]/np.sqrt(1+e[j][:,8]**2)
+                        c=e[modnum*j][:,4]/np.sqrt(1+e[modnum*j][:,8]**2)
                     elif args.track_color == "beta_y":
-                        c=e[j][:,2]/np.sqrt(1+e[j][:,8]**2)
+                        c=e[modnum*j][:,2]/np.sqrt(1+e[modnum*j][:,8]**2)
                     # print(len(x))
                     # print(len(y))
-                    print("laenge track proc tag %i part tag %i ist %i" %(i, j, len(z)))
+                    print("laenge track proc tag %i part tag %i ist %i" %(i, modnum*j, len(z)))
         
                     # if args.twodproj:
                     #     plot_2D_colourline(z,x,c, cmin, cmax)
                     # else:
                     #     plot_3D_colourline(z,y,x,c, cmin, cmax)
                     
-                    ################### TAKEN OUT TO FASTEN EVERYTHING FOR THE 1/R analysis!
-                    if args.twodproj:
-                        if args.track_color == "u_tot":
-                            plot_2D_colourline(z,x,c, cmin, cmax)
-                        elif args.track_color == "beta_z":
-                            plot_2D_colourline_beta(z,x,c)
-                        elif args.track_color == "beta_y":
-                            plot_2D_colourline_beta(z,x,c)
-                    else:
-                        if args.track_color == "u_tot":
-                            plot_3D_colourline(z,y,x,c, cmin, cmax)
-                        elif args.track_color == "beta_z":
-                            plot_3D_colourline_beta(z,y,x,c)
-                        elif args.track_color == "beta_y":
-                            plot_3D_colourline_beta(z,y,x,c)
-                    #ax.plot(z, y, x, label='particle track')
+                    # ################### TAKEN OUT TO FASTEN EVERYTHING FOR THE 1/R analysis!
+                    # if args.twodproj:
+                    #     if args.track_color == "u_tot":
+                    #         plot_2D_colourline(z,x,c, cmin, cmax)
+                    #     elif args.track_color == "beta_z":
+                    #         plot_2D_colourline_beta(z,x,c)
+                    #     elif args.track_color == "beta_y":
+                    #         plot_2D_colourline_beta(z,x,c)
+                    # else:
+                    #     if args.track_color == "u_tot":
+                    #         plot_3D_colourline(z,y,x,c, cmin, cmax)
+                    #     elif args.track_color == "beta_z":
+                    #         plot_3D_colourline_beta(z,y,x,c)
+                    #     elif args.track_color == "beta_y":
+                    #         plot_3D_colourline_beta(z,y,x,c)
+                    ###### ## ##ax.plot(z, y, x, label='particle track')
 
             if args.twodproj:
             
 
                 
-                input_r_array = np.array([ 0.0941176488995552, 0.1882352977991104, 0.2823529541492462, 0.3764705955982208, 0.47058823704719543, 0.5647059082984924, 0.658823549747467, 0.7529411911964417, 0.8470588326454163, 0.9411764740943909, 1.0352941751480103, 1.1294118165969849, 1.2235294580459595, 1.317647099494934, 1.4117647409439087, 1.5058823823928833, 1.600000023841858, 1.6941176652908325, 1.7882353067398071, 1.8823529481887817, 1.9764705896377563])
-                
-
-  
-                
+                input_r_array = np.array([ 0, 0.0941176488995552, 0.1882352977991104, 0.2823529541492462, 0.3764705955982208, 0.47058823704719543, 0.5647059082984924, 0.658823549747467, 0.7529411911964417, 0.8470588326454163, 0.9411764740943909, 1.0352941751480103, 1.1294118165969849, 1.2235294580459595, 1.317647099494934, 1.4117647409439087, 1.5058823823928833, 1.600000023841858, 1.6941176652908325, 1.7882353067398071, 1.8823529481887817, 1.9764705896377563])
+                input_r_array = np.array([0.02346041053533554, 0.04692082107067108, 0.07038123160600662, 0.09384164214134216, 0.1173020526766777, 0.14076246321201324, 0.16422288119792938, 0.18768328428268433, 0.21114370226860046, 0.2346041053533554, 0.25806450843811035, 0.2815249264240265])
+                #input_r_array = np.array([0.3128054738044739, 0.703812301158905, 1.094819188117981, 1.485826015472412, 1.8768328428268433, 2.2678396701812744, 2.658846616744995, 3.0498533248901367, 3.4408602714538574, 3.831866979598999, 4.222873687744141, 4.613880634307861]) #rp 5 mod 1
+                input_r_array = np.array([ 0.03519061580300331, 0.07038123160600662, 0.10557185113430023, 0.14076246321201324, 0.17595307528972626, 0.21114370226860046, 0.24633431434631348]) #rp 0.3 mod 3
+                #input_r_array = np.array([0.033,0.034,0.03516, 0.03517,0.03519061580300331]) #,0.0352])
                 # fig = plt.figure()
                 # if args.twodproj:
                 #     ax = fig.add_subplot(111)
                 # else:
                 #     ax = fig.add_subplot(111, projection='3d')
-
-                for i in range(len(datan_zeta)):
-                    ax.plot(datan_zeta[i,:], datan[i,:], '#551a8b')
                 # 
-                # 
+                # for i in range(int(np.floor(len(datan_zeta)/modnum))):
+                #     ax.plot(datan_zeta[modnum*i,:], datan[modnum*i,:], color = '#00cc00', linestyle = '--') #'#551a8b'
+                # # 
+                # # 
+                modnum = 1
+                #for i in range(int(np.floor(len(input_r_array)/modnum))):
                 for i in range(len(input_r_array)):
-                    zeta_array3, r_matrix2 = calc_analytical_solution(input_r_array[i], 1.2, 1, 2, 8,2) 
-                    ax.plot(zeta_array3, r_matrix2, '#00cc00' )
+                    zeta_array3, r_matrix2 = calc_analytical_solution(input_r_array[i], 5, 1, 2, 12, 0.3) #36, 0.3)#8,2)  ###(start_r_array, nb, ni, lbunch, zeta_end, rbunch):
+                    ax.plot(zeta_array3[np.where(r_matrix2 >0)], r_matrix2[np.where(r_matrix2 >0)], color = 'black',linestyle = '-.' ) ##00cc00
                 # zeta_array2, r_matrix = calc_analytical_solution( 1.999999999, 1.2, 1, 2, 8,2) #1.8823529481887817 1.9764705896377563
                 # ax.plot(zeta_array2, r_matrix, 'r' )  
             else:
@@ -574,24 +741,26 @@ def main():
             
             
             
-            ax.set_xlim(-8, 0)
+            #ax.set_xlim(-8, 0)
             # # ax.set_xlim(0, 300)
-            ax.set_ylim(-1/2, 7)
+            #ax.set_ylim(-1/2, 6)
             ax.grid()
             if not args.twodproj:
                 ax.set_zlabel(' x ')
-                ax.set_zlim(-6, 6)
+                #ax.set_zlim(-6, 6)
             ax.set_xlabel(r'$\zeta$')
             ax.set_ylabel(' y ')
             
             numerical_solutions = mlines.Line2D([], [], color='#551a8b', label='numerical solutions')
             analytical_solutions = mlines.Line2D([], [], color='#00cc00', label='analytical solutions')
-            ax.legend(handles=[numerical_solutions,analytical_solutions ])
+            #ax.legend(handles=[numerical_solutions,analytical_solutions ])
 
-            #print(starting_positions)
+            print(starting_positions)
             plt.show()
 
-        #     # fig = plt.figure()
+    calc_transversal_probability_density(12, 512, 5, 1, 0.3, 2) #parameters from hipace.c ##(r_max, nx, nb, ni, rbunch, lbunch)
+
+
         #     # cax = plt.plot( array)
         #     # 
         #     # ax = plt.gca()

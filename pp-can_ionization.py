@@ -237,27 +237,41 @@ def main():
   # plt.savefig('plots/pp-ionization/E_y.png')
   # plt.show()
   
-  nb = 7
+  nb = 1.2
   ni = 1
   can_field = np.zeros(shape=(256,300))
   can_field2 = np.zeros(shape=(256,300))
   
+  length_x_step = 24/256
+  
   for i in range(0, 128):
-      can_field[127-i, 150:200] = (33/64)**2 * nb * 0.5 / (0.09375 * (i + 0.5))
-      can_field[128+i, 150:200] = -(33/64)**2 * nb * 0.5 / (0.09375 * (i + 0.5)) 
+      can_field[127-i, 150:200] = (63/64)**2 * nb * 0.5 / (length_x_step * (i + 0.5))
+      can_field[128+i, 150:200] = -(63/64)**2 * nb * 0.5 / (length_x_step * (i + 0.5)) 
       # Rp needs to be adjusted here as well:
-      can_field2[127-i, 0:200] = -(63/64)**2 * ni * 0.5 / (0.09375 * (i + 0.5))
-      can_field2[128+i, 0:200] = +(63/64)**2 * ni * 0.5 / (0.09375 * (i + 0.5))
+      can_field2[127-i, 0:200] = -(63/64)**2 * ni * 0.5 / (length_x_step * (i + 0.5))
+      can_field2[128+i, 0:200] = +(63/64)**2 * ni * 0.5 / (length_x_step * (i + 0.5))
       
       #can_field2[127-i, 0:200] = -(255/64)**2 * ni * 0.5 / (0.09375 * (i + 0.5))
       #can_field2[128+i, 0:200] = +(255/64)**2 * ni * 0.5 / (0.09375 * (i + 0.5))
       
+      ### FOR Rp = 2
+      can_field[127-i, 150:200] = (129/64)**2 * nb * 0.5 / (length_x_step * (i + 0.5))
+      can_field[128+i, 150:200] = -(129/64)**2 * nb * 0.5 / (length_x_step * (i + 0.5)) 
+      # Rp needs to be adjusted here as well:
+      can_field2[127-i, 0:200] = -(129/64)**2 * ni * 0.5 / (length_x_step * (i + 0.5))
+      can_field2[128+i, 0:200] = +(129/64)**2 * ni * 0.5 / (length_x_step * (i + 0.5))
 
-      
-      
-  for i in range(0,6):
-      can_field[127-i, 150:200] = (0.09375 * (i + 0.5)) * nb * 0.5 
-      can_field[128+i, 150:200] = -0.09375 * (i + 0.5) * nb  * 0.5 
+      ### for rp=rb=2
+  for i in range(0,22):
+      can_field[127-i, 150:200] = (length_x_step * (i + 0.5)) * nb * 0.5 
+      can_field[128+i, 150:200] = -length_x_step * (i + 0.5) * nb  * 0.5
+      can_field2[127-i, 0:200] = -(length_x_step * (i + 0.5)) * ni * 0.5 
+      can_field2[128+i, 0:200] = +length_x_step * (i + 0.5) * ni  * 0.5 
+  
+  
+  # for i in range(0,11):
+  #     can_field[127-i, 150:200] = (length_x_step * (i + 0.5)) * nb * 0.5 
+  #     can_field[128+i, 150:200] = -length_x_step * (i + 0.5) * nb  * 0.5 
   
   #for Rp = 255/64
   # for i in range(0, 43):
@@ -265,16 +279,42 @@ def main():
   #     can_field2[128+i, 0:200] = +0.09375 * (i + 0.5) * ni  * 0.5 
 
   #for Rp = 63/64
-  for i in range(0, 11):
-      can_field2[127-i, 0:200] = -(0.09375 * (i + 0.5)) * ni * 0.5 
-      can_field2[128+i, 0:200] = +0.09375 * (i + 0.5) * ni  * 0.5 
+  # for i in range(0, 11):
+  #     can_field2[127-i, 0:200] = -(length_x_step * (i + 0.5)) * ni * 0.5 
+  #     can_field2[128+i, 0:200] = +length_x_step * (i + 0.5) * ni  * 0.5 
 
+  
   #for Rp = 33/64
   # for i in range(0, 6):
   #    can_field2[127-i, 0:200] = -(0.09375 * (i + 0.5)) * ni * 0.5 
   #    can_field2[128+i, 0:200] = +0.09375 * (i + 0.5) * ni  * 0.5 
 
   can_field += can_field2
+  
+  plt.plot(np.arange(-12,12, length_x_step), can_field[:, 175])
+  plt.show()
+  
+  vmax = np.max(can_field)
+  vmin = np.min(can_field)
+  midpoint = 1 - vmax/(vmax + np.abs(vmin))
+  shifted_cmap = shiftedColorMap(cm.seismic, midpoint=midpoint, name='shifted')
+  plt.contourf(By_g3d.get_zeta_arr(), By_g3d.get_x_arr(2), can_field, 200, cmap=shifted_cmap) # here cmap reds, since it is not divering
+  plt.ylabel(r'$k_p x$', fontsize =14)
+  plt.xlabel(r'$k_p \zeta$', fontsize =14)
+  cb = plt.colorbar()
+  cb.set_label(label = r'$ E_r/E_0$ analytical', fontsize = 14)
+  plt.axvline(x = -2, color='black')
+  plt.axhline(y = 129/64, color='black')
+  plt.text(-7.5, 11, 'IV', fontsize=16)
+  plt.text(-1, 11, 'III', fontsize=16)
+  plt.text(-1, 0.5, 'I', fontsize=16)
+  plt.text(-7.5, 0.5, 'II', fontsize=16)
+  plt.xlim(-8, 0)
+  plt.ylim(0,12)
+  plt.show()
+  
+  
+  
   ## Computing the ionization rate:
   #ionization_rate = np.nan_to_num(omega_alpha / (2.0 * np.pi) *4.0 * E_alpha/ E_magnitude * np.exp (-2.0/3.0 * E_alpha/ E_magnitude ) )# this is just correct for hydrogen!
   ionization_rate = vectorfunc(abs(can_field)*E_0, 1, 13.659843449,13.659843449, 0,0 ) # complete formulae for hydrogen

@@ -158,6 +158,18 @@ def main():
   
   #neutral_density_path = '/Users/diederse/desy/PIC-sim/HiPACE/tests/interaction_tests2/Cs/DATA/density_plasma_neutral_000000.h5'
   neutral_density_path2 = '/Users/diederse/desy/PIC-sim/HiPACE/tests/the_return_of_the_local_electron/theo_test6/DATA/density_ionized_electrons_plasma_H_000000.h5'
+  
+  
+  
+  #home path Path definitions
+  Ez_path2 = '/Users/diederse/desy/PIC-sim/HiPACE/tests/return_of_e2/rp_1_rb_1_2/DATA/field_Ez_000000.h5'
+  ExmBy_path2 = '/Users/diederse/desy/PIC-sim/HiPACE/tests/return_of_e2/rp_1_rb_1_2/DATA/field_ExmBy_000000.h5'
+  EypBx_path2 = '/Users/diederse/desy/PIC-sim/HiPACE/tests/return_of_e2/rp_1_rb_1_2/DATA/field_EypBx_000000.h5'
+  Bx_path2 = '/Users/diederse/desy/PIC-sim/HiPACE/tests/return_of_e2/rp_1_rb_1_2/DATA/field_Bx_000000.h5'
+  By_path2 = '/Users/diederse/desy/PIC-sim/HiPACE/tests/return_of_e2/rp_1_rb_1_2/DATA/field_By_000000.h5'
+  
+  #neutral_density_path = '/Users/diederse/desy/PIC-sim/HiPACE/tests/interaction_tests2/Cs/DATA/density_plasma_neutral_000000.h5'
+  neutral_density_path2 = '/Users/diederse/desy/PIC-sim/HiPACE/tests/return_of_e2/rp_1_rb_1_2/DATA/density_ionized_electrons_plasma_H_000000.h5'
   if not os.path.exists('plots'):
     os.makedirs('plots')
   if not os.path.exists('plots/pp-ionization/'):

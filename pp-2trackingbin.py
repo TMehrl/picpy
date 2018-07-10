@@ -265,7 +265,7 @@ def calc_v3_m(r, c, int_const_1):
     return v
 
 def calc_analytical_solution(start_r_array, nb, ni, lbunch, zeta_end, rbunch):
-        shielding_factor = 1#(1-start_r_array**2/rbunch**2)
+        shielding_factor = (1-start_r_array**2/rbunch**2)
         #forcing numpy to use complex squareroot
         c1 = 1/2*(shielding_factor*ni - nb) + 0j # 1/2*((1-start_r_array**2/rbunch**2) * ni - nb) + 0j ##
         c2 = 1/2*ni*shielding_factor + 0j # 1/2*((1-start_r_array**2/rbunch**2) *ni) + 0j # 
@@ -321,11 +321,12 @@ def calc_analytical_solution(start_r_array, nb, ni, lbunch, zeta_end, rbunch):
         if final_r_array[len(zeta_array)-1 ] < rbunch:
             #calc v
             v = calc_v2_p(final_r_array[len(zeta_array)-1 ], c1, int_const_1)
-
+            print("v wert bei transition: %f " %v)
+            
             # calc new int_const_1 with v at the end of the bunch:
             int_const_1 = calc_int_const_1(final_r_array[len(zeta_array)-1 ], c2, np.abs(v) )
             int_const_2 = calc_int_const_2_vm(-lbunch, final_r_array[len(zeta_array)-1 ], c2, int_const_1)
-            
+            print('r wert bei transition:  %f' %(np.real(calc_r2_vm(zeta_array_2[0], (c2), (int_const_1), (int_const_2) ) )) )
             for i in range(len(zeta_array_2)):
                 
                 # Again, check in which regime the particle is and adapt accordingly
@@ -384,7 +385,8 @@ def calc_analytical_solution(start_r_array, nb, ni, lbunch, zeta_end, rbunch):
 
 
 def main():
-
+    
+    modnum = 3
     getcontext().prec = 36
     basic_cols=['#75b765', '#808080', '#ffd700']
     basic_cols=['#2020ff' ,'#808080', '#ff2020']
@@ -400,7 +402,15 @@ def main():
     ppart_track_str = 'ppart_track'
     bin_fending = '.bin'
     
-    zeta_array = np.arange(-8, 4, 12/300)
+    
+    zeta_min = -12
+    #zeta_min = -12
+    zeta_max = 4
+    zeta_gridpoints = 1200
+    # zeta_min = -8
+    # zeta_max = 4
+    # zeta_gridpoints = 300
+    zeta_array = np.arange(zeta_min, zeta_max, abs(zeta_max - zeta_min)/zeta_gridpoints)
     numerical_data = np.load("/Users/diederse/desy/PIC-sim/HiPACE/tests/return_of_e2/rp_1_rb_1_2/data_numerical.npz")
     print(numerical_data.files)
     datan_zeta = numerical_data['arr_0']
@@ -486,21 +496,21 @@ def main():
                 e = np.split(d[i], np.where(np.diff(d[i][:, 6]) != 0)[0]+1) 
                 #print(np.shape(e))
                 #print('particle tags %i (always look at 1 and ignore 0) %i'% (i, e[16][1, 6]))
-                for j in range(len(e)):
-                    x=e[j][:,0]
-                    starting_positions.append(x[299])
-                    y=e[j][:,1]
-                    z=e[j][:,5] # IN CASE OF UNIONIZED PLASMA USE THIS TERM
-                    z=zeta_array[300-len(y):] # IN CASE OF preionized PLASMA USE THIS TERM
+                for j in range(int(np.floor(len(e)/modnum))):
+                    x=e[modnum*j][:,0]
+                    y=e[modnum*j][:,1]
+                    z=e[modnum*j][:,5] # IN CASE OF UNIONIZED PLASMA USE THIS TERM
+                    starting_positions.append(x[ zeta_gridpoints -1]) #799])#
+                    z=zeta_array[zeta_gridpoints-len(y):] # IN CASE OF preionized PLASMA USE THIS TERM
                     if args.track_color == "u_tot":
-                        c=e[j][:,8]
+                        c=e[modnum*j][:,8]
                     elif args.track_color == "beta_z":
-                        c=e[j][:,4]/np.sqrt(1+e[j][:,8]**2)
+                        c=e[modnum*j][:,4]/np.sqrt(1+e[modnum*j][:,8]**2)
                     elif args.track_color == "beta_y":
-                        c=e[j][:,2]/np.sqrt(1+e[j][:,8]**2)
+                        c=e[modnum*j][:,2]/np.sqrt(1+e[modnum*j][:,8]**2)
                     # print(len(x))
                     # print(len(y))
-                    print("laenge track proc tag %i part tag %i ist %i" %(i, j, len(z)))
+                    print("laenge track proc tag %i part tag %i ist %i" %(i, modnum*j, len(z)))
         
                     # if args.twodproj:
                     #     plot_2D_colourline(z,x,c, cmin, cmax)
@@ -508,44 +518,46 @@ def main():
                     #     plot_3D_colourline(z,y,x,c, cmin, cmax)
                     
                     ################### TAKEN OUT TO FASTEN EVERYTHING FOR THE 1/R analysis!
-                    if args.twodproj:
-                        if args.track_color == "u_tot":
-                            plot_2D_colourline(z,x,c, cmin, cmax)
-                        elif args.track_color == "beta_z":
-                            plot_2D_colourline_beta(z,x,c)
-                        elif args.track_color == "beta_y":
-                            plot_2D_colourline_beta(z,x,c)
-                    else:
-                        if args.track_color == "u_tot":
-                            plot_3D_colourline(z,y,x,c, cmin, cmax)
-                        elif args.track_color == "beta_z":
-                            plot_3D_colourline_beta(z,y,x,c)
-                        elif args.track_color == "beta_y":
-                            plot_3D_colourline_beta(z,y,x,c)
+                    # if args.twodproj:
+                    #     if args.track_color == "u_tot":
+                    #         plot_2D_colourline(z,x,c, cmin, cmax)
+                    #     elif args.track_color == "beta_z":
+                    #         plot_2D_colourline_beta(z,x,c)
+                    #     elif args.track_color == "beta_y":
+                    #         plot_2D_colourline_beta(z,x,c)
+                    # else:
+                    #     if args.track_color == "u_tot":
+                    #         plot_3D_colourline(z,y,x,c, cmin, cmax)
+                    #     elif args.track_color == "beta_z":
+                    #         plot_3D_colourline_beta(z,y,x,c)
+                    #     elif args.track_color == "beta_y":
+                    #         plot_3D_colourline_beta(z,y,x,c)
                     #ax.plot(z, y, x, label='particle track')
 
             if args.twodproj:
             
 
                 
-                input_r_array = np.array([ 0.0941176488995552, 0.1882352977991104, 0.2823529541492462, 0.3764705955982208, 0.47058823704719543, 0.5647059082984924, 0.658823549747467, 0.7529411911964417, 0.8470588326454163, 0.9411764740943909, 1.0352941751480103, 1.1294118165969849, 1.2235294580459595, 1.317647099494934, 1.4117647409439087, 1.5058823823928833, 1.600000023841858, 1.6941176652908325, 1.7882353067398071, 1.8823529481887817, 1.9764705896377563])
-                
-
-  
-                
+                input_r_array = np.array([ 0, 0.0941176488995552, 0.1882352977991104, 0.2823529541492462, 0.3764705955982208, 0.47058823704719543, 0.5647059082984924, 0.658823549747467, 0.7529411911964417, 0.8470588326454163, 0.9411764740943909, 1.0352941751480103, 1.1294118165969849, 1.2235294580459595, 1.317647099494934, 1.4117647409439087, 1.5058823823928833, 1.600000023841858, 1.6941176652908325, 1.7882353067398071, 1.8823529481887817, 1.9764705896377563])
+                input_r_array = np.array([0.02346041053533554, 0.04692082107067108, 0.07038123160600662, 0.09384164214134216, 0.1173020526766777, 0.14076246321201324, 0.16422288119792938, 0.18768328428268433, 0.21114370226860046, 0.2346041053533554, 0.25806450843811035, 0.2815249264240265])
+                #input_r_array = np.array([0.3128054738044739, 0.703812301158905, 1.094819188117981, 1.485826015472412, 1.8768328428268433, 2.2678396701812744, 2.658846616744995, 3.0498533248901367, 3.4408602714538574, 3.831866979598999, 4.222873687744141, 4.613880634307861]) #rp 5 mod 1
+                input_r_array = np.array([0.01, 0.02, 0.03, 0.03519061580300331, 0.07038123160600662, 0.10557185113430023, 0.14076246321201324, 0.17595307528972626, 0.21114370226860046, 0.24633431434631348]) #rp 0.3 mod 3
+                input_r_array = np.array([0.03519061580300331])
                 # fig = plt.figure()
                 # if args.twodproj:
                 #     ax = fig.add_subplot(111)
                 # else:
                 #     ax = fig.add_subplot(111, projection='3d')
-
-                for i in range(len(datan_zeta)):
-                    ax.plot(datan_zeta[i,:], datan[i,:], '#551a8b')
                 # 
-                # 
+                # for i in range(int(np.floor(len(datan_zeta)/modnum))):
+                #     ax.plot(datan_zeta[modnum*i,:], datan[modnum*i,:], color = '#00cc00', linestyle = '--') #'#551a8b'
+                # # 
+                # # 
+                modnum = 1
+                #for i in range(int(np.floor(len(input_r_array)/modnum))):
                 for i in range(len(input_r_array)):
-                    zeta_array3, r_matrix2 = calc_analytical_solution(input_r_array[i], 1.2, 1, 2, 8,2) 
-                    ax.plot(zeta_array3, r_matrix2, '#00cc00' )
+                    zeta_array3, r_matrix2 = calc_analytical_solution(input_r_array[i], 5, 1, 2, 12, 0.3) #36, 0.3)#8,2)  ###(start_r_array, nb, ni, lbunch, zeta_end, rbunch):
+                    ax.plot(zeta_array3, r_matrix2, color = 'black',linestyle = '-.' ) ##00cc00
                 # zeta_array2, r_matrix = calc_analytical_solution( 1.999999999, 1.2, 1, 2, 8,2) #1.8823529481887817 1.9764705896377563
                 # ax.plot(zeta_array2, r_matrix, 'r' )  
             else:
@@ -576,19 +588,19 @@ def main():
             
             ax.set_xlim(-8, 0)
             # # ax.set_xlim(0, 300)
-            ax.set_ylim(-1/2, 7)
+            ax.set_ylim(-1/2, 6)
             ax.grid()
             if not args.twodproj:
                 ax.set_zlabel(' x ')
-                ax.set_zlim(-6, 6)
+                #ax.set_zlim(-6, 6)
             ax.set_xlabel(r'$\zeta$')
             ax.set_ylabel(' y ')
             
             numerical_solutions = mlines.Line2D([], [], color='#551a8b', label='numerical solutions')
             analytical_solutions = mlines.Line2D([], [], color='#00cc00', label='analytical solutions')
-            ax.legend(handles=[numerical_solutions,analytical_solutions ])
+            #ax.legend(handles=[numerical_solutions,analytical_solutions ])
 
-            #print(starting_positions)
+            print(starting_positions)
             plt.show()
 
         #     # fig = plt.figure()
