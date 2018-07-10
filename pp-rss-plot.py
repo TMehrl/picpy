@@ -63,19 +63,19 @@ def ps_parseopts():
                           default=parsedefs.save.path + '/raw-slice-series',
                           help = """Path to which generated files will be saved.
                               (default: %(default)s)""")
-    parser.add_argument(  "-n", "--name-prefix",
+    parser.add_argument("-n", "--name-prefix",
                         dest="save_prefix",
                         metavar="NAME",
                         default=parsedefs.save.prefix,
                         help = """Define customized prefix of output filename.""")
-    parser.add_argument(  "-c", "--code",
+    parser.add_argument("-c", "--code",
                         action='store',
                         dest="piccode",
                         metavar="CODE",
                         choices = [pp_defs.code.hipace, pp_defs.code.osiris,],
                         default = pp_defs.code.hipace,
                         help= "PIC code which was used to generate files (default: %(default)s).")
-    parser.add_argument(  "-d", "--dim",
+    parser.add_argument("-d", "--dim",
                         action='store',
                         dest="dimensionality",
                         metavar="DIM",
@@ -83,17 +83,33 @@ def ps_parseopts():
                         default=3,
                         help= """Dimensionality of PIC simulation
                               (default: %(default)s).""")
-    parser.add_argument(  "-N", "--number-of-files",
+    parser.add_argument("-N", "--number-of-files",
                         action='store',
                         dest="Nfiles",
                         metavar="NFILES",
                         default=0,
                         help= """Number of files to analyze.""")
+    parser.add_argument(  '-t', '--time',
+                          help='time for which rms plots are to be generated',
+                          action='store',
+                          dest="time",
+                          nargs=1,
+                          type=float,
+                          default=None)  
+    parser.add_argument(  '--zeta-range',
+                          help='zeta range',
+                          action='store',
+                          dest="zeta_range",
+                          metavar=('ZETA_MIN', 'ZETA_MAX'),
+                          nargs=2,
+                          type=float,
+                          default=None)    
     parser.add_argument(  "--h5",
                           dest = "h5plot",
                           action="store_true",
                           default=True,
-                          help = "Save plot as hdf5 file (Default: %(default)s).")    
+                          help = "Save plot as hdf5 file (Default: %(default)s).") 
+
     return parser
 
 
@@ -169,7 +185,7 @@ def plot_save_slice_rms(slm, savepath, verbose=True):
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
     cbar = fig_spx.colorbar( cax )
     cbar.ax.set_ylabel(r'$k_p \sigma_{p_x}$', fontsize=14)  
-    saveas_png(fig_sx, savepath, 'sigma_px')
+    saveas_png(fig_spx, savepath, 'sigma_px')
 
     emittance = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) 
                          - np.power(slm.avgx2p2,2) )
@@ -184,17 +200,28 @@ def plot_save_slice_rms(slm, savepath, verbose=True):
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
     cbar = fig_e.colorbar( cax )
     cbar.ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
-    saveas_png(fig_sx, savepath, 'slice_emittance_x')
+    saveas_png(fig_e, savepath, 'slice_emittance_x')
 
 
-def plot_save_proj_rms(slm, savepath, h5plot=True, verbose=True):
+def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True):
     
     t = slm.time_array
     tot_charge = np.sum(slm.charge, axis=1)
-    xsq = np.divide(np.sum(np.multiply(slm.avgx2sq, slm.charge), axis=1),tot_charge)
-    psq = np.divide(np.sum(np.multiply(slm.avgp2sq, slm.charge), axis=1),tot_charge)
-    xp = np.divide(np.sum(np.multiply(slm.avgx2p2, slm.charge), axis=1),tot_charge)
 
+    if axdir == 2:
+        xsq = np.divide(np.sum(np.multiply(slm.avgx2sq, slm.charge), axis=1),tot_charge)
+        psq = np.divide(np.sum(np.multiply(slm.avgp2sq, slm.charge), axis=1),tot_charge)
+        xp = np.divide(np.sum(np.multiply(slm.avgx2p2, slm.charge), axis=1),tot_charge)
+        emittance_all_slices = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) - np.power(slm.avgx2p2,2) )
+        emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.charge), axis=1),tot_charge)
+        # Also define labels and savenames here!    
+    elif axdir == 3:
+        xsq = np.divide(np.sum(np.multiply(slm.avgx3sq, slm.charge), axis=1),tot_charge)
+        psq = np.divide(np.sum(np.multiply(slm.avgp3sq, slm.charge), axis=1),tot_charge)
+        xp = np.divide(np.sum(np.multiply(slm.avgx3p3, slm.charge), axis=1),tot_charge)
+        emittance_all_slices = np.sqrt( np.multiply(slm.avgx3sq, slm.avgp3sq) - np.power(slm.avgx3p3,2) )
+        emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.charge), axis=1),tot_charge)
+        # Also define labels and savenames here!           
 
     fig_sx = plt.figure()    
     plt.plot(t, np.sqrt(xsq))
@@ -240,13 +267,13 @@ def plot_save_proj_rms(slm, savepath, h5plot=True, verbose=True):
     plt.close(fig_xp)
 
 
-    emittance = np.sqrt(xsq*psq-np.power(xp,2))
+    emittance_proj = np.sqrt(xsq*psq-np.power(xp,2))
     fig_e = plt.figure()    
-    plt.plot(t, emittance)
+    plt.plot(t, emittance_proj, label='projected emittance') 
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
     ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
-    if magn_check(emittance):
+    if magn_check(emittance_proj):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
@@ -254,6 +281,82 @@ def plot_save_proj_rms(slm, savepath, h5plot=True, verbose=True):
     
     saveas_eps_pdf(fig_e, savepath, 'emittance_proj')   
     plt.close(fig_e)
+
+    fig_esl = plt.figure()    
+    plt.plot(t, emittance_sliced, label='sliced emittance') 
+    ax = plt.gca()
+    ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_ylabel(r'$k_p \epsilon_{x,\mathrm{sliced}}$', fontsize=14)
+    if magn_check(emittance_sliced):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)  
+    
+    saveas_eps_pdf(fig_esl, savepath, 'emittance_sliced')   
+    plt.close(fig_esl)
+
+    fig_e_slpr = plt.figure()    
+    epp = plt.plot(t, emittance_proj, label='projected')
+    esp = plt.plot(t, emittance_sliced, color = epp[0].get_color(), linestyle='--', label='sliced')    
+    ax = plt.gca()
+    ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
+    ax.legend()
+    if magn_check(emittance_proj):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)  
+    
+    saveas_eps_pdf(fig_e_slpr, savepath, 'emittance_sl_proj')   
+    plt.close(fig_e_slpr)
+
+
+def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
+
+    if time == None:
+        tidx = [0,-1];
+    else:
+        tidx = [(np.abs(slm.time_array - time)).argmin()]
+
+    for i in tidx:
+
+        if axdir == 2:
+            sigma_xy = np.sqrt(slm.avgx2sq[i,:])
+            sigma_xy_lab = r'$k_p \sigma_{x}$'
+            sigma_xy_savename = 'sigma_x'
+            sigma_pxy = np.sqrt(slm.avgp2sq[i,:])
+            sigma_pxy_lab = r'$\sigma_{p_x}/mc$'
+            sigma_pxy_savename = 'sigma_px'
+            # Also define labels and savenames here!    
+        elif axdir == 3:
+            sigma_xy = np.sqrt(slm.avgx3sq[i,:])
+            sigma_xy_lab = r'$k_p \sigma_{y}$'
+            sigma_xy_savename = 'sigma_y'
+            sigma_pxy = np.sqrt(slm.avgp3sq[i,:])
+            sigma_pxy_lab = r'$\sigma_{p_y}/mc$'
+            sigma_pxy_savename = 'sigma_py'
+
+        fig_sigma_xy = plt.figure()
+        plt.plot( slm.zeta_array,
+                  sigma_xy)
+        ax = plt.gca()
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(sigma_xy_lab, fontsize=14)     
+        saveas_eps_pdf(fig_sigma_xy, savepath, ('%s_time_%0.f' % (sigma_xy_savename, slm.time_array[i])))
+        plt.close(fig_sigma_xy)
+
+
+        fig_sigma_pxy = plt.figure()
+        plt.plot( slm.zeta_array,
+                  sigma_pxy)
+        ax = plt.gca()
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(sigma_xy_lab, fontsize=14)     
+        saveas_eps_pdf(fig_sigma_pxy, savepath, ('%s_time_%0.f' % (sigma_pxy_savename, slm.time_array[i])))
+        plt.close(fig_sigma_pxy)
+
 
 def plot_save_slice_centroids(slm, savepath, h5plot=True):
 
@@ -287,7 +390,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$\omega_p t$', fontsize=14) 
-    saveas_png(figXb, savepath, 'Xb_raw')
+    saveas_png(figXb, savepath, 'Xb')
     plt.close(figXb)
 
     figYb = plt.figure()
@@ -302,7 +405,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)     
-    saveas_png(figYb, savepath, 'Yb_raw')
+    saveas_png(figYb, savepath, 'Yb')
     plt.close(figYb)
 
     figXbnorm = plt.figure()
@@ -317,7 +420,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)  
-    saveas_png(figXbnorm, savepath, 'Xb')
+    saveas_png(figXbnorm, savepath, 'Xb_rel')
     plt.close(figXbnorm)
 
     figYbnorm = plt.figure()
@@ -332,7 +435,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)
-    saveas_png(figYbnorm, savepath, 'Yb')
+    saveas_png(figYbnorm, savepath, 'Yb_rel')
     plt.close(figYbnorm)
 
     figXb0 = plt.figure()
@@ -427,7 +530,11 @@ def main():
 
     file = args.path
 
-    slm = SliceMoms(file)
+    slm = SliceMoms()
+    slm.read(file)
+
+    if args.zeta_range != None:
+        slm.truncate_zeta_region(args.zeta_range[0], args.zeta_range[1])
 
     mkdirs_if_nexist(args.savepath)
 
@@ -437,10 +544,11 @@ def main():
 
     plot_save_slice_ene(slm, args.savepath)
 
-    plot_save_proj_rms(slm, args.savepath, args.h5plot)
+    plot_save_proj_rms(slm, args.savepath, h5plot=args.h5plot)
 
-    plot_save_slice_centroids(slm, args.savepath, args.h5plot)
+    plot_save_slice_centroids(slm, args.savepath, h5plot=args.h5plot)
 
+    plot_save_slice_rms_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
 
 if __name__ == "__main__":
     main()

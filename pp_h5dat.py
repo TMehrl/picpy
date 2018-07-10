@@ -455,19 +455,23 @@ class Grid3d(HiFile):
 
 
 class SliceMoms(H5File):
-    def __init__(self, file):
+    def __init__(self):
+        self.time_array_name = 'time_array'
+        self.zeta_array_name = 'zeta_array'
+        # ...
 
+    def read(self, file, order = 2):
         H5File.__init__(self, file)
+        if not self.is_h5_file():
+            print('Error:\tFile is not an HDF5 file!')
+            sys.exit(1)      
 
-        self.read()
-
-    def read(self):
         with h5py.File(self.file,'r') as hf:
-            # read order of moments
-            order = 2
+            # TODO: read order of moments and if crossterms from attributes!!!
+
             # Reading datasets
-            self.time_array = np.array(hf.get( 'time_array' ))
-            self.zeta_array = np.array(hf.get( 'zeta_array' ))
+            self.time_array = np.array(hf.get( self.time_array_name ))
+            self.zeta_array = np.array(hf.get( self.zeta_array_name ))
             self.charge = np.array(hf.get( 'charge' ))
             self.avgx1 = np.array(hf.get( 'avgx1' ))
             self.avgx2 = np.array(hf.get( 'avgx2' ))
@@ -486,6 +490,177 @@ class SliceMoms(H5File):
                 self.avgx1p1 = np.array(hf.get( 'avgx1p1' ))
                 self.avgx2p2 = np.array(hf.get( 'avgx2p2' ))
                 self.avgx3p3 = np.array(hf.get( 'avgx3p3' ))
+
+    def alloc(self, Nt, Nzeta, order = 2):
+
+        self.zeta_array = np.zeros(Nfiles, dtype=np.float32)   
+        self.time_array = np.zeros(Nfiles, dtype=np.float32)   
+        self.charge = np.zeros((Nfiles, Nbins), dtype=np.float32)
+
+        if order>0:
+            self.avgx1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgp1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgp2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgp3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+
+        if order>1:
+            self.avgx1sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx2sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx3sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgp1sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgp2sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgp3sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx1p1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx2p2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx3p3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+
+            # crossterms:
+            self.avgx1x2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx3x1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx2x3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgp1p2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgp3p1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgp2p3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx1p2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx1p3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx2p1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx2p3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx3p1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx3p2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+
+        if order>2:
+            self.avgx1cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx2cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx3cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgp1cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgp2cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgp3cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx1sqp1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx2sqp2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx3sqp3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx1p1sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx2p2sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx3p3sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+
+
+
+    def write(self, file, order = 2):
+        H5File.__init__(self, file)
+        if not self.is_h5_file():
+            print('Error:\tFile name does not have an hdf5 ending!')
+            sys.exit(1) 
+
+        # TODO: write order of moments and if crossterms into attributes!!!
+
+        h5f = h5py.File(file, "w")
+        dset_zeta_array = h5f.create_dataset( self.zeta_array_name, data = self.zeta_array )
+        dset_time_array = h5f.create_dataset( self.time_array_name, data = self.time_array )
+
+        dset_charge = h5f.create_dataset(  "charge", data = self.charge )
+        
+        dset_avgx1 = h5f.create_dataset(  "avgx1", data = self.avgx1 )
+        dset_avgx2 = h5f.create_dataset(  "avgx2", data = self.avgx2 )
+        dset_avgx3 = h5f.create_dataset(  "avgx3", data = self.avgx3 )
+        dset_avgp1 = h5f.create_dataset(  "avgp1", data = self.avgp1 )
+        dset_avgp2 = h5f.create_dataset(  "avgp2", data = self.avgp2 )
+        dset_avgp3 = h5f.create_dataset(  "avgp3", data = self.avgp3 )
+
+        if order>1:
+            dset_avgx1sq = h5f.create_dataset(  "avgx1sq", data = self.avgx1sq )
+            dset_avgx2sq = h5f.create_dataset(  "avgx2sq", data = self.avgx2sq )
+            dset_avgx3sq = h5f.create_dataset(  "avgx3sq", data = self.avgx3sq )
+            dset_avgp1sq = h5f.create_dataset(  "avgp1sq", data = self.avgp1sq )
+            dset_avgp2sq = h5f.create_dataset(  "avgp2sq", data = self.avgp2sq )
+            dset_avgp3sq = h5f.create_dataset(  "avgp3sq", data = self.avgp3sq )
+            dset_avgx1p1 = h5f.create_dataset(  "avgx1p1", data = self.avgx1p1 )
+            dset_avgx2p2 = h5f.create_dataset(  "avgx2p2", data = self.avgx2p2 )
+            dset_avgx3p3 = h5f.create_dataset(  "avgx3p3", data = self.avgx3p3 )
+
+            # crossterms:
+            dset_avgx1x2 = h5f.create_dataset(  "avgx1x2", data = self.avgx1x2 )
+            dset_avgx3x1 = h5f.create_dataset(  "avgx3x1", data = self.avgx3x1 )
+            dset_avgx2x3 = h5f.create_dataset(  "avgx2x3", data = self.avgx2x3 )
+            dset_avgp1p2 = h5f.create_dataset(  "avgp1p2", data = self.avgp1p2 )
+            dset_avgp3p1 = h5f.create_dataset(  "avgp3p1", data = self.avgp3p1 )
+            dset_avgp2p3 = h5f.create_dataset(  "avgp2p3", data = self.avgp2p3 )
+            dset_avgx1p2 = h5f.create_dataset(  "avgx1p2", data = self.avgx1p2 )
+            dset_avgx1p3 = h5f.create_dataset(  "avgx1p3", data = self.avgx1p3 )
+            dset_avgx2p1 = h5f.create_dataset(  "avgx2p1", data = self.avgx2p1 )
+            dset_avgx2p3 = h5f.create_dataset(  "avgx2p3", data = self.avgx2p3 )
+            dset_avgx3p1 = h5f.create_dataset(  "avgx3p1", data = self.avgx3p1 )
+            dset_avgx3p2 = h5f.create_dataset(  "avgx3p2", data = self.avgx3p2 )
+
+        if order>2:
+            dset_avgx1cube = h5f.create_dataset(  "avgx1cube", data = self.avgx1cube )
+            dset_avgx2cube = h5f.create_dataset(  "avgx2cube", data = self.avgx2cube )
+            dset_avgx3cube = h5f.create_dataset(  "avgx3cube", data = self.avgx3cube )
+            dset_avgp1cube = h5f.create_dataset(  "avgp1cube", data = self.avgp1cube )
+            dset_avgp2cube = h5f.create_dataset(  "avgp2cube", data = self.avgp2cube )
+            dset_avgp3cube = h5f.create_dataset(  "avgp3cube", data = self.avgp3cube )
+            dset_avgx1sqp1 = h5f.create_dataset(  "avgx1sqp1", data = self.avgx1sqp1 )
+            dset_avgx2sqp2 = h5f.create_dataset(  "avgx2sqp2", data = self.avgx2sqp2 )
+            dset_avgx3sqp3 = h5f.create_dataset(  "avgx3sqp3", data = self.avgx3sqp3 )
+            dset_avgx1p1sq = h5f.create_dataset(  "avgx1p1sq", data = self.avgx1p1sq )
+            dset_avgx2p2sq = h5f.create_dataset(  "avgx2p2sq", data = self.avgx2p2sq )
+            dset_avgx3p3sq = h5f.create_dataset(  "avgx3p3sq", data = self.avgx3p3sq )
+
+        h5f.close()
+
+    def truncate_zeta_region(self, zeta_min, zeta_max, order = 2, crossterms = False):
+
+        idx = np.nonzero(np.logical_and( self.zeta_array >= zeta_min, self.zeta_array <= zeta_max ))[0]
+
+        self.zeta_array = self.zeta_array[idx]
+        self.charge = self.charge[:,idx]
+
+        if order>0:
+            self.avgx1 = self.avgx1[:,idx]
+            self.avgx2 = self.avgx2[:,idx]
+            self.avgx3 = self.avgx3[:,idx]
+            self.avgp1 = self.avgp1[:,idx]
+            self.avgp2 = self.avgp2[:,idx]
+            self.avgp3 = self.avgp3[:,idx]
+
+        if order>1:
+            self.avgx1sq = self.avgx1sq[:,idx]
+            self.avgx2sq = self.avgx2sq[:,idx]
+            self.avgx3sq = self.avgx3sq[:,idx]
+            self.avgp1sq = self.avgp1sq[:,idx]
+            self.avgp2sq = self.avgp2sq[:,idx]
+            self.avgp3sq = self.avgp3sq[:,idx]
+            self.avgx1p1 = self.avgx1p1[:,idx]
+            self.avgx2p2 = self.avgx2p2[:,idx]
+            self.avgx3p3 = self.avgx3p3[:,idx]
+
+            if crossterms:
+                self.avgx1x2 = self.avgx1x2[:,idx]
+                self.avgx3x1 = self.avgx1x2[:,idx]
+                self.avgx2x3 = self.avgx1x2[:,idx]
+                self.avgp1p2 = self.avgp1p2[:,idx]
+                self.avgp3p1 = self.avgp3p1[:,idx]
+                self.avgp2p3 = self.avgp2p3[:,idx]
+                self.avgx1p2 = self.avgx1p2[:,idx]
+                self.avgx1p3 = self.avgx1p3[:,idx]
+                self.avgx2p1 = self.avgx2p1[:,idx]
+                self.avgx2p3 = self.avgx2p3[:,idx]
+                self.avgx3p1 = self.avgx3p1[:,idx]
+                self.avgx3p2 = self.avgx3p2[:,idx]
+
+        if order>2:
+            self.avgx1cube = self.avgx1cube[:,idx]
+            self.avgx2cube = self.avgx2cube[:,idx]
+            self.avgx3cube = self.avgx3cube[:,idx]
+            self.avgp1cube = self.avgp1cube[:,idx]
+            self.avgp2cube = self.avgp2cube[:,idx]
+            self.avgp3cube = self.avgp3cube[:,idx]
+            self.avgx1sqp1 = self.avgx1sqp1[:,idx]
+            self.avgx2sqp2 = self.avgx2sqp2[:,idx]
+            self.avgx3sqp3 = self.avgx3sqp3[:,idx]
+            self.avgx1p1sq = self.avgx1p1sq[:,idx]
+            self.avgx2p2sq = self.avgx2p2sq[:,idx]
+            self.avgx3p3sq = self.avgx3p3sq[:,idx]
 
 
 class H5Plot:

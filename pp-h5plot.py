@@ -69,7 +69,7 @@ def h5plot_parser():
                           choices=[ 'png',
                                     'pdf',
                                     'eps',],
-                          default='eps',
+                          default='pdf',
                           help= """Format of output file (Default: %(default)s).""")
     parser.add_argument(  "-l", "--line-no",
                           action='store',
@@ -124,7 +124,7 @@ def main():
     h5lp = []
     i = 0
     linestyles = ['-', '--', '-.', ':']
-
+    save_append_str = ''
     
   
     for path in args.paths:
@@ -134,9 +134,10 @@ def main():
 
         h5lp.append(H5Plot())
         h5lp[i].read(path)
-        j = 0   
+        j = 0 
         for (x, y, label, linestyle, color) in h5lp[i].get_line_plots():
             if args.labels != None:
+                save_append_str += '_' + args.labels[i]
                 label = args.labels[i]
 
             if label == '_line0':
@@ -170,9 +171,12 @@ def main():
         plt.gcf().subplots_adjust(left=0.15)              
     plt.show()
     fname, fext = os.path.splitext(args.paths[0])
-    fig.savefig(  fname + '_h5plot.' + args.file_format ,
-                      format=args.file_format)
+    save_path_name = fname + save_append_str + '_comp' + '.' + args.file_format
+    fig.savefig(save_path_name, format=args.file_format)
     plt.close(fig)
+    if args.verbose: 
+        sys.stdout.write('Saved: %s\n' % save_path_name)
+        sys.stdout.flush()
 
     if args.diff:
         print('DIFFERENCE PLOTS: TO BE IMPLEMENTED!!!')
