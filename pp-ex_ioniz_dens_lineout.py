@@ -5,7 +5,7 @@ import glob
 import numpy as np
 import argparse
 import matplotlib
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import pp_defs
@@ -241,7 +241,7 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta
     h5lp = H5Plot()
     h5lp.inherit_matplotlib_line_plots(ax)
     h5lp.write(savepath + '/' + savename + '.h5')
-    plt.show()
+    #plt.show()
     #use zeta array for shaping the elctric field to get the same spacing etc.
     #print(Earray)
     
@@ -267,7 +267,7 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta
     h5lp = H5Plot()
     h5lp.inherit_matplotlib_line_plots(ax2)
     h5lp.write(savepath + '/' + savename + '.h5')
-    plt.show()
+    #plt.show()
 
 
 
