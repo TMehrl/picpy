@@ -321,7 +321,6 @@ def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
         tidx = [(np.abs(slm.time_array - time)).argmin()]
 
     for i in tidx:
-
         if axdir == 2:
             sigma_xy = np.sqrt(slm.avgx2sq[i,:])
             sigma_xy_lab = r'$k_p \sigma_{x}$'
@@ -344,7 +343,7 @@ def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(sigma_xy_lab, fontsize=14)     
-        saveas_eps_pdf(fig_sigma_xy, savepath, ('%s_time_%0.f' % (sigma_xy_savename, slm.time_array[i])))
+        saveas_eps_pdf(fig_sigma_xy, savepath, ('%s_time_%0.1f' % (sigma_xy_savename, slm.time_array[i])))
         plt.close(fig_sigma_xy)
 
 
@@ -354,7 +353,7 @@ def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(sigma_xy_lab, fontsize=14)     
-        saveas_eps_pdf(fig_sigma_pxy, savepath, ('%s_time_%0.f' % (sigma_pxy_savename, slm.time_array[i])))
+        saveas_eps_pdf(fig_sigma_pxy, savepath, ('%s_time_%0.1f' % (sigma_pxy_savename, slm.time_array[i])))
         plt.close(fig_sigma_pxy)
 
 
@@ -505,7 +504,7 @@ def plot_save_slice_ene(slm, savepath):
     saveas_png(fig, savepath, 'gamma')
     plt.close(fig)    
 
-def plot_curr_profile(slm, savepath):
+def plot_curr_profile(slm, savepath, time = None):
     fig = plt.figure()
     dzeta = abs(slm.zeta_array[1] - slm.zeta_array[0]);
     curr = slm.charge / dzeta
@@ -517,12 +516,18 @@ def plot_curr_profile(slm, savepath):
     # curr * 4 * pi = I_b/I_A
     Ib_per_IA = curr/(4 * math.pi)
 
-    plt.plot(slm.zeta_array, Ib_per_IA[0,:])
-    ax = plt.gca()
-    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-    ax.set_ylabel(r'$I_{b,0}/I_A$', fontsize=14)
-    saveas_eps_pdf(fig, savepath, 'Ib0')
-    plt.close(fig)    
+    if time == None:
+        tidx = [0,-1];
+    else:
+        tidx = [(np.abs(slm.time_array - time)).argmin()]
+
+    for i in tidx:
+        plt.plot(slm.zeta_array, Ib_per_IA[i,:])
+        ax = plt.gca()
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(r'$I_{b,0}/I_A$', fontsize=14)
+        saveas_eps_pdf(fig, savepath, ('Ib0_time_%0.1f' % (slm.time_array[i])) )
+        plt.close(fig)    
 
 
     figIb = plt.figure()
@@ -556,7 +561,7 @@ def main():
 
     mkdirs_if_nexist(args.savepath)
 
-    plot_curr_profile(slm, args.savepath)
+    plot_curr_profile(slm, args.savepath, time = args.time)
 
     plot_save_slice_rms(slm, args.savepath)
 
