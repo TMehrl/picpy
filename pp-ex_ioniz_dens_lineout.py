@@ -7,6 +7,7 @@ import argparse
 import matplotlib
 #matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 from matplotlib import cm
 import pp_defs
 from pp_h5dat import mkdirs_if_nexist
