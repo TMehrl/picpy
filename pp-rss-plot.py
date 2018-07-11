@@ -496,7 +496,7 @@ def plot_save_slice_ene(slm, savepath):
                           slm.time_array,
                           gamma,
                           cmap=cm.GnBu,
-                          vmin=0, vmax=np.amax(gamma))
+                          vmin=np.amin(gamma), vmax=np.amax(gamma))
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
@@ -508,19 +508,37 @@ def plot_save_slice_ene(slm, savepath):
 def plot_curr_profile(slm, savepath):
     fig = plt.figure()
     dzeta = abs(slm.zeta_array[1] - slm.zeta_array[0]);
-    curr = slm.charge[0,:] / dzeta
+    curr = slm.charge / dzeta
 
     # print('Q = %0.3e' % (np.sum(curr) * dzeta ))
 
     # I_A = 4 * pi * epsilon_0 * m * c^3 / e
     # [curr] = epsilon_0 * m * c^3 / e
     # curr * 4 * pi = I_b/I_A
-    plt.plot(slm.zeta_array, curr/(4 * math.pi))
+    Ib_per_IA = curr/(4 * math.pi)
+
+    plt.plot(slm.zeta_array, Ib_per_IA[0,:])
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$I_{b,0}/I_A$', fontsize=14)
     saveas_eps_pdf(fig, savepath, 'Ib0')
     plt.close(fig)    
+
+
+    figIb = plt.figure()
+    cax = plt.pcolormesh(   slm.zeta_array,
+                            slm.time_array,
+                            Ib_per_IA,
+                            cmap=cm.Greys,
+                            vmin=0, 
+                            vmax=np.amax(abs(Ib_per_IA)))
+    cbar = figIb.colorbar(cax)   
+    cbar.ax.set_ylabel('$I_b/I_A$', fontsize=14)
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(r'$\omega_p t$', fontsize=14) 
+    saveas_png(figIb, savepath, 'Ib')
+    plt.close(figIb)
 
 def main():
 

@@ -5,7 +5,6 @@ import os
 import sys
 import numpy as np
 import h5py
-import pp_defs
 
 
 # Dictionary for PIC codes
@@ -491,58 +490,58 @@ class SliceMoms(H5File):
                 self.avgx2p2 = np.array(hf.get( 'avgx2p2' ))
                 self.avgx3p3 = np.array(hf.get( 'avgx3p3' ))
 
-    def alloc(self, Nt, Nzeta, order = 2):
+    def alloc(self, Nzeta, Nt, order = 2):
 
-        self.zeta_array = np.zeros(Nfiles, dtype=np.float32)   
-        self.time_array = np.zeros(Nfiles, dtype=np.float32)   
-        self.charge = np.zeros((Nfiles, Nbins), dtype=np.float32)
+        self.zeta_array = np.zeros(Nt, dtype=np.float32)   
+        self.time_array = np.zeros(Nt, dtype=np.float32)   
+        self.charge = np.zeros((Nt, Nzeta), dtype=np.float32)
 
         if order>0:
-            self.avgx1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgp1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgp2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgp3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx1 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx2 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx3 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgp1 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgp2 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgp3 = np.zeros((Nt, Nzeta), dtype=np.float32)
 
         if order>1:
-            self.avgx1sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx2sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx3sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgp1sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgp2sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgp3sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx1p1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx2p2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx3p3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx1sq = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx2sq = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx3sq = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgp1sq = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgp2sq = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgp3sq = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx1p1 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx2p2 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx3p3 = np.zeros((Nt, Nzeta), dtype=np.float32)
 
             # crossterms:
-            self.avgx1x2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx3x1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx2x3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgp1p2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgp3p1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgp2p3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx1p2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx1p3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx2p1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx2p3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx3p1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx3p2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx1x2 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx3x1 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx2x3 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgp1p2 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgp3p1 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgp2p3 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx1p2 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx1p3 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx2p1 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx2p3 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx3p1 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx3p2 = np.zeros((Nt, Nzeta), dtype=np.float32)
 
         if order>2:
-            self.avgx1cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx2cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx3cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgp1cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgp2cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgp3cube = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx1sqp1 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx2sqp2 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx3sqp3 = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx1p1sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx2p2sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
-            self.avgx3p3sq = np.zeros((Nfiles, Nbins), dtype=np.float32)
+            self.avgx1cube = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx2cube = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx3cube = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgp1cube = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgp2cube = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgp3cube = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx1sqp1 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx2sqp2 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx3sqp3 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx1p1sq = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx2p2sq = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx3p3sq = np.zeros((Nt, Nzeta), dtype=np.float32)
 
 
 
