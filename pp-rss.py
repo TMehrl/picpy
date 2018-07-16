@@ -184,9 +184,9 @@ def main():
     sm = SliceMoms()
     sm.alloc(Nzeta = Nbins, Nt = Ntimesteps)
 
-    for i in range(0, Nfiles, args.Nskip):
-        file = flist[i]
-        sys.stdout.write('Processing: %s\t(%i/%i)\n' % (file, i+1, Nfiles))
+    for i in range(0, Ntimesteps):
+        file = flist[i * args.Nskip]
+        sys.stdout.write('Processing: %s\t(%i/%i)\n' % (file, (i+1)*args.Nskip, Nfiles))
         sys.stdout.flush()
 
         raw = HiRAW(file)
