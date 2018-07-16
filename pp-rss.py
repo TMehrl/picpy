@@ -78,6 +78,13 @@ def ps_parseargs():
                           metavar="NFILES",
                           default=None,
                           help='Number of files to analyze.')
+    parser.add_argument(  "--Nskip",
+                          type=int,
+                          action='store',
+                          dest="Nskip",
+                          metavar="NSKIP",
+                          default=1,
+                          help='Skipping every nth file.')    
     parser.add_argument(  "--Nbins",
                           type=int,
                           action='store',
@@ -172,13 +179,14 @@ def main():
     sys.stdout.write('There are %i raw files to process...\n' % Nfiles)
     sys.stdout.flush()
 
+    Ntimesteps = int( math.ceil(Nfiles/args.Nskip) )
 
     sm = SliceMoms()
-    sm.alloc(Nzeta = Nbins, Nt = Nfiles)
+    sm.alloc(Nzeta = Nbins, Nt = Ntimesteps)
 
-    for i in range(0,Nfiles):
+    for i in range(0,Ntimesteps, args.Nskip):
         file = flist[i]
-        sys.stdout.write('Processing: %s\t(%i/%i)\n' % (file, i+1, Nfiles))
+        sys.stdout.write('Processing: %s\t(%i/%i)\n' % (file, i+1, Ntimesteps))
         sys.stdout.flush()
 
         raw = HiRAW(file)
