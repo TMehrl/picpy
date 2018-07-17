@@ -352,7 +352,7 @@ def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
                   sigma_pxy)
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-        ax.set_ylabel(sigma_xy_lab, fontsize=14)     
+        ax.set_ylabel(sigma_pxy_lab, fontsize=14)     
         saveas_eps_pdf(fig_sigma_pxy, savepath, ('%s_time_%0.1f' % (sigma_pxy_savename, slm.time_array[i])))
         plt.close(fig_sigma_pxy)
 
