@@ -109,6 +109,11 @@ def ps_parseopts():
                           action="store_true",
                           default=True,
                           help = "Save plot as hdf5 file (Default: %(default)s).") 
+    parser.add_argument(  "--latexfont",
+                          dest = "latexfont",
+                          action="store_true",
+                          default=True,
+                          help = "Use LaTeX font (Default: %(default)s).")
 
     return parser
 
@@ -560,6 +565,10 @@ def main():
         slm.truncate_zeta_region(args.zeta_range[0], args.zeta_range[1])
 
     mkdirs_if_nexist(args.savepath)
+
+    if args.latexfont:
+        plt.rc('text', usetex=True)
+        plt.rc('font', family='serif') 
 
     plot_curr_profile(slm, args.savepath, time = args.time)
 

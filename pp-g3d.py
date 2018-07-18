@@ -115,7 +115,12 @@ def g3d_parser():
                           metavar="PATH",
                           default=None,
                           help = """Path to which generated files will be saved.
-                              (default: %(default)s)""")                                                        
+                              (default: %(default)s)""")
+    parser.add_argument(  "--latexfont",
+                          dest = "latexfont",
+                          action="store_true",
+                          default=True,
+                          help = "Use LaTeX font (Default: %(default)s).")                                                                                    
     return parser
 
 def g3d_slice_subparser(subparsers, parent_parser):
@@ -889,6 +894,10 @@ def main():
     if len(sys.argv)==1:
         parser.print_help()
         sys.exit(1)
+
+    if args.latexfont:
+        plt.rc('text', usetex=True)
+        plt.rc('font', family='serif') 
 
     args.func(args)
 
