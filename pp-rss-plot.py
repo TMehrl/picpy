@@ -89,6 +89,14 @@ def ps_parseopts():
                         metavar="NFILES",
                         default=0,
                         help= """Number of files to analyze.""")
+    parser.add_argument(  "-o", "--mom-order",
+                          type=int,
+                          action='store',
+                          dest="mom_order",
+                          metavar="MOMORDER",
+                          choices=[1, 2, 3, 4,],
+                          default=None,
+                          help='Order of moment evaluation (Default: %(default)s).')    
     parser.add_argument(  '-t', '--time',
                           help='time for which rms plots are to be generated',
                           action='store',
@@ -361,6 +369,48 @@ def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
         saveas_eps_pdf(fig_sigma_pxy, savepath, ('%s_time_%0.1f' % (sigma_pxy_savename, slm.time_array[i])))
         plt.close(fig_sigma_pxy)
 
+def plot_save_slice_fouor_lines(slm, savepath, time = None, axdir=2, h5plot=True):
+
+    if time == None:
+        tidx = [0,-1];
+    else:
+        tidx = [(np.abs(slm.time_array - time)).argmin()]
+
+    for i in tidx:
+        if axdir == 2:
+            kurtosis_xy = np.divide(slm.avgx2quar[i,:],np.power(slm.avgx2sq[i,:],2))
+            kurtosis_xy_lab = r'$k_p \left \langle x^4/\sigma^4 \right\rangle$'
+            kurtosis_xy_savename = 'kurtosis_x'
+            kurtosis_pxy = np.divide(slm.avgp2quar[i,:],np.power(slm.avgp2sq[i,:],2))
+            kurtosis_pxy_lab = r'$k_p \left \langle p_x^4/mc \right\rangle$'
+            kurtosis_pxy_savename = 'kurtosis_px'
+            # Also define labels and savenames here!    
+        elif axdir == 3:
+            kurtosis_xy = np.divide(slm.avgx3quar[i,:],np.power(slm.avgx3sq[i,:],2))
+            kurtosis_xy_lab = r'$k_p \left \langle y^4 \right\rangle$'
+            kurtosis_xy_savename = 'kurtosis_y'
+            kurtosis_pxy = np.divide(slm.avgp3quar[i,:],np.power(slm.avgp3sq[i,:],2))
+            kurtosis_pxy_lab = r'$k_p \left \langle p_y^4/mc \right\rangle$'
+            kurtosis_pxy_savename = 'kurtosis_py'
+
+        fig_kurtosis_xy = plt.figure()
+        plt.plot( slm.zeta_array,
+                  kurtosis_xy)
+        ax = plt.gca()
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(kurtosis_xy_lab, fontsize=14)     
+        saveas_eps_pdf(fig_kurtosis_xy, savepath, ('%s_time_%0.1f' % (kurtosis_xy_savename, slm.time_array[i])))
+        plt.close(fig_kurtosis_xy)
+
+
+        fig_kurtosis_pxy = plt.figure()
+        plt.plot( slm.zeta_array,
+                  kurtosis_pxy)
+        ax = plt.gca()
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(kurtosis_pxy_lab, fontsize=14)     
+        saveas_eps_pdf(fig_kurtosis_pxy, savepath, ('%s_time_%0.1f' % (kurtosis_pxy_savename, slm.time_array[i])))
+        plt.close(fig_kurtosis_pxy)
 
 def plot_save_slice_centroids(slm, savepath, h5plot=True):
 
@@ -561,6 +611,15 @@ def main():
     slm = SliceMoms()
     slm.read(file)
 
+    if slm.get_order() > 0:
+        if args.mom_order != None:
+            mom_order = args.mom_order
+        else:
+            mom_order = slm.get_order()
+    else:
+        print('Error:\tMoment order in file <= 0!')
+        sys.exit(1)                 
+
     if args.zeta_range != None:
         slm.truncate_zeta_region(args.zeta_range[0], args.zeta_range[1])
 
@@ -581,6 +640,10 @@ def main():
     plot_save_slice_centroids(slm, args.savepath, h5plot=args.h5plot)
 
     plot_save_slice_rms_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
+
+    if mom_order > 3:
+        plot_save_slice_fouor_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
+
 
 if __name__ == "__main__":
     main()
