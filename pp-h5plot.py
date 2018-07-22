@@ -97,8 +97,8 @@ def h5plot_parser():
                           action="store_true",
                           default=False,
                           help = "Plot difference w.r.t. first line plot (default: %(default)s).")
-    parser.add_argument(  "--latexfontoff",
-                          dest = "latexfontoff",
+    parser.add_argument(  "--latexoff",
+                          dest = "latexoff",
                           action="store_false",
                           default=True,
                           help = "Use LaTeX font (Default: %(default)s).")                                                                       
@@ -131,7 +131,7 @@ def main():
     linestyles = ['-', '--', '-.', ':']
     save_append_str = ''
 
-    if not args.latexfontoff:
+    if not args.latexoff:
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif') 
 
@@ -154,7 +154,7 @@ def main():
             if label == '_line0':
                 label = path
 
-            if not args.latexfontoff:
+            if not args.latexoff:
                 if label[0] != '$' or label[-1] != '$':
                     label = r'$\textrm{' + label + '}$'
 
