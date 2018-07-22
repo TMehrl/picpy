@@ -369,7 +369,7 @@ def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
         saveas_eps_pdf(fig_sigma_pxy, savepath, ('%s_time_%0.1f' % (sigma_pxy_savename, slm.time_array[i])))
         plt.close(fig_sigma_pxy)
 
-def plot_save_slice_fouor_lines(slm, savepath, time = None, axdir=2, h5plot=True):
+def plot_save_slice_exkurtosis_lines(slm, savepath, time = None, axdir=2, h5plot=True):
 
     if time == None:
         tidx = [0,-1];
@@ -378,39 +378,39 @@ def plot_save_slice_fouor_lines(slm, savepath, time = None, axdir=2, h5plot=True
 
     for i in tidx:
         if axdir == 2:
-            kurtosis_xy = np.divide(slm.avgx2quar[i,:],np.power(slm.avgx2sq[i,:],2))
-            kurtosis_xy_lab = r'$k_p \left \langle x^4/\sigma^4 \right\rangle$'
-            kurtosis_xy_savename = 'kurtosis_x'
-            kurtosis_pxy = np.divide(slm.avgp2quar[i,:],np.power(slm.avgp2sq[i,:],2))
-            kurtosis_pxy_lab = r'$k_p \left \langle p_x^4/mc \right\rangle$'
-            kurtosis_pxy_savename = 'kurtosis_px'
+            exkurtosis_xy = np.divide(slm.avgx2quar[i,:],np.power(slm.avgx2sq[i,:],2)) - 3
+            exkurtosis_xy_lab = r'$k_p \left \langle x^4/\sigma^4 \right\rangle - 3$'
+            exkurtosis_xy_savename = 'exkurtosis_x'
+            exkurtosis_pxy = np.divide(slm.avgp2quar[i,:],np.power(slm.avgp2sq[i,:],2)) - 3
+            exkurtosis_pxy_lab = r'$k_p \left \langle p_x^4/\sigma_{px}^4 \right\rangle -3$'
+            exkurtosis_pxy_savename = 'exkurtosis_px'
             # Also define labels and savenames here!    
         elif axdir == 3:
-            kurtosis_xy = np.divide(slm.avgx3quar[i,:],np.power(slm.avgx3sq[i,:],2))
-            kurtosis_xy_lab = r'$k_p \left \langle y^4 \right\rangle$'
-            kurtosis_xy_savename = 'kurtosis_y'
-            kurtosis_pxy = np.divide(slm.avgp3quar[i,:],np.power(slm.avgp3sq[i,:],2))
-            kurtosis_pxy_lab = r'$k_p \left \langle p_y^4/mc \right\rangle$'
-            kurtosis_pxy_savename = 'kurtosis_py'
+            exkurtosis_xy = np.divide(slm.avgx3quar[i,:],np.power(slm.avgx3sq[i,:],2)) - 3
+            exkurtosis_xy_lab = r'$k_p \left \langle y^4 \right\rangle -3$'
+            exkurtosis_xy_savename = 'exkurtosis_y'
+            exkurtosis_pxy = np.divide(slm.avgp3quar[i,:],np.power(slm.avgp3sq[i,:],2)) - 3
+            exkurtosis_pxy_lab = r'$k_p \left \langle p_y^4/\sigma_{py}^4 \right\rangle -3$'
+            exkurtosis_pxy_savename = 'exkurtosis_py'
 
-        fig_kurtosis_xy = plt.figure()
+        fig_exkurtosis_xy = plt.figure()
         plt.plot( slm.zeta_array,
-                  kurtosis_xy)
+                  exkurtosis_xy)
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-        ax.set_ylabel(kurtosis_xy_lab, fontsize=14)     
-        saveas_eps_pdf(fig_kurtosis_xy, savepath, ('%s_time_%0.1f' % (kurtosis_xy_savename, slm.time_array[i])))
-        plt.close(fig_kurtosis_xy)
+        ax.set_ylabel(exkurtosis_xy_lab, fontsize=14)     
+        saveas_eps_pdf(fig_exkurtosis_xy, savepath, ('%s_time_%0.1f' % (exkurtosis_xy_savename, slm.time_array[i])))
+        plt.close(fig_exkurtosis_xy)
 
 
-        fig_kurtosis_pxy = plt.figure()
+        fig_exkurtosis_pxy = plt.figure()
         plt.plot( slm.zeta_array,
-                  kurtosis_pxy)
+                  exkurtosis_pxy)
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-        ax.set_ylabel(kurtosis_pxy_lab, fontsize=14)     
-        saveas_eps_pdf(fig_kurtosis_pxy, savepath, ('%s_time_%0.1f' % (kurtosis_pxy_savename, slm.time_array[i])))
-        plt.close(fig_kurtosis_pxy)
+        ax.set_ylabel(exkurtosis_pxy_lab, fontsize=14)     
+        saveas_eps_pdf(fig_exkurtosis_pxy, savepath, ('%s_time_%0.1f' % (exkurtosis_pxy_savename, slm.time_array[i])))
+        plt.close(fig_exkurtosis_pxy)
 
 def plot_save_slice_centroids(slm, savepath, h5plot=True):
 
@@ -642,7 +642,7 @@ def main():
     plot_save_slice_rms_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
 
     if mom_order > 3:
-        plot_save_slice_fouor_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
+        plot_save_slice_exkurtosis_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
 
 
 if __name__ == "__main__":
