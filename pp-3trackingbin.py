@@ -10,7 +10,9 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import pp_defs
 from pp_h5dat import mkdirs_if_nexist
+from pp_h5dat import H5Plot
 from mpl_toolkits.mplot3d import Axes3D
+from pp_h5dat import Grid3d
 
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.lines as mlines
@@ -80,8 +82,11 @@ def binSlab_parser():
                           help = "Select the attribute which is displayed as the color of the track \n"
                                  "Default is the total momentum u_tot, other available options are: \n"
                                  "beta_z")
-
-
+    parser.add_argument(  "--h5",
+                          dest = "h5plot",
+                          action="store_true",
+                          default=True,
+                          help = "Save plot as hdf5 file (Default: %(default)s).")
 
     return parser
 
@@ -298,6 +303,24 @@ def calc_v3_m(r, c, int_const_1):
     
     return v
 
+def plot_hipace_Ex(zeta_pos):
+    ExmBy_path = './DATA/field_ExmBy_000000.h5'
+    By_path = './DATA/field_By_000000.h5'
+    
+    ExmBy_g3d2 = Grid3d(ExmBy_path)
+    By_g3d2 = Grid3d(By_path)
+    
+    ExmBy = np.transpose(ExmBy_g3d2.read(x2=0.0))
+    By = np.transpose(By_g3d2.read(x2=0.0))  
+
+    Ex = ExmBy + By
+    
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    idx =np.abs(By_g3d2.get_zeta_arr() - zeta_pos).argmin()
+    
+    return By_g3d2.get_x_arr(2), Ex[:,idx]
+
 def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch):
     ELECTRON_CHARGE_IN_COUL   =    1.60217657e-19
     ELECTRON_MASS_IN_KG       =    9.10938291e-31
@@ -310,9 +333,12 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch):
     E_0 = omega_p * ELECTRON_MASS_IN_KG * SPEED_OF_LIGHT_IN_M_PER_S / ELECTRON_CHARGE_IN_COUL;     
     #Use zeta array in order to calculate delta t
     
+    savepath = './plots/g3d-line/'
+    mkdirs_if_nexist(savepath)
+    
     bunch_array = np.arange(0, lbunch+lbunch/10, lbunch/10)
     bunch_array_sum = np.cumsum(bunch_array)
-    
+
     deltat = np.abs(bunch_array_sum) / omega_p
 
     vcalc_ion_rate = np.vectorize(calc_ion_rate)
@@ -324,19 +350,31 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch):
     c3prime = -1/2*rbunch**2*(nb)
 
     
+    savename = 'Ex_analytic'
     
     E = np.zeros(shape = np.shape(r_array))
     for i in range(len(r_array)):
         if(r_array[i] <= rbunch):
-            E[i] = np.real(c1prime) * r_array[i] * E_0
+            E[i] = np.real(c1prime) * r_array[i] 
         else:
-            E[i] = np.real(c3prime) / r_array[i] * E_0
+            E[i] = np.real(c3prime) / r_array[i] 
     
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    
+    ax.plot(np.append(-r_array[::-1], r_array), np.append(-(E[::-1]) ,E[:]))
+    x, Ex =plot_hipace_Ex(-0.2) # input = zeta pos 
+    ax.plot(x, Ex)
+    
+    h5lp = H5Plot()
+    h5lp.inherit_matplotlib_line_plots(ax)
+    h5lp.write(savepath + '/' + savename + '.h5')
+    plt.show()
     #use zeta array for shaping the elctric field to get the same spacing etc.
     #print(Earray)
     
     ionization_rate =np.zeros(shape=np.shape(r_array))
-    ionization_rate[:] = vcalc_ion_rate(E, 1, 13.659843449,13.659843449, 0,0 ) # complete formulae for hydrogen
+    ionization_rate[:] = vcalc_ion_rate(E*E_0, 1, 13.659843449,13.659843449, 0,0 ) # complete formulae for hydrogen
     #print(ionization_rate[1])
     
     
@@ -344,11 +382,19 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch):
     ax = fig.add_subplot(111)
     #print('Deltat is %0.3e' %deltat)
     #computing the ionization probability
+    
+
+    savename = 'ion_probability_test'
     ion_probability = np.zeros(shape=(len(bunch_array) -1, len(ionization_rate)))
-    for i in range(1,len(bunch_array)):
+    for i in range(1,2): #len(bunch_array)):
         ion_probability[i-1,:] = 1.0 - np.exp(-ionization_rate[:] * deltat[i] )
-        ax.plot(r_array, ion_probability[i-1,:], label=('prob at lb: ' + str(np.around(bunch_array[i], decimals = 1) ) ) )
-        ax.legend()
+        ax.plot(np.append(-r_array[::-1], r_array), np.append((ion_probability[i-1,::-1]) ,ion_probability[i-1,:]), label=('prob at lb: ' + str(np.around(bunch_array[i], decimals = 1) ) ) )
+        #ax.legend()
+        
+        
+    h5lp = H5Plot()
+    h5lp.inherit_matplotlib_line_plots(ax)
+    h5lp.write(savepath + '/' + savename + '.h5')
     plt.show()
 
 
@@ -616,149 +662,149 @@ def main():
         
         starting_positions = []
         
-        for k in range(len(w)):
-        
-    
-            fig = plt.figure()
-            if args.twodproj:
-                ax = fig.add_subplot(111)
-            else:
-                ax = fig.add_subplot(111, projection='3d')
-            ''' get min and max value for universal colorbar later '''
-            if args.track_color == "u_tot":
-                cmin = min(w[k][:,8])
-                cmax = max(w[k][:,8])
-                chosencmap = cm.jet
-            elif args.track_color == "beta_z":
-                cmin = -1
-                cmax = 1
-                chosencmap = my_cmap
-            elif args.track_color == "beta_y":
-                cmin = -1
-                cmax = 1
-                chosencmap = my_cmap
-            else:
-                print("This attribute doesn't exist or is not implemented yet")
-                break
-            # ##################### EXCLUDE HIPACE TRACKS FOR THE MOMENT
-            ''' Splitting the array into each particle trajectory by proc tag'''
-            d= np.split(w[k], np.where(np.diff(w[k][:, 7]) != 0)[0]+1) 
-        
-            for i in range(len(d)):
-        
-                ''' Splitting the array into each particle trajectory by part tag'''
-                e = np.split(d[i], np.where(np.diff(d[i][:, 6]) != 0)[0]+1) 
-                #print(np.shape(e))
-                #print('particle tags %i (always look at 1 and ignore 0) %i'% (i, e[16][1, 6]))
-                for j in range(int(np.floor(len(e)/modnum))):
-                    x=e[modnum*j][:,0]
-                    y=e[modnum*j][:,1]
-                    z=e[modnum*j][:,5] # IN CASE OF UNIONIZED PLASMA USE THIS TERM
-                    #starting_positions.append(x[ zeta_gridpoints -1]) #799])#
-                    z=zeta_array[zeta_gridpoints-len(y):] # IN CASE OF preionized PLASMA USE THIS TERM
-                    z=zeta_array[:len(y)]
-                    if args.track_color == "u_tot":
-                        c=e[modnum*j][:,8]
-                    elif args.track_color == "beta_z":
-                        c=e[modnum*j][:,4]/np.sqrt(1+e[modnum*j][:,8]**2)
-                    elif args.track_color == "beta_y":
-                        c=e[modnum*j][:,2]/np.sqrt(1+e[modnum*j][:,8]**2)
-                    # print(len(x))
-                    # print(len(y))
-                    print("laenge track proc tag %i part tag %i ist %i" %(i, modnum*j, len(z)))
-        
-                    # if args.twodproj:
-                    #     plot_2D_colourline(z,x,c, cmin, cmax)
-                    # else:
-                    #     plot_3D_colourline(z,y,x,c, cmin, cmax)
-                    
-                    # ################### TAKEN OUT TO FASTEN EVERYTHING FOR THE 1/R analysis!
-                    # if args.twodproj:
-                    #     if args.track_color == "u_tot":
-                    #         plot_2D_colourline(z,x,c, cmin, cmax)
-                    #     elif args.track_color == "beta_z":
-                    #         plot_2D_colourline_beta(z,x,c)
-                    #     elif args.track_color == "beta_y":
-                    #         plot_2D_colourline_beta(z,x,c)
-                    # else:
-                    #     if args.track_color == "u_tot":
-                    #         plot_3D_colourline(z,y,x,c, cmin, cmax)
-                    #     elif args.track_color == "beta_z":
-                    #         plot_3D_colourline_beta(z,y,x,c)
-                    #     elif args.track_color == "beta_y":
-                    #         plot_3D_colourline_beta(z,y,x,c)
-                    ###### ## ##ax.plot(z, y, x, label='particle track')
+        # for k in range(len(w)):
+        # 
+        # 
+        #     fig = plt.figure()
+        #     if args.twodproj:
+        #         ax = fig.add_subplot(111)
+        #     else:
+        #         ax = fig.add_subplot(111, projection='3d')
+        #     ''' get min and max value for universal colorbar later '''
+        #     if args.track_color == "u_tot":
+        #         cmin = min(w[k][:,8])
+        #         cmax = max(w[k][:,8])
+        #         chosencmap = cm.jet
+        #     elif args.track_color == "beta_z":
+        #         cmin = -1
+        #         cmax = 1
+        #         chosencmap = my_cmap
+        #     elif args.track_color == "beta_y":
+        #         cmin = -1
+        #         cmax = 1
+        #         chosencmap = my_cmap
+        #     else:
+        #         print("This attribute doesn't exist or is not implemented yet")
+        #         break
+        #     # ##################### EXCLUDE HIPACE TRACKS FOR THE MOMENT
+        #     ''' Splitting the array into each particle trajectory by proc tag'''
+        #     d= np.split(w[k], np.where(np.diff(w[k][:, 7]) != 0)[0]+1) 
+        # 
+        #     for i in range(len(d)):
+        # 
+        #         ''' Splitting the array into each particle trajectory by part tag'''
+        #         e = np.split(d[i], np.where(np.diff(d[i][:, 6]) != 0)[0]+1) 
+        #         #print(np.shape(e))
+        #         #print('particle tags %i (always look at 1 and ignore 0) %i'% (i, e[16][1, 6]))
+        #         for j in range(int(np.floor(len(e)/modnum))):
+        #             x=e[modnum*j][:,0]
+        #             y=e[modnum*j][:,1]
+        #             z=e[modnum*j][:,5] # IN CASE OF UNIONIZED PLASMA USE THIS TERM
+        #             #starting_positions.append(x[ zeta_gridpoints -1]) #799])#
+        #             z=zeta_array[zeta_gridpoints-len(y):] # IN CASE OF preionized PLASMA USE THIS TERM
+        #             z=zeta_array[:len(y)]
+        #             if args.track_color == "u_tot":
+        #                 c=e[modnum*j][:,8]
+        #             elif args.track_color == "beta_z":
+        #                 c=e[modnum*j][:,4]/np.sqrt(1+e[modnum*j][:,8]**2)
+        #             elif args.track_color == "beta_y":
+        #                 c=e[modnum*j][:,2]/np.sqrt(1+e[modnum*j][:,8]**2)
+        #             # print(len(x))
+        #             # print(len(y))
+        #             print("laenge track proc tag %i part tag %i ist %i" %(i, modnum*j, len(z)))
+        # 
+        #             # if args.twodproj:
+        #             #     plot_2D_colourline(z,x,c, cmin, cmax)
+        #             # else:
+        #             #     plot_3D_colourline(z,y,x,c, cmin, cmax)
+        # 
+        #             # ################### TAKEN OUT TO FASTEN EVERYTHING FOR THE 1/R analysis!
+        #             # if args.twodproj:
+        #             #     if args.track_color == "u_tot":
+        #             #         plot_2D_colourline(z,x,c, cmin, cmax)
+        #             #     elif args.track_color == "beta_z":
+        #             #         plot_2D_colourline_beta(z,x,c)
+        #             #     elif args.track_color == "beta_y":
+        #             #         plot_2D_colourline_beta(z,x,c)
+        #             # else:
+        #             #     if args.track_color == "u_tot":
+        #             #         plot_3D_colourline(z,y,x,c, cmin, cmax)
+        #             #     elif args.track_color == "beta_z":
+        #             #         plot_3D_colourline_beta(z,y,x,c)
+        #             #     elif args.track_color == "beta_y":
+        #             #         plot_3D_colourline_beta(z,y,x,c)
+        #             ###### ## ##ax.plot(z, y, x, label='particle track')
+        # 
+        #     if args.twodproj:
+        # 
+        # 
+        # 
+        #         input_r_array = np.array([ 0, 0.0941176488995552, 0.1882352977991104, 0.2823529541492462, 0.3764705955982208, 0.47058823704719543, 0.5647059082984924, 0.658823549747467, 0.7529411911964417, 0.8470588326454163, 0.9411764740943909, 1.0352941751480103, 1.1294118165969849, 1.2235294580459595, 1.317647099494934, 1.4117647409439087, 1.5058823823928833, 1.600000023841858, 1.6941176652908325, 1.7882353067398071, 1.8823529481887817, 1.9764705896377563])
+        #         input_r_array = np.array([0.02346041053533554, 0.04692082107067108, 0.07038123160600662, 0.09384164214134216, 0.1173020526766777, 0.14076246321201324, 0.16422288119792938, 0.18768328428268433, 0.21114370226860046, 0.2346041053533554, 0.25806450843811035, 0.2815249264240265])
+        #         #input_r_array = np.array([0.3128054738044739, 0.703812301158905, 1.094819188117981, 1.485826015472412, 1.8768328428268433, 2.2678396701812744, 2.658846616744995, 3.0498533248901367, 3.4408602714538574, 3.831866979598999, 4.222873687744141, 4.613880634307861]) #rp 5 mod 1
+        #         input_r_array = np.array([ 0.03519061580300331, 0.07038123160600662, 0.10557185113430023, 0.14076246321201324, 0.17595307528972626, 0.21114370226860046, 0.24633431434631348]) #rp 0.3 mod 3
+        #         #input_r_array = np.array([0.033,0.034,0.03516, 0.03517,0.03519061580300331]) #,0.0352])
+        #         # fig = plt.figure()
+        #         # if args.twodproj:
+        #         #     ax = fig.add_subplot(111)
+        #         # else:
+        #         #     ax = fig.add_subplot(111, projection='3d')
+        #         # 
+        #         # for i in range(int(np.floor(len(datan_zeta)/modnum))):
+        #         #     ax.plot(datan_zeta[modnum*i,:], datan[modnum*i,:], color = '#00cc00', linestyle = '--') #'#551a8b'
+        #         # # 
+        #         # # 
+        #         modnum = 1
+        #         #for i in range(int(np.floor(len(input_r_array)/modnum))):
+        #         for i in range(len(input_r_array)):
+        #             zeta_array3, r_matrix2 = calc_analytical_solution(input_r_array[i], 5, 1, 2, 12, 0.3) #36, 0.3)#8,2)  ###(start_r_array, nb, ni, lbunch, zeta_end, rbunch):
+        #             ax.plot(zeta_array3[np.where(r_matrix2 >0)], r_matrix2[np.where(r_matrix2 >0)], color = 'black',linestyle = '-.' ) ##00cc00
+        #         # zeta_array2, r_matrix = calc_analytical_solution( 1.999999999, 1.2, 1, 2, 8,2) #1.8823529481887817 1.9764705896377563
+        #         # ax.plot(zeta_array2, r_matrix, 'r' )  
+        #     else:
+        #         ax = plt.gca()
+        #         # ax.plot(data_zeta, np.zeros(len(data_zeta)), data2)
+        # 
+        #     ''' Set colorbar ''' 
+        #     norm = matplotlib.colors.Normalize(
+        #     vmin=np.min(cmin),
+        #     vmax=np.max(cmax))
+        # 
+        #     # choose a colormap
+        #     c_m = chosencmap
+        # 
+        #     # create a ScalarMappable and initialize a data structure
+        #     s_m = matplotlib.cm.ScalarMappable(cmap=c_m, norm=norm)
+        #     s_m.set_array([])
+        # 
+        #     cbar = plt.colorbar(s_m)
+        #     if args.track_color == "u_tot":
+        #         cbar.ax.set_ylabel(r'$|u|$')
+        #     elif args.track_color == "beta_z":
+        #         cbar.ax.set_ylabel(r'$\beta_z$')
+        #     elif args.track_color == "beta_y":
+        #         cbar.ax.set_ylabel(r'$\beta_y$')
+        # 
+        # 
+        # 
+        #     #ax.set_xlim(-8, 0)
+        #     # # ax.set_xlim(0, 300)
+        #     #ax.set_ylim(-1/2, 6)
+        #     ax.grid()
+        #     if not args.twodproj:
+        #         ax.set_zlabel(' x ')
+        #         #ax.set_zlim(-6, 6)
+        #     ax.set_xlabel(r'$\zeta$')
+        #     ax.set_ylabel(' y ')
+        # 
+        #     numerical_solutions = mlines.Line2D([], [], color='#551a8b', label='numerical solutions')
+        #     analytical_solutions = mlines.Line2D([], [], color='#00cc00', label='analytical solutions')
+        #     #ax.legend(handles=[numerical_solutions,analytical_solutions ])
+        # 
+        #     print(starting_positions)
+        #     plt.show()
 
-            if args.twodproj:
-            
-
-                
-                input_r_array = np.array([ 0, 0.0941176488995552, 0.1882352977991104, 0.2823529541492462, 0.3764705955982208, 0.47058823704719543, 0.5647059082984924, 0.658823549747467, 0.7529411911964417, 0.8470588326454163, 0.9411764740943909, 1.0352941751480103, 1.1294118165969849, 1.2235294580459595, 1.317647099494934, 1.4117647409439087, 1.5058823823928833, 1.600000023841858, 1.6941176652908325, 1.7882353067398071, 1.8823529481887817, 1.9764705896377563])
-                input_r_array = np.array([0.02346041053533554, 0.04692082107067108, 0.07038123160600662, 0.09384164214134216, 0.1173020526766777, 0.14076246321201324, 0.16422288119792938, 0.18768328428268433, 0.21114370226860046, 0.2346041053533554, 0.25806450843811035, 0.2815249264240265])
-                #input_r_array = np.array([0.3128054738044739, 0.703812301158905, 1.094819188117981, 1.485826015472412, 1.8768328428268433, 2.2678396701812744, 2.658846616744995, 3.0498533248901367, 3.4408602714538574, 3.831866979598999, 4.222873687744141, 4.613880634307861]) #rp 5 mod 1
-                input_r_array = np.array([ 0.03519061580300331, 0.07038123160600662, 0.10557185113430023, 0.14076246321201324, 0.17595307528972626, 0.21114370226860046, 0.24633431434631348]) #rp 0.3 mod 3
-                #input_r_array = np.array([0.033,0.034,0.03516, 0.03517,0.03519061580300331]) #,0.0352])
-                # fig = plt.figure()
-                # if args.twodproj:
-                #     ax = fig.add_subplot(111)
-                # else:
-                #     ax = fig.add_subplot(111, projection='3d')
-                # 
-                # for i in range(int(np.floor(len(datan_zeta)/modnum))):
-                #     ax.plot(datan_zeta[modnum*i,:], datan[modnum*i,:], color = '#00cc00', linestyle = '--') #'#551a8b'
-                # # 
-                # # 
-                modnum = 1
-                #for i in range(int(np.floor(len(input_r_array)/modnum))):
-                for i in range(len(input_r_array)):
-                    zeta_array3, r_matrix2 = calc_analytical_solution(input_r_array[i], 5, 1, 2, 12, 0.3) #36, 0.3)#8,2)  ###(start_r_array, nb, ni, lbunch, zeta_end, rbunch):
-                    ax.plot(zeta_array3[np.where(r_matrix2 >0)], r_matrix2[np.where(r_matrix2 >0)], color = 'black',linestyle = '-.' ) ##00cc00
-                # zeta_array2, r_matrix = calc_analytical_solution( 1.999999999, 1.2, 1, 2, 8,2) #1.8823529481887817 1.9764705896377563
-                # ax.plot(zeta_array2, r_matrix, 'r' )  
-            else:
-                ax = plt.gca()
-                # ax.plot(data_zeta, np.zeros(len(data_zeta)), data2)
-
-            ''' Set colorbar ''' 
-            norm = matplotlib.colors.Normalize(
-            vmin=np.min(cmin),
-            vmax=np.max(cmax))
-
-            # choose a colormap
-            c_m = chosencmap
-
-            # create a ScalarMappable and initialize a data structure
-            s_m = matplotlib.cm.ScalarMappable(cmap=c_m, norm=norm)
-            s_m.set_array([])
-    
-            cbar = plt.colorbar(s_m)
-            if args.track_color == "u_tot":
-                cbar.ax.set_ylabel(r'$|u|$')
-            elif args.track_color == "beta_z":
-                cbar.ax.set_ylabel(r'$\beta_z$')
-            elif args.track_color == "beta_y":
-                cbar.ax.set_ylabel(r'$\beta_y$')
-            
-            
-            
-            #ax.set_xlim(-8, 0)
-            # # ax.set_xlim(0, 300)
-            #ax.set_ylim(-1/2, 6)
-            ax.grid()
-            if not args.twodproj:
-                ax.set_zlabel(' x ')
-                #ax.set_zlim(-6, 6)
-            ax.set_xlabel(r'$\zeta$')
-            ax.set_ylabel(' y ')
-            
-            numerical_solutions = mlines.Line2D([], [], color='#551a8b', label='numerical solutions')
-            analytical_solutions = mlines.Line2D([], [], color='#00cc00', label='analytical solutions')
-            #ax.legend(handles=[numerical_solutions,analytical_solutions ])
-
-            print(starting_positions)
-            plt.show()
-
-    calc_transversal_probability_density(12, 512, 5, 1, 0.3, 2) #parameters from hipace.c ##(r_max, nx, nb, ni, rbunch, lbunch)
+    calc_transversal_probability_density(12, 256, 5, 1, 0.3, 2) #parameters from hipace.c ##(r_max, nx, nb, ni, rbunch, lbunch)
 
 
         #     # cax = plt.plot( array)

@@ -6,6 +6,7 @@ import math
 import argparse
 import numpy as np
 import matplotlib
+matplotlib.use('TkAgg')
 import itertools
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -102,11 +103,10 @@ def h5plot_parser():
  
 
 def main():
-
+    
     parser = h5plot_parser()
     args = parser.parse_args()
-
-
+    
     if len(sys.argv)==1:
         parser.print_help()
         sys.exit(1)
@@ -116,7 +116,7 @@ def main():
     if (args.line_no != None) and (len(args.line_no) != len(args.paths)):
         print('ERROR: number of selected lines must be equal to the number of provided hdf5 files!')
         sys.exit(1)        
-
+    
     if (args.labels != None) and (len(args.labels) != len(args.paths)):
         print('ERROR: number of prepend labels must be equal to the number of provided hdf5 files!')
         sys.exit(1)  
@@ -131,7 +131,7 @@ def main():
         if not os.path.isfile(path):
             print('ERROR: File %s does not exist!' % path)
             sys.exit(1)             
-
+        
         h5lp.append(H5Plot())
         h5lp[i].read(path)
         j = 0 
@@ -139,7 +139,7 @@ def main():
             if args.labels != None:
                 save_append_str += '_' + args.labels[i]
                 label = args.labels[i]
-
+            
             if label == '_line0':
                 label = path
 
@@ -157,18 +157,19 @@ def main():
                     plt.plot(x, y, label=label, linestyle=linestyles[i%len(linestyles)])      
             j += 1
         i += 1
-
+    
     ax = plt.gca()
     ax.set_xlabel(h5lp[0].get_xlab(), fontsize=14)
     ax.set_ylabel(h5lp[0].get_ylab(), fontsize=14)    
     handles, labels = ax.get_legend_handles_labels()
     #plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
-    plt.legend()
-    if not (-3.0 < math.log(np.max(abs(y)),10) < 3.0):
-        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
-        plt.gcf().subplots_adjust(left=0.18)
-    else:
-        plt.gcf().subplots_adjust(left=0.15)              
+    #plt.legend()
+
+    # if not (-3.0 < math.log(np.max(abs(y)),10) < 3.0):
+    #     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+    #     plt.gcf().subplots_adjust(left=0.18)
+    # else:
+    #     plt.gcf().subplots_adjust(left=0.15)              
     plt.show()
     fname, fext = os.path.splitext(args.paths[0])
     save_path_name = fname + save_append_str + '_comp' + '.' + args.file_format
