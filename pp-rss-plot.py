@@ -378,23 +378,37 @@ def plot_save_slice_exkurtosis_lines(slm, savepath, time = None, axdir=2, h5plot
 
     for i in tidx:
         if axdir == 2:
-            exkurtosis_xy = np.divide(slm.avgx2quar[i,:],np.power(slm.avgx2sq[i,:],2)) - 3
+            var_xy = slm.avgx2sq[i,:]
+            var_xy_nonzero_idx = np.nonzero(var_xy)[0]
+            exkurtosis_xy = np.divide(  slm.avgx2quar[i,var_xy_nonzero_idx],\
+                                        np.power(var_xy[var_xy_nonzero_idx],2)) - 3
             exkurtosis_xy_lab = r'$k_p \left \langle x^4/\sigma^4 \right\rangle - 3$'
             exkurtosis_xy_savename = 'exkurtosis_x'
-            exkurtosis_pxy = np.divide(slm.avgp2quar[i,:],np.power(slm.avgp2sq[i,:],2)) - 3
+            
+            var_pxy = slm.avgp2sq[i,:]
+            var_pxy_nonzero_idx = np.nonzero(var_pxy)[0]
+            exkurtosis_pxy = np.divide( slm.avgp2quar[i,var_pxy_nonzero_idx],\
+                                        np.power(var_pxy[var_pxy_nonzero_idx],2)) - 3
             exkurtosis_pxy_lab = r'$k_p \left \langle p_x^4/\sigma_{px}^4 \right\rangle -3$'
             exkurtosis_pxy_savename = 'exkurtosis_px'
             # Also define labels and savenames here!    
         elif axdir == 3:
-            exkurtosis_xy = np.divide(slm.avgx3quar[i,:],np.power(slm.avgx3sq[i,:],2)) - 3
+            var_xy = slm.avgx3sq[i,:]
+            var_xy_nonzero_idx = np.nonzero(var_xy)[0]           
+            exkurtosis_xy = np.divide(  slm.avgx3quar[i,var_xy_nonzero_idx],\
+                                        np.power(var_xy[var_xy_nonzero_idx],2)) - 3
             exkurtosis_xy_lab = r'$k_p \left \langle y^4 \right\rangle -3$'
             exkurtosis_xy_savename = 'exkurtosis_y'
-            exkurtosis_pxy = np.divide(slm.avgp3quar[i,:],np.power(slm.avgp3sq[i,:],2)) - 3
+            
+            var_pxy = slm.avgp3sq[i,:]
+            var_pxy_nonzero_idx = np.nonzero(var_pxy)[0]
+            exkurtosis_pxy = np.divide( slm.avgp3quar[i,var_pxy_nonzero_idx],\
+                                        np.power(var_pxy[var_pxy_nonzero_idx],2)) - 3
             exkurtosis_pxy_lab = r'$k_p \left \langle p_y^4/\sigma_{py}^4 \right\rangle -3$'
             exkurtosis_pxy_savename = 'exkurtosis_py'
 
         fig_exkurtosis_xy = plt.figure()
-        plt.plot( slm.zeta_array,
+        plt.plot( slm.zeta_array[var_xy_nonzero_idx],
                   exkurtosis_xy)
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
@@ -404,7 +418,7 @@ def plot_save_slice_exkurtosis_lines(slm, savepath, time = None, axdir=2, h5plot
 
 
         fig_exkurtosis_pxy = plt.figure()
-        plt.plot( slm.zeta_array,
+        plt.plot( slm.zeta_array[var_pxy_nonzero_idx],
                   exkurtosis_pxy)
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)

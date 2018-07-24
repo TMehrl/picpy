@@ -119,7 +119,7 @@ def g3d_parser():
     parser.add_argument(  "--latexfont",
                           dest = "latexfont",
                           action="store_true",
-                          default=True,
+                          default=False,
                           help = "Use LaTeX font (Default: %(default)s).")                                                                                    
     return parser
 
