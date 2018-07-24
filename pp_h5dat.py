@@ -528,11 +528,14 @@ class SliceMoms(H5File):
             self.avgx2sqp2sq = np.zeros((Nt, Nzeta), dtype=np.float32)
             self.avgx3sqp3sq = np.zeros((Nt, Nzeta), dtype=np.float32)
 
-    def read(self, file, order = None):
+    def read(self, file, order = None, verbose = True):
         H5File.__init__(self, file)
         if not self.is_h5_file():
             print('Error:\tFile is not an HDF5 file!')
             sys.exit(1)      
+
+        if verbose:
+            print('Reading %s ...' % file)
 
         with h5py.File(self.file,'r') as hf:
             # TODO: read order of moments and if crossterms from attributes!!!
@@ -550,6 +553,8 @@ class SliceMoms(H5File):
             self.zeta_array = np.array(hf.get( self.zeta_array_name ))
             self.charge = np.array(hf.get( 'charge' ))
 
+            if verbose:
+                print('Reading first order moments...')
             first_order = hf.get('first_order')
             self.avgx1 = np.array(first_order.get( 'avgx1' ))
             self.avgx2 = np.array(first_order.get( 'avgx2' ))
@@ -559,6 +564,8 @@ class SliceMoms(H5File):
             self.avgp3 = np.array(first_order.get( 'avgp3' ))
 
             if order > 1:
+                if verbose:
+                    print('Reading second order moments...')
                 second_order = hf.get('second_order')
                 self.avgx1sq = np.array(second_order.get( 'avgx1sq' ))
                 self.avgx2sq = np.array(second_order.get( 'avgx2sq' ))
@@ -570,8 +577,9 @@ class SliceMoms(H5File):
                 self.avgx2p2 = np.array(second_order.get( 'avgx2p2' ))
                 self.avgx3p3 = np.array(second_order.get( 'avgx3p3' ))
 
-
             if order > 2:
+                if verbose:
+                    print('Reading third order moments...')
                 third_order = hf.get('third_order')
                 self.avgx1cube = np.array(third_order.get( 'avgx1cube' ))
                 self.avgx2cube = np.array(third_order.get( 'avgx2cube' ))
@@ -590,6 +598,8 @@ class SliceMoms(H5File):
                 # ...
 
             if order > 3:
+                if verbose:
+                        print('Reading fourth order moments...')
                 fourth_order = hf.get('fourth_order')
                 self.avgx1quar = np.array(fourth_order.get( 'avgx1quar' ))
                 self.avgx2quar = np.array(fourth_order.get( 'avgx2quar' ))

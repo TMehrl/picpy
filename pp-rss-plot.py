@@ -554,12 +554,30 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     plt.close(figYbtail)  
 
 
-def plot_save_slice_ene(slm, savepath):
+
+def plot_save_slice_ene(slm, savepath, time = None):
+    
     gamma = np.sqrt( 1 + np.power(slm.avgp1,2) 
                        + np.power(slm.avgp2,2)
                        + np.power(slm.avgp3,2) )
 
-    fig = plt.figure()
+    if time == None:
+        tidx = [0,-1];
+    else:
+        tidx = [(np.abs(slm.time_array - time)).argmin()]
+
+    for i in tidx:
+        fig = plt.figure()
+        plt.plot(slm.zeta_array, gamma[i,:])
+        ax = plt.gca()
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(r'$\gamma$', fontsize=14)
+        saveas_eps_pdf(fig, savepath, ('gamma_time_%0.1f' % (slm.time_array[i])) )
+        plt.close(fig)    
+
+
+
+    figG = plt.figure()
     cax = plt.pcolormesh( slm.zeta_array,
                           slm.time_array,
                           gamma,
@@ -568,13 +586,13 @@ def plot_save_slice_ene(slm, savepath):
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
-    cbar = fig.colorbar( cax )
+    cbar = figG.colorbar( cax )
     cbar.ax.set_ylabel(r'$\gamma$', fontsize=14)
-    saveas_png(fig, savepath, 'gamma')
-    plt.close(fig)    
+    saveas_png(figG, savepath, 'gamma')
+    plt.close(figG)    
+
 
 def plot_curr_profile(slm, savepath, time = None):
-    fig = plt.figure()
     dzeta = abs(slm.zeta_array[1] - slm.zeta_array[0]);
     curr = slm.charge / dzeta
 
@@ -591,6 +609,7 @@ def plot_curr_profile(slm, savepath, time = None):
         tidx = [(np.abs(slm.time_array - time)).argmin()]
 
     for i in tidx:
+        fig = plt.figure()
         plt.plot(slm.zeta_array, Ib_per_IA[i,:])
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
