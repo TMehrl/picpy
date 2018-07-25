@@ -541,7 +541,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     plt.plot(slm.time_array, slm.avgx2[:,0])
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14)
-    ax.set_ylabel(r'$X_{b,\mathrm{tail}}$', fontsize=14)
+    ax.set_ylabel(r'$k_p X_{b,\mathrm{tail}}$', fontsize=14)
     if magn_check(slm.avgx2[:,0]):    
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
@@ -554,7 +554,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     plt.plot(slm.time_array, slm.avgx3[:,0])
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14)
-    ax.set_ylabel(r'$Y_{b,\mathrm{tail}}$', fontsize=14) 
+    ax.set_ylabel(r'$k_p Y_{b,\mathrm{tail}}$', fontsize=14) 
     saveas_eps_pdf(figYbtail, savepath, 'Yb_tail')   
     plt.close(figYbtail)  
 

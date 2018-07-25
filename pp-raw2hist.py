@@ -156,14 +156,36 @@ def r2h_2d_subparser(subparsers, parent_parser):
     return parser
 
 
+
+
+
+
+
 def oneD(raw, args):
     if args.psv == 'x':
        xlabel = r'$k_p x$' 
        psv = raw.x2
        savename = 'x'
+    elif args.psv == 'y':
+       xlabel = r'$k_p y$' 
+       psv = raw.x3
+       savename = 'y'       
     elif args.psv == 'z':
        xlabel = r'$k_p \zeta$' 
        psv = raw.x1
+       savename = 'zeta'
+    elif args.psv == 'px':
+       xlabel = r'$p_x/m c$' 
+       psv = raw.p2
+       savename = 'px'
+    elif args.psv == 'py':
+       xlabel = r'$p_y/m c$' 
+       psv = raw.p3
+       savename = 'pz'
+    elif args.psv == 'pz':
+       xlabel = r'$p_z/m c$' 
+       psv = raw.p1
+       savename = 'pz'
 
     if args.nbins == None:
         nbins = np.int(raw.get_npart()/1e2)
@@ -185,7 +207,6 @@ def oneD(raw, args):
 def twoD(raw, args):
     # Do stuff  
     pass
-
 
 
 
