@@ -17,19 +17,7 @@ from pp_h5dat import HiRAW
 from pp_h5dat import H5FList
 from pp_h5dat import mkdirs_if_nexist
 
-# Parse defaults/definitions
-class parsedefs:
-    class file_format:
-        png = 'png'
-        eps = 'eps'
-        pdf = 'pdf'
-    class zax:
-        zeta = 'zeta'
-        z = 'z'
-        xi = 'xi'
-    class save:
-        prefix = 'g3d_name'
-        path = './plots'
+
 
 def raw2hist_parser():
 
@@ -55,38 +43,16 @@ def raw2hist_parser():
                           action = "store_true",
                           default = False,
                           help = "Show figure.")
-    parser.add_argument(  "--name-prefix",
-                          action = "store",
-                          dest = "save_prefix",
-                          metavar = "NAME",
-                          default = parsedefs.save.prefix,
-                          help = """Define customized prefix of output filename.""")
-    parser.add_argument(  "-c", "--code",
-                          action="store",
-                          dest="piccode",
-                          metavar="CODE",
-                          choices = [pp_defs.code.hipace, pp_defs.code.osiris,],
-                          default = pp_defs.code.hipace,
-                          help="PIC code (Default: " + pp_defs.code.hipace + ").")
-    parser.add_argument(  "-z", "--z-axis",
-                          action='store',
-                          dest="zax",
-                          metavar="ZAXIS",
-                          choices=[ parsedefs.zax.zeta,
-                                  parsedefs.zax.z,
-                                  parsedefs.zax.xi,],
-                          default=parsedefs.zax.zeta,
-                          help= "z-axis type (Default: " + parsedefs.zax.zeta + ").")    
     return parser
 
 def r2h_2d_subparser(subparsers, parent_parser):
     parser = subparsers.add_parser( "2d", parents=[parent_parser],
                                     help="2d histogram")    
     # Slice plot specific arguments
-    parser.add_argument(  '--psv',
+    parser.add_argument(  '--psv', '--phase-space-vars',
                           help='Phase space vars',
                           action='store',
-                          dest="cblim",
+                          dest="psv",
                           metavar=('VAR1', 'VAR2'),
                           nargs=2,
                           default=None)
@@ -96,7 +62,7 @@ def r2h_2d_subparser(subparsers, parent_parser):
                           metavar="CSCALE",
                           choices=[ "lin", "log",],
                           default="lin",
-                          help= "z-axis type (Default: " + parsedefs.zax.zeta + ").")
+                          help= "z-axis type (Default: %(default)s).")
     parser.add_argument(  '--cblim',
                           help='Colorbar axis limits',
                           action='store',
@@ -109,7 +75,7 @@ def r2h_2d_subparser(subparsers, parent_parser):
                           action="store",
                           dest="savepath",
                           metavar="PATH",
-                          default=parsedefs.save.path + '/g3d-slice',
+                          default='plots/hist2d',
                           help = """Path to which generated files will be saved.
                               (Default: './')""")
     parser.add_argument(  "-f", "--format",
@@ -135,26 +101,11 @@ def r2h_1d_subparser(subparsers, parent_parser):
                           choices=[ 'x', 'y', 'z'],
                           default='z',
                           help= """Axis along which lineout is generated (Default: z).""")
-    parser.add_argument(  '-i', '--indices',
-                          help='Indices for which lineout is taken.',
-                          action='store',
-                          dest="lout_idx",
-                          metavar=('idx0', 'idx1'),
-                          nargs=2,
-                          type=int,
-                          default=None)
-    parser.add_argument(  "--zeta-pos",
-                          action='store',
-                          dest="lout_zeta_pos",
-                          metavar="LOUT-ZETA-POS",
-                          type=float,    
-                          default=None,
-                          help= """Zeta-position at which lineout is generated (Default: 0.0).""")    
     parser.add_argument(  "-s", "--save-path",
                           action="store",
                           dest="savepath",
                           metavar="PATH",
-                          default=parsedefs.save.path + '/g3d-line',
+                          default='plots/hist1d',
                           help = """Path to which generated files will be saved.
                               (Default: './')""")
     parser.add_argument(  "-f", "--format",
@@ -618,12 +569,12 @@ def main():
 
     r2h_parent_parser = raw2hist_parser()
 
-    r2h_ssp = r2h_2D_subparser(  subparsers=r2h_subparsers,
-                                    parent_parser=r2h_parent_parser)
+    r2h_ssp = r2h_2d_subparser( subparsers=r2h_subparsers,
+                                parent_parser=r2h_parent_parser)
     r2h_ssp.set_defaults(func=twoD)
 
-    r2h_lsp = r2h_1D_subparser( subparsers=r2h_subparsers,
-                                  parent_parser=r2h_parent_parser)
+    r2h_lsp = r2h_1d_subparser( subparsers=r2h_subparsers,
+                                parent_parser=r2h_parent_parser)
     r2h_lsp.set_defaults(func=oneD)
 
     args = parser.parse_args()
