@@ -229,8 +229,17 @@ class HiFile(H5Keys, H5File):
     def get_nt(self):
         return round(self.time/self.dt)
 
+    def get_time(self):
+        return self.time
+
     def get_nx(self,dim):
         return self.nx[dim]        
+
+    def get_xmin(self,dim):
+        return self.xmin[dim]
+
+    def get_xmax(self,dim):
+        return self.xmax[dim]
 
     def get_dx(self,dim):
         return (self.xmax[dim]-self.xmin[dim])/self.nx[dim]
@@ -255,6 +264,8 @@ class HiFile(H5Keys, H5File):
 class HiRAW(HiFile):
     def __init__(self, file):
         HiFile.__init__(self, file)
+        self.__npart = 0
+        self.__data_is_read = False
 
     def read_data(self):
 
@@ -269,7 +280,35 @@ class HiRAW(HiFile):
             self.p2 = np.array(hf.get(  self.get_rawkey('p2') ))
             self.p3 = np.array(hf.get(  self.get_rawkey('p3') ))
 
-            self.npart = len(self.q)
+            self.__npart = len(self.q)
+
+        self.__data_is_read = True
+
+    def get_npart(self):
+        return self.__npart
+
+    def select_zeta_range(self, zeta_range):
+        if not self.__data_is_read:
+            self.read_data()
+        if zeta_range != [] and len(zeta_range) == 2:
+            idx = np.where((self.x1 >= zeta_range[0]) & (self.x1 < zeta_range[1]))
+            self.__npart = len(idx)
+            self.x1 = self.x1[idx]
+            self.x2 = self.x2[idx]
+            self.x3 = self.x3[idx]
+            self.p1 = self.p1[idx]
+            self.p2 = self.p2[idx]
+            self.p3 = self.p3[idx]
+
+    # def get_var(self, var = '', idx = [], ifread = True)
+    #     if self.__data_is_read:
+    #         if idx == []:
+    #             return self.x1
+    #         else:
+    #             return self.x1[idx]
+    #     else:
+    #         print('Error:\tData not yet read!' % (self.file) )
+    #         sys.exit()            
 
 #### 3D-grid
 class Grid3d(HiFile):

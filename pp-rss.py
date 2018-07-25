@@ -193,7 +193,7 @@ def main():
         raw.read_attrs()
         raw.read_data()
 
-        sm.time_array[i] = raw.time
+        sm.time_array[i] = raw.get_time()
         slices = pp_raw_ana.Slices(raw, nbins=Nbins, zrange=zeta_range, cellvol=cellvol)
 
         slices.calc_moments(order = mom_order, crossterms=crossterms, timings=args.timings )

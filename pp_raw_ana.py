@@ -54,18 +54,18 @@ class Slices:
         self.if_moms_calc = False
         self.cellvol = cellvol
 
-        dx0 = (raw.xmax[0] - raw.xmin[0])/raw.nx[0]
         self.raw = raw
+        dx0 = self.raw.get_dx(0)        
         if nbins == 0:
             if (edges==[]) and (zrange == None):
-                self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(raw.nx[0]+1))
+                self.edges = np.linspace(raw.get_xmin(0)-dx0/2, raw.get_xmax(0)+dx0/2, num=(raw.get_nx(0)+1))
                 self.if_edges_eq_spaced = True
             elif (edges==[]) and (zrange != None):
                 self.edges = np.arange(start=zrange[0]-dx0/2,stop=zrange[1]+dx0/2,step=dx0,dtype=np.float32)
                 self.if_edges_eq_spaced = True
         elif nbins != 0:
             if zrange==None:
-                self.edges = np.linspace(raw.xmin[0]-dx0/2, raw.xmax[0]+dx0/2, num=(nbins+1))
+                self.edges = np.linspace(raw.get_xmin(0)-dx0/2, raw.get_xmax(0)+dx0/2, num=(nbins+1))
                 self.if_edges_eq_spaced = True
             else:
                 dx0_step = (zrange[1] - zrange[0])/nbins
