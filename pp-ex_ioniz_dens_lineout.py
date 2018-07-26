@@ -177,8 +177,8 @@ def calc_ion_rate( elec_field,
 
 
 def plot_hipace_Ex(zeta_pos):
-    ExmBy_path = './DATA/field_ExmBy_000000.h5'
-    By_path = './DATA/field_By_000000.h5'
+    ExmBy_path = './DATA/field_ExmBy_000000.0.h5'
+    By_path = './DATA/field_By_000000.0.h5'
     
     ExmBy_g3d2 = Grid3d(ExmBy_path)
     By_g3d2 = Grid3d(By_path)
