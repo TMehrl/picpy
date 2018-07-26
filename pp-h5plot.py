@@ -107,7 +107,7 @@ def h5plot_parser():
                           help = "Plot difference w.r.t. first line plot (default: %(default)s).")
     parser.add_argument(  "--latexoff",
                           dest = "latexoff",
-                          action="store_false",
+                          action="store_true",
                           default=False,
                           help = "Use LaTeX font (Default: %(default)s).")                                                                       
     return parser
@@ -135,28 +135,41 @@ def main():
         sys.exit(1)  
     
     h5lp = []
-    i = 0
+
     linestyles = ['-', '--', '-.', ':']
     save_append_str = ''
+    type_str = 'comp'
 
     if not args.latexoff:
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif') 
 
+    j = 0
+    if args.diff:
+        h5firstlp = H5Plot()
+        h5firstlp.read(args.paths[0])
+        type_str = 'diff'
+        for (x, y, label, linestyle, color) in h5firstlp.get_line_plots():
+            if j == 0:
+                x0 = x 
+                y0 = y
+            j += 1
+
+    i = 0
     for path in args.paths:
         if not os.path.isfile(path):
             print('ERROR: File %s does not exist!' % path)
-            sys.exit(1)             
+            sys.exit(1)          
 
         h5lp.append(H5Plot())
         h5lp[i].read(path)
-        j = 0 
 
         if args.cno == None:
             argcolor = plt.cm.Dark2(i)
         else:
             argcolor = plt.cm.Dark2(args.cno[i])
-
+        
+        j = 0
         for (x, y, label, linestyle, color) in h5lp[i].get_line_plots():
             if args.labels != None:
                 save_append_str += '_' + args.labels[i]
@@ -168,6 +181,12 @@ def main():
             if not args.latexoff:
                 if label[0] != '$' or label[-1] != '$':
                     label = r'$\textrm{' + label + '}$'
+
+            if args.diff: 
+                if (j == 0 and i == 0):
+                    continue
+                else:
+                    y -= np.interp(x,x0,y0)
 
             if (args.line_no != None):
                 if args.line_no[i] == j:
@@ -197,15 +216,12 @@ def main():
         plt.gcf().subplots_adjust(left=0.15)              
     plt.show()
     fname, fext = os.path.splitext(args.paths[0])
-    save_path_name = fname + save_append_str + '_comp' + '.' + args.file_format
+    save_path_name = fname + save_append_str + '_' + type_str + '.' + args.file_format
     fig.savefig(save_path_name, format=args.file_format)
     plt.close(fig)
     if args.verbose: 
         sys.stdout.write('Saved: %s\n' % save_path_name)
         sys.stdout.flush()
-
-    if args.diff:
-        print('DIFFERENCE PLOTS: TO BE IMPLEMENTED!!!')
 
 
 if __name__ == "__main__":
