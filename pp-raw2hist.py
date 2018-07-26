@@ -156,43 +156,47 @@ def r2h_2d_subparser(subparsers, parent_parser):
     return parser
 
 
-
-
-
+def get_props(raw,psv_str):
+    if psv_str == 'x':
+       label = r'$k_p x$' 
+       psv = raw.x2
+       savename = 'x'
+    elif psv_str == 'y':
+       label = r'$k_p y$' 
+       psv = raw.x3
+       savename = 'y'       
+    elif psv_str == 'z':
+       label = r'$k_p \zeta$' 
+       psv = raw.x1
+       savename = 'zeta'
+    elif psv_str == 'px':
+       label = r'$p_x/m c$' 
+       psv = raw.p2
+       savename = 'px'
+    elif psv_str == 'py':
+       label = r'$p_y/m c$' 
+       psv = raw.p3
+       savename = 'pz'
+    elif psv_str == 'pz':
+       label = r'$p_z/m c$' 
+       psv = raw.p1
+       savename = 'pz'
+    return psv, label, savename
 
 
 def oneD(raw, args):
-    if args.psv == 'x':
-       xlabel = r'$k_p x$' 
-       psv = raw.x2
-       savename = 'x'
-    elif args.psv == 'y':
-       xlabel = r'$k_p y$' 
-       psv = raw.x3
-       savename = 'y'       
-    elif args.psv == 'z':
-       xlabel = r'$k_p \zeta$' 
-       psv = raw.x1
-       savename = 'zeta'
-    elif args.psv == 'px':
-       xlabel = r'$p_x/m c$' 
-       psv = raw.p2
-       savename = 'px'
-    elif args.psv == 'py':
-       xlabel = r'$p_y/m c$' 
-       psv = raw.p3
-       savename = 'pz'
-    elif args.psv == 'pz':
-       xlabel = r'$p_z/m c$' 
-       psv = raw.p1
-       savename = 'pz'
+
+    psv, xlabel, savename = get_props(raw,args.psv)
 
     if args.nbins == None:
-        nbins = np.int(raw.get_npart()/1e2)
+        if raw.get_npart()>1e3:
+            nbins = np.int(raw.get_npart()/1e2)
+        else:
+            nbins = 20
     else:
         nbins = args.nbins  
 
-    hist, bin_edges = np.histogram(psv,bins=nbins,weights=raw.q)
+    hist, bin_edges = np.histogram(psv,bins=nbins,weights=raw.q,density=True)
     x_array = bin_edges[0:-1] + (bin_edges[1] - bin_edges[0])/2
 
     fig = plt.figure()
@@ -205,9 +209,33 @@ def oneD(raw, args):
 
 
 def twoD(raw, args):
-    # Do stuff  
-    pass
 
+    varx, xlabel, savenamex = get_props(raw,args.psv[0])
+    vary, ylabel, savenamey = get_props(raw,args.psv[1])
+    savename = savenamex + '_' + savenamey
+
+    if args.nbins == None:
+        if raw.get_npart()>1e3:
+            nbins = np.int(raw.get_npart()/1e2)
+        else:
+            nbins = 20
+
+    H, xedges, yedges = np.histogram2d(varx,vary,bins=nbins,weights=raw.q)
+    x_array = xedges[0:-1] + (xedges[1] - xedges[0])/2
+    y_array = yedges[0:-1] + (yedges[1] - yedges[0])/2
+
+    fig = plt.figure()
+    cax = plt.pcolor(x_array,
+                     y_array,
+                     H, cmap='PuBu')            
+    #cax.cmap = self.colormap
+    # if args.clog:
+    #     cax.norm = matplotlib.colors.LogNorm(vmin=self.clim[0], vmax=self.clim[1])
+
+    ax = plt.gca()
+    ax.set_ylabel(ylabel, fontsize=14)
+    ax.set_xlabel(xlabel, fontsize=14)
+    saveas_png(fig, args.savepath, savename, verbose=True)
 
 
 def main():
@@ -243,8 +271,11 @@ def main():
         raw.read_data()
         if args.zeta_range != None:
             raw.select_zeta_range(args.zeta_range)
-
-        args.func(raw, args)
+        if raw.get_npart() > 0:
+            args.func(raw, args)
+        else:
+            print('Error:\tNo particles in file (or range)!')
+            sys.exit()                
 
 
 if __name__ == "__main__":

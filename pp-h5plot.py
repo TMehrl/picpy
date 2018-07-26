@@ -87,6 +87,14 @@ def h5plot_parser():
                           default=None,
                           nargs='+',
                           help= """Labels for each selected line.""")
+    parser.add_argument(  "--cno", "--color-number",
+                          action='store',
+                          dest="cno",
+                          metavar="CNUMBERS",
+                          type=int,                      
+                          default=None,
+                          nargs='+',
+                          help= """Color number for each selected line.""")    
     parser.add_argument(  "--ylog",
                           dest = "absylog",
                           action="store_true",
@@ -100,7 +108,7 @@ def h5plot_parser():
     parser.add_argument(  "--latexoff",
                           dest = "latexoff",
                           action="store_false",
-                          default=True,
+                          default=False,
                           help = "Use LaTeX font (Default: %(default)s).")                                                                       
     return parser
 
@@ -144,7 +152,10 @@ def main():
         h5lp[i].read(path)
         j = 0 
 
-        colormap = plt.cm.Dark2(i)
+        if args.cno == None:
+            argcolor = plt.cm.Dark2(i)
+        else:
+            argcolor = plt.cm.Dark2(args.cno[i])
 
         for (x, y, label, linestyle, color) in h5lp[i].get_line_plots():
             if args.labels != None:
@@ -161,15 +172,15 @@ def main():
             if (args.line_no != None):
                 if args.line_no[i] == j:
                     if args.absylog:
-                        plt.semilogy( x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=colormap)                        
+                        plt.semilogy( x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=argcolor)                        
                     else:
-                        plt.plot(x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=colormap)
+                        plt.plot(x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=argcolor)
             else:
                 if args.absylog:
-                    plt.semilogy( x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=colormap)
+                    plt.semilogy( x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=argcolor)
                 else:    
                     #plt.plot(x, y, label=label, linestyle=linestyle, color=color)
-                    plt.plot(x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=colormap)      
+                    plt.plot(x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=argcolor)      
             j += 1
         i += 1
 
