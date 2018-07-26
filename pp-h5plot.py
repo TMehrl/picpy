@@ -124,7 +124,7 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(6,5))
 
     if (args.line_no != None) and (len(args.line_no) != len(args.paths)):
         print('ERROR: number of selected lines must be equal to the number of provided hdf5 files!')
@@ -209,13 +209,14 @@ def main():
     handles, labels = ax.get_legend_handles_labels()
     #plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
     plt.legend(frameon=False)
+    plt.gcf().subplots_adjust(left=0.15, bottom=0.15)       
     if not (-3.0 < math.log(np.max(abs(y)),10) < 3.0):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
-        plt.gcf().subplots_adjust(left=0.18)
-    else:
-        plt.gcf().subplots_adjust(left=0.15)              
+        plt.gcf().subplots_adjust(left=0.18)          
     plt.show()
     fname, fext = os.path.splitext(args.paths[0])
+
+
     save_path_name = fname + save_append_str + '_' + type_str + '.' + args.file_format
     fig.savefig(save_path_name, format=args.file_format)
     plt.close(fig)

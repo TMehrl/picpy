@@ -267,10 +267,10 @@ class HiRAW(HiFile):
         self.__npart = 0
         self.__data_is_read = False
 
-    def read_data(self):
-
+    def read_data(self, verbose=True):
+        if verbose:
+            print('Reading data...')        
         with h5py.File(self.file,'r') as hf:
-
             # Reading datasets
             self.x1 = np.array(hf.get(  self.get_rawkey('x1') ))
             self.x2 = np.array(hf.get(  self.get_rawkey('x2') ))
@@ -283,6 +283,8 @@ class HiRAW(HiFile):
             self.__npart = len(self.q)
 
         self.__data_is_read = True
+        if verbose:
+            print('Data is read.') 
 
     def get_npart(self):
         return self.__npart
@@ -299,16 +301,28 @@ class HiRAW(HiFile):
             self.p1 = self.p1[idx]
             self.p2 = self.p2[idx]
             self.p3 = self.p3[idx]
+            self.q = self.q[idx]
 
-    # def get_var(self, var = '', idx = [], ifread = True)
-    #     if self.__data_is_read:
-    #         if idx == []:
-    #             return self.x1
-    #         else:
-    #             return self.x1[idx]
+    # def get_var(self, var, idx = [], ifread = True):
+    #     ret_array = []
+    #     if not self.__data_is_read:
+    #         if ifread:
+    #             if var in self.__rawkeys:
+    #                 with h5py.File(self.file,'r') as hf:
+    #                     exec("self.%s = np.array(hf.get(  self.get_rawkey('%s') ))" % (var,var))
+    #             else:
+    #                 print('Error:\tVariable "%s" does not exist!' % var )
+    #                 sys.exit()                     
+    #         else:    
+    #             print('Error:\tFile %s has not been read!' % (self.file) )
+    #             sys.exit()
+    #     exec('ret_array = self.%s' % var)  
+    #     exec('print(self.%s)' % var)
+    #     print(ret_array)
+    #     if idx == []:
+    #         return ret_array
     #     else:
-    #         print('Error:\tData not yet read!' % (self.file) )
-    #         sys.exit()            
+    #         return ret_array[idx]
 
 #### 3D-grid
 class Grid3d(HiFile):
@@ -579,10 +593,15 @@ class SliceMoms(H5File):
         with h5py.File(self.file,'r') as hf:
             # TODO: read order of moments and if crossterms from attributes!!!
 
-            if order == None:
-                order = hf.attrs['mom_order']
+            if 'mom_order' in hf.keys():
+                h5_mom_order = hf.attrs['mom_order']
             else:
-                if order > hf.attrs['mom_order']:
+                h5_mom_order = 2
+
+            if order == None:
+                order = h5_mom_order
+            else:
+                if order > h5_mom_order:
                     print('Error:\tSpecified order is greater than moment order in hdf5 file!')
                     sys.exit(1)     
             self.__order = order

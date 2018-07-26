@@ -68,7 +68,8 @@ def r2h_1d_subparser(subparsers, parent_parser):
                           dest="psv",
                           metavar="VAR",
                           choices=[ 'x', 'y', 'z', 'px', 'py', 'pz'],
-                          default='x',
+                          default=None,
+                          required=True,
                           help= 'Phase space variable')
     parser.add_argument(  "-s", "--save-path",
                           action="store",
@@ -113,6 +114,7 @@ def r2h_2d_subparser(subparsers, parent_parser):
                           dest="psv",
                           metavar=('VAR1', 'VAR2'),
                           nargs=2,
+                          required=True,
                           default=None)
     parser.add_argument(  "--cscale",
                           action='store',
@@ -189,20 +191,18 @@ def oneD(raw, args):
     psv, xlabel, savename = get_props(raw,args.psv)
 
     if args.nbins == None:
-        if raw.get_npart()>1e3:
-            nbins = np.int(raw.get_npart()/1e2)
-        else:
-            nbins = 20
+        nbins = np.int( np.sqrt(raw.get_npart()) / 2.0 )
     else:
         nbins = args.nbins  
 
     hist, bin_edges = np.histogram(psv,bins=nbins,weights=raw.q,density=True)
     x_array = bin_edges[0:-1] + (bin_edges[1] - bin_edges[0])/2
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(6,5))
     plt.plot( x_array, hist )
     ax = plt.gca()    
     ax.set_xlabel(xlabel, fontsize=14)
+    plt.gcf().subplots_adjust(left=0.15, bottom=0.15)   
 
     saveas_eps_pdf(fig, args.savepath, savename, h5plot=True, verbose=True, fformat='pdf')
 
@@ -215,19 +215,24 @@ def twoD(raw, args):
     savename = savenamex + '_' + savenamey
 
     if args.nbins == None:
-        if raw.get_npart()>1e3:
-            nbins = np.int(raw.get_npart()/1e2)
-        else:
-            nbins = 20
+        print(raw.get_npart())
+        nbins = np.int( np.sqrt(raw.get_npart()) / 2.0 )
+    else:
+        nbins = args.nbins
 
+    if args.verbose:
+        print("Generating 2d histogram...")
     H, xedges, yedges = np.histogram2d(varx,vary,bins=nbins,weights=raw.q)
     x_array = xedges[0:-1] + (xedges[1] - xedges[0])/2
     y_array = yedges[0:-1] + (yedges[1] - yedges[0])/2
 
-    fig = plt.figure()
+    if args.verbose:
+        print("Generating plot...")
+    fig = plt.figure(figsize=(6,5))
     cax = plt.pcolor(x_array,
                      y_array,
-                     H, cmap='PuBu')            
+                     H, cmap='PuBu') 
+    plt.gcf().subplots_adjust(left=0.15, bottom=0.15)                                  
     #cax.cmap = self.colormap
     # if args.clog:
     #     cax.norm = matplotlib.colors.LogNorm(vmin=self.clim[0], vmax=self.clim[1])
@@ -268,7 +273,7 @@ def main():
 
     for file in flist:
         raw = HiRAW(file)
-        raw.read_data()
+        raw.read_data(verbose=args.verbose)
         if args.zeta_range != None:
             raw.select_zeta_range(args.zeta_range)
         if raw.get_npart() > 0:
