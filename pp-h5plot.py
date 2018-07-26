@@ -94,7 +94,15 @@ def h5plot_parser():
                           type=int,                      
                           default=None,
                           nargs='+',
-                          help= """Color number for each selected line.""")    
+                          help= """Color number for each selected line.""")
+    parser.add_argument(  "--lstyle", "--line-style",
+                          action='store',
+                          dest="lstyle",
+                          metavar="LINE-STYLE-NUMBER",
+                          type=int,                      
+                          default=None,
+                          nargs='+',
+                          help= """Line style number for each selected line. 0: '-', 1: '--', 2: '-.',  3: ':'""")  
     parser.add_argument(  "--ylog",
                           dest = "absylog",
                           action="store_true",
@@ -188,18 +196,23 @@ def main():
                 else:
                     y -= np.interp(x,x0,y0)
 
+            if args.lstyle == None:
+                linestyle_code = linestyles[i%len(linestyles)]
+            else:
+                linestyle_code = linestyles[args.lstyle[i]]
+
             if (args.line_no != None):
                 if args.line_no[i] == j:
                     if args.absylog:
-                        plt.semilogy( x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=argcolor)                        
+                        plt.semilogy( x, y, label=label, linestyle=linestyle_code, color=argcolor)                        
                     else:
-                        plt.plot(x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=argcolor)
+                        plt.plot(x, y, label=label, linestyle=linestyle_code, color=argcolor)
             else:
                 if args.absylog:
-                    plt.semilogy( x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=argcolor)
+                    plt.semilogy( x, y, label=label, linestyle=linestyle_code, color=argcolor)
                 else:    
                     #plt.plot(x, y, label=label, linestyle=linestyle, color=color)
-                    plt.plot(x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=argcolor)      
+                    plt.plot(x, y, label=label, linestyle=linestyle_code, color=argcolor)      
             j += 1
         i += 1
 
