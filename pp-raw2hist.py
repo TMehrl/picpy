@@ -186,6 +186,14 @@ def get_props(raw,psv_str):
     return psv, label, savename
 
 
+def get_zeta_range_str(zeta_range):
+    if zeta_range != None:
+        zr_str = ('_zeta_range_%0.2f_%0.2f' % (zeta_range[0], zeta_range[1]))
+    else:
+        zr_str = ''
+    return zr_str 
+
+
 def oneD(raw, args):
 
     psv, xlabel, savename = get_props(raw,args.psv)
@@ -204,6 +212,8 @@ def oneD(raw, args):
     ax.set_xlabel(xlabel, fontsize=14)
     plt.gcf().subplots_adjust(left=0.15, bottom=0.15)   
 
+    savename += get_zeta_range_str(args.zeta_range)
+
     saveas_eps_pdf(fig, args.savepath, savename, h5plot=True, verbose=True, fformat='pdf')
 
 
@@ -212,10 +222,8 @@ def twoD(raw, args):
 
     varx, xlabel, savenamex = get_props(raw,args.psv[0])
     vary, ylabel, savenamey = get_props(raw,args.psv[1])
-    savename = savenamex + '_' + savenamey
 
     if args.nbins == None:
-        print(raw.get_npart())
         nbins = np.int( np.sqrt(raw.get_npart()) / 2.0 )
     else:
         nbins = args.nbins
@@ -240,6 +248,9 @@ def twoD(raw, args):
     ax = plt.gca()
     ax.set_ylabel(ylabel, fontsize=14)
     ax.set_xlabel(xlabel, fontsize=14)
+
+    savename = savenamex + '_' + savenamey + get_zeta_range_str(args.zeta_range)
+
     saveas_png(fig, args.savepath, savename, verbose=True)
 
 

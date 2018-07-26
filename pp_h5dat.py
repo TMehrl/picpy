@@ -289,12 +289,14 @@ class HiRAW(HiFile):
     def get_npart(self):
         return self.__npart
 
-    def select_zeta_range(self, zeta_range):
+    def select_zeta_range(self, zeta_range, verbose=True):
         if not self.__data_is_read:
             self.read_data()
         if zeta_range != [] and len(zeta_range) == 2:
-            idx = np.where((self.x1 >= zeta_range[0]) & (self.x1 < zeta_range[1]))
-            self.__npart = len(idx)
+            idx = np.nonzero((self.x1 >= zeta_range[0]) & (self.x1 < zeta_range[1]))
+            self.__npart = np.size(idx)
+            if verbose:
+                print('%i particles in selected range [%0.2f, %0.2f]' % (self.__npart,zeta_range[0],zeta_range[1]))
             self.x1 = self.x1[idx]
             self.x2 = self.x2[idx]
             self.x3 = self.x3[idx]
