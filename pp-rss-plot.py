@@ -22,6 +22,8 @@ from pp_h5dat import SliceMoms
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
 import pp_raw_ana
+from pp_plt_tools import saveas_png
+from pp_plt_tools import saveas_eps_pdf
 
 
 # Parse defaults/definitions
@@ -89,6 +91,14 @@ def ps_parseopts():
                         metavar="NFILES",
                         default=0,
                         help= """Number of files to analyze.""")
+    parser.add_argument(  "-o", "--mom-order",
+                          type=int,
+                          action='store',
+                          dest="mom_order",
+                          metavar="MOMORDER",
+                          choices=[1, 2, 3, 4,],
+                          default=None,
+                          help='Order of moment evaluation (Default: %(default)s).')    
     parser.add_argument(  '-t', '--time',
                           help='time for which rms plots are to be generated',
                           action='store',
@@ -109,44 +119,14 @@ def ps_parseopts():
                           action="store_true",
                           default=True,
                           help = "Save plot as hdf5 file (Default: %(default)s).") 
+    parser.add_argument(  "--latexoff",
+                          dest = "latexoff",
+                          action="store_false",
+                          default=True,
+                          help = "Use LaTeX font (Default: %(default)s).")
 
     return parser
 
-
-def saveas_eps_pdf(fig, savepath, savename, h5plot=True, verbose=True, fformat='pdf'):
-
-    fformat_list = ['eps','pdf']
-
-    if fformat not in fformat_list:
-        print("Error: fformat must be one of: " + fformat_list)
-
-    fig.savefig( savepath + '/' + savename + '.' + fformat,
-                  format=fformat)
-      
-    if verbose: 
-        sys.stdout.write('Saved "%s.%s" at: %s/\n' % (savename, fformat, savepath))
-        sys.stdout.flush()
-
-    if h5plot: 
-        h5lp = H5Plot()
-        h5lp.inherit_matplotlib_line_plots(plt.gca())    
-        h5lp.write(savepath + '/' + savename + '.h5')
-
-        if verbose: 
-            sys.stdout.write('Saved "%s.h5" at: %s/\n' % (savename, savepath))
-            sys.stdout.flush()  
-
-
-def saveas_png(fig, savepath, savename, verbose=True):
-
-    fformat = 'png'
-    fig.savefig( savepath + '/' + savename + '.' + fformat,
-                  format=fformat,
-                  dpi=600)    
-      
-    if verbose: 
-        sys.stdout.write('Saved "%s.%s" at: %s/\n' % (savename, fformat, savepath))
-        sys.stdout.flush()  
 
 
 def magn_check(x):
@@ -352,9 +332,103 @@ def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
                   sigma_pxy)
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-        ax.set_ylabel(sigma_xy_lab, fontsize=14)     
+        ax.set_ylabel(sigma_pxy_lab, fontsize=14)     
         saveas_eps_pdf(fig_sigma_pxy, savepath, ('%s_time_%0.1f' % (sigma_pxy_savename, slm.time_array[i])))
         plt.close(fig_sigma_pxy)
+
+def plot_save_slice_exkurtosis_lines(slm, savepath, time = None, axdir=2, h5plot=True):
+
+    if time == None:
+        tidx = [0,-1];
+    else:
+        tidx = [(np.abs(slm.time_array - time)).argmin()]
+
+    for i in tidx:
+        if axdir == 2:
+            var_xy = slm.avgx2sq[i,:]
+            var_xy_nonzero_idx = np.nonzero(var_xy)[0]
+            exkurtosis_xy = np.divide(  slm.avgx2quar[i,var_xy_nonzero_idx],\
+                                        np.power(var_xy[var_xy_nonzero_idx],2)) - 3
+            exkurtosis_xy_lab = r'$\left \langle x^4/\sigma_x^4 \right\rangle - 3$'
+            exkurtosis_xy_savename = 'exkurtosis_x'
+            
+            var_pxy = slm.avgp2sq[i,:]
+            var_pxy_nonzero_idx = np.nonzero(var_pxy)[0]
+            exkurtosis_pxy = np.divide( slm.avgp2quar[i,var_pxy_nonzero_idx],\
+                                        np.power(var_pxy[var_pxy_nonzero_idx],2)) - 3
+            exkurtosis_pxy_lab = r'$\left \langle p_x^4/\sigma_{px}^4 \right\rangle -3$'
+            exkurtosis_pxy_savename = 'exkurtosis_px'
+            # Also define labels and savenames here!    
+        elif axdir == 3:
+            var_xy = slm.avgx3sq[i,:]
+            var_xy_nonzero_idx = np.nonzero(var_xy)[0]           
+            exkurtosis_xy = np.divide(  slm.avgx3quar[i,var_xy_nonzero_idx],\
+                                        np.power(var_xy[var_xy_nonzero_idx],2)) - 3
+            exkurtosis_xy_lab = r'$\left \langle y^4 \right\rangle -3$'
+            exkurtosis_xy_savename = 'exkurtosis_y'
+            
+            var_pxy = slm.avgp3sq[i,:]
+            var_pxy_nonzero_idx = np.nonzero(var_pxy)[0]
+            exkurtosis_pxy = np.divide( slm.avgp3quar[i,var_pxy_nonzero_idx],\
+                                        np.power(var_pxy[var_pxy_nonzero_idx],2)) - 3
+            exkurtosis_pxy_lab = r'$\left \langle p_y^4/\sigma_{py}^4 \right\rangle -3$'
+            exkurtosis_pxy_savename = 'exkurtosis_py'
+
+        fig_exkurtosis_xy = plt.figure()
+        plt.plot( slm.zeta_array[var_xy_nonzero_idx],
+                  exkurtosis_xy)
+        ax = plt.gca()
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(exkurtosis_xy_lab, fontsize=14)     
+        saveas_eps_pdf(fig_exkurtosis_xy, savepath, ('%s_time_%0.1f' % (exkurtosis_xy_savename, slm.time_array[i])))
+        plt.close(fig_exkurtosis_xy)
+
+
+        fig_exkurtosis_pxy = plt.figure()
+        plt.plot( slm.zeta_array[var_pxy_nonzero_idx],
+                  exkurtosis_pxy)
+        ax = plt.gca()
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(exkurtosis_pxy_lab, fontsize=14)     
+        saveas_eps_pdf(fig_exkurtosis_pxy, savepath, ('%s_time_%0.1f' % (exkurtosis_pxy_savename, slm.time_array[i])))
+        plt.close(fig_exkurtosis_pxy)
+
+
+def plot_save_slice_quad_corr_lines(slm, savepath, time = None, axdir=2, h5plot=True):
+
+    if time == None:
+        tidx = [0,-1];
+    else:
+        tidx = [(np.abs(slm.time_array - time)).argmin()]
+
+    for i in tidx:
+        if axdir == 2:
+            var_xy = slm.avgx2sq[i,:]
+            var_pxy = slm.avgp2sq[i,:]
+            nonzero_idx = np.nonzero(np.multiply(var_xy, var_pxy))[0]
+            quad_corr_xy = np.divide(  slm.avgx2sqp2sq[i,nonzero_idx],\
+                                        np.multiply(var_xy[nonzero_idx],var_pxy[nonzero_idx]) ) - 1.0
+            quad_corr_xy_lab = r'$\left \langle x^2  p_x^2\right\rangle/(\sigma_x^2\sigma_{p_x}^2) - 1$'
+            quad_corr_xy_savename = 'quad_corr_x'
+            
+  
+        elif axdir == 3:
+            var_xy = slm.avgx3sq[i,:]
+            var_pxy = slm.avgp3sq[i,:]
+            nonzero_idx = np.nonzero(np.multiply(var_xy, var_pxy))[0]
+            quad_corr_xy = np.divide(  slm.avgx3sqp3sq[i,nonzero_idx],\
+                                        np.multiply(var_xy[nonzero_idx],var_pxy[nonzero_idx]) ) - 1.0
+            quad_corr_xy_lab = r'$\left \langle y^2  p_y^2\right\rangle/(\sigma_y^2\sigma_{p_y}^2) - 1$'
+            quad_corr_xy_savename = 'quad_corr_y'
+
+        fig_quad_corr_xy = plt.figure()
+        plt.plot( slm.zeta_array[nonzero_idx],
+                  quad_corr_xy)
+        ax = plt.gca()
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(quad_corr_xy_lab, fontsize=14)     
+        saveas_eps_pdf(fig_quad_corr_xy, savepath, ('%s_time_%0.1f' % (quad_corr_xy_savename, slm.time_array[i])))
+        plt.close(fig_quad_corr_xy)
 
 
 def plot_save_slice_centroids(slm, savepath, h5plot=True):
@@ -467,7 +541,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     plt.plot(slm.time_array, slm.avgx2[:,0])
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14)
-    ax.set_ylabel(r'$X_{b,\mathrm{tail}}$', fontsize=14)
+    ax.set_ylabel(r'$k_p X_{b,\mathrm{tail}}$', fontsize=14)
     if magn_check(slm.avgx2[:,0]):    
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
@@ -480,17 +554,35 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     plt.plot(slm.time_array, slm.avgx3[:,0])
     ax = plt.gca()
     ax.set_xlabel(r'$\omega_p t$', fontsize=14)
-    ax.set_ylabel(r'$Y_{b,\mathrm{tail}}$', fontsize=14) 
+    ax.set_ylabel(r'$k_p Y_{b,\mathrm{tail}}$', fontsize=14) 
     saveas_eps_pdf(figYbtail, savepath, 'Yb_tail')   
     plt.close(figYbtail)  
 
 
-def plot_save_slice_ene(slm, savepath):
+
+def plot_save_slice_ene(slm, savepath, time = None):
+    
     gamma = np.sqrt( 1 + np.power(slm.avgp1,2) 
                        + np.power(slm.avgp2,2)
                        + np.power(slm.avgp3,2) )
 
-    fig = plt.figure()
+    if time == None:
+        tidx = [0,-1];
+    else:
+        tidx = [(np.abs(slm.time_array - time)).argmin()]
+
+    for i in tidx:
+        fig = plt.figure()
+        plt.plot(slm.zeta_array, gamma[i,:])
+        ax = plt.gca()
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(r'$\gamma$', fontsize=14)
+        saveas_eps_pdf(fig, savepath, ('gamma_time_%0.1f' % (slm.time_array[i])) )
+        plt.close(fig)    
+
+
+
+    figG = plt.figure()
     cax = plt.pcolormesh( slm.zeta_array,
                           slm.time_array,
                           gamma,
@@ -499,13 +591,13 @@ def plot_save_slice_ene(slm, savepath):
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
-    cbar = fig.colorbar( cax )
+    cbar = figG.colorbar( cax )
     cbar.ax.set_ylabel(r'$\gamma$', fontsize=14)
-    saveas_png(fig, savepath, 'gamma')
-    plt.close(fig)    
+    saveas_png(figG, savepath, 'gamma')
+    plt.close(figG)    
+
 
 def plot_curr_profile(slm, savepath, time = None):
-    fig = plt.figure()
     dzeta = abs(slm.zeta_array[1] - slm.zeta_array[0]);
     curr = slm.charge / dzeta
 
@@ -522,6 +614,7 @@ def plot_curr_profile(slm, savepath, time = None):
         tidx = [(np.abs(slm.time_array - time)).argmin()]
 
     for i in tidx:
+        fig = plt.figure()
         plt.plot(slm.zeta_array, Ib_per_IA[i,:])
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
@@ -556,22 +649,38 @@ def main():
     slm = SliceMoms()
     slm.read(file)
 
+    if slm.get_order() > 0:
+        if args.mom_order != None:
+            mom_order = args.mom_order
+        else:
+            mom_order = slm.get_order()
+    else:
+        print('Error:\tMoment order in file <= 0!')
+        sys.exit(1)                 
+
     if args.zeta_range != None:
         slm.truncate_zeta_region(args.zeta_range[0], args.zeta_range[1])
 
     mkdirs_if_nexist(args.savepath)
 
-    plot_curr_profile(slm, args.savepath, time = args.time)
+    if not args.latexoff:
+        plt.rc('text', usetex=True)
+        plt.rc('font', family='serif') 
 
-    plot_save_slice_rms(slm, args.savepath)
+    plot_curr_profile(slm, args.savepath, time = args.time)
 
     plot_save_slice_ene(slm, args.savepath)
 
-    plot_save_proj_rms(slm, args.savepath, h5plot=args.h5plot)
-
     plot_save_slice_centroids(slm, args.savepath, h5plot=args.h5plot)
+    
+    if mom_order > 1:
+        plot_save_slice_rms(slm, args.savepath)
+        plot_save_proj_rms(slm, args.savepath, h5plot=args.h5plot)        
+        plot_save_slice_rms_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
 
-    plot_save_slice_rms_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
+    if mom_order > 3:
+        plot_save_slice_exkurtosis_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
+        plot_save_slice_quad_corr_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
 
 if __name__ == "__main__":
     main()

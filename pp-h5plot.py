@@ -88,6 +88,14 @@ def h5plot_parser():
                           default=None,
                           nargs='+',
                           help= """Labels for each selected line.""")
+    parser.add_argument(  "--cno", "--color-number",
+                          action='store',
+                          dest="cno",
+                          metavar="CNUMBERS",
+                          type=int,                      
+                          default=None,
+                          nargs='+',
+                          help= """Color number for each selected line.""")    
     parser.add_argument(  "--ylog",
                           dest = "absylog",
                           action="store_true",
@@ -97,7 +105,12 @@ def h5plot_parser():
                           dest = "diff",
                           action="store_true",
                           default=False,
-                          help = "Plot difference w.r.t. first line plot (default: %(default)s).")                                                     
+                          help = "Plot difference w.r.t. first line plot (default: %(default)s).")
+    parser.add_argument(  "--latexoff",
+                          dest = "latexoff",
+                          action="store_false",
+                          default=False,
+                          help = "Use LaTeX font (Default: %(default)s).")                                                                       
     return parser
 
  
@@ -125,8 +138,11 @@ def main():
     i = 0
     linestyles = ['-', '--', '-.', ':']
     save_append_str = ''
-    
-  
+
+    if not args.latexoff:
+        plt.rc('text', usetex=True)
+        plt.rc('font', family='serif') 
+
     for path in args.paths:
         if not os.path.isfile(path):
             print('ERROR: File %s does not exist!' % path)
@@ -135,6 +151,12 @@ def main():
         h5lp.append(H5Plot())
         h5lp[i].read(path)
         j = 0 
+
+        if args.cno == None:
+            argcolor = plt.cm.Dark2(i)
+        else:
+            argcolor = plt.cm.Dark2(args.cno[i])
+
         for (x, y, label, linestyle, color) in h5lp[i].get_line_plots():
             if args.labels != None:
                 save_append_str += '_' + args.labels[i]
@@ -143,18 +165,22 @@ def main():
             if label == '_line0':
                 label = path
 
+            if not args.latexoff:
+                if label[0] != '$' or label[-1] != '$':
+                    label = r'$\textrm{' + label + '}$'
+
             if (args.line_no != None):
                 if args.line_no[i] == j:
                     if args.absylog:
-                        plt.semilogy( x, y, label=label, linestyle=linestyles[i%len(linestyles)])                        
+                        plt.semilogy( x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=argcolor)                        
                     else:
-                        plt.plot(x, y, label=label, linestyle=linestyles[i%len(linestyles)])
+                        plt.plot(x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=argcolor)
             else:
                 if args.absylog:
-                    plt.semilogy( x, y, label=label, linestyle=linestyles[i%len(linestyles)])
+                    plt.semilogy( x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=argcolor)
                 else:    
                     #plt.plot(x, y, label=label, linestyle=linestyle, color=color)
-                    plt.plot(x, y, label=label, linestyle=linestyles[i%len(linestyles)])      
+                    plt.plot(x, y, label=label, linestyle=linestyles[i%len(linestyles)], color=argcolor)      
             j += 1
         i += 1
     
@@ -163,13 +189,12 @@ def main():
     ax.set_ylabel(h5lp[0].get_ylab(), fontsize=14)    
     handles, labels = ax.get_legend_handles_labels()
     #plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
-    #plt.legend()
-
-    # if not (-3.0 < math.log(np.max(abs(y)),10) < 3.0):
-    #     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
-    #     plt.gcf().subplots_adjust(left=0.18)
-    # else:
-    #     plt.gcf().subplots_adjust(left=0.15)              
+    plt.legend(frameon=False)
+    if not (-3.0 < math.log(np.max(abs(y)),10) < 3.0):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)              
     plt.show()
     fname, fext = os.path.splitext(args.paths[0])
     save_path_name = fname + save_append_str + '_comp' + '.' + args.file_format

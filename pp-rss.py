@@ -50,13 +50,13 @@ def ps_parseargs():
                           metavar="PATH",
                           default=parsedefaults.savepath,
                           help = 'Path to which generated files will be saved. '
-                                 '(Default: "%s")' % parsedefaults.savepath)
+                                 '(Default: "%(default)s")')
     parser.add_argument(  "--raw-istr",
                           dest="raw_ident_str",
                           metavar="RAWIdentstr",
                           default=parsedefaults.raw_ident_str,
                           help = 'Identification string for beam raw file. '
-                                '(Default: "%s")' % parsedefaults.raw_ident_str)
+                                '(Default: "%(default)s")')
     parser.add_argument(  "-n", "--save-name",
                           dest="save_name",
                           metavar="NAME",
@@ -67,9 +67,9 @@ def ps_parseargs():
                           action='store',
                           dest="mom_order",
                           metavar="MOMORDER",
-                          choices=[1, 2, 3,],
+                          choices=[1, 2, 3, 4,],
                           default=parsedefaults.mom_order,
-                          help='Order of moment evaluation (Default: 2).')
+                          help='Order of moment evaluation (Default: %(default)s).')
 #                        '(Default: %i).' % parsedefaults.mom_order)
     parser.add_argument(  "--Nfiles",
                           type=int,
@@ -78,6 +78,13 @@ def ps_parseargs():
                           metavar="NFILES",
                           default=None,
                           help='Number of files to analyze.')
+    parser.add_argument(  "--Nskip",
+                          type=int,
+                          action='store',
+                          dest="Nskip",
+                          metavar="NSKIP",
+                          default=1,
+                          help='Skipping every nth file.')    
     parser.add_argument(  "--Nbins",
                           type=int,
                           action='store',
@@ -172,20 +179,21 @@ def main():
     sys.stdout.write('There are %i raw files to process...\n' % Nfiles)
     sys.stdout.flush()
 
+    Ntimesteps = int( math.ceil(Nfiles/args.Nskip) )
 
     sm = SliceMoms()
-    sm.alloc(Nzeta = Nbins, Nt = Nfiles)
+    sm.alloc(Nzeta = Nbins, Nt = Ntimesteps, order = mom_order)
 
-    for i in range(0,Nfiles):
-        file = flist[i]
-        sys.stdout.write('Processing: %s\t(%i/%i)\n' % (file, i+1, Nfiles))
+    for i in range(0, Ntimesteps):
+        file = flist[i * args.Nskip]
+        sys.stdout.write('Processing: %s\t(%i/%i)\n' % (file, (i+1)*args.Nskip, Nfiles))
         sys.stdout.flush()
 
         raw = HiRAW(file)
         raw.read_attrs()
         raw.read_data()
 
-        sm.time_array[i] = raw.time
+        sm.time_array[i] = raw.get_time()
         slices = pp_raw_ana.Slices(raw, nbins=Nbins, zrange=zeta_range, cellvol=cellvol)
 
         slices.calc_moments(order = mom_order, crossterms=crossterms, timings=args.timings )
@@ -236,6 +244,17 @@ def main():
             sm.avgx2p2sq[i,:] = slices.avgx2p2sq
             sm.avgx3p3sq[i,:] = slices.avgx3p3sq
 
+
+        if mom_order>3:
+            sm.avgx1quar[i,:] = slices.avgx1quar
+            sm.avgx2quar[i,:] = slices.avgx2quar
+            sm.avgx3quar[i,:] = slices.avgx3quar
+            sm.avgp1quar[i,:] = slices.avgp1quar
+            sm.avgp2quar[i,:] = slices.avgp2quar
+            sm.avgp3quar[i,:] = slices.avgp3quar
+            sm.avgx1sqp1sq[i,:] = slices.avgx1sqp1sq
+            sm.avgx2sqp2sq[i,:] = slices.avgx2sqp2sq
+            sm.avgx3sqp3sq[i,:] = slices.avgx3sqp3sq
 
     sm.zeta_array = slices.centers
 
