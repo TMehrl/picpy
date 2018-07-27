@@ -85,14 +85,13 @@ class Slices:
 
         self.alloc_arrays(nbins=self.nbins)
 
-    class time:
-        startcm = 0.0
-        cm_afcalcsqavg = 0.0
-        cm_afallocsortpart = 0.0
-        cm_afsortingpart = 0.0
-        cm_afcalcavg = 0.0
-        cm_afallocsqavg = 0.0       
-
+    class timings:
+        def __init__(self, order):        
+            self.startcm = 0.0
+            self.cm_afsearchsorted = 0.0            
+            self.cm_afsortingpart = 0.0    
+            self.endcm = 0.0
+            self.avg = np.zeros(order+1, dtype=np.float32)
 
     def alloc_arrays(self, nbins):
 
@@ -164,9 +163,11 @@ class Slices:
         self.avgx3sqp3sq = np.zeros((nbins), dtype=np.float32)
 
 
-    def calc_moments(self, order=2, central=True, crossterms=False, timings=False, reshape_method=False):
+    def calc_moments(self, order=2, central=True, crossterms=False, showtimings=False, reshape_method=False):
 
-        if timings: self.time.startcm = time.time()
+        if showtimings: 
+            timings = self.timings(order)
+            timings.startcm = time.time()
 
         # Select subset of particles which are in range
         idx_part_in_range = np.logical_and(self.raw.x1 > self.edges[0], 
@@ -195,7 +196,7 @@ class Slices:
         if np.size(self.npart)>self.nbins | np.size(self.charge)>self.nbins:
             print('Warning: particles out of range!')
 
-        if timings: self.time.cm_afsearchsorted = time.time()
+        if showtimings: timings.cm_afsearchsorted = time.time()
 
         # Sorting partile arrays according to the bins they are located in
         idx = np.argsort(ibinpart)
@@ -207,15 +208,13 @@ class Slices:
         p2 = p2[idx]
         p3 = p3[idx]
 
-        if timings: self.time.cm_afsortingpart = time.time()
+        if showtimings: timings.cm_afsortingpart = time.time()
 
         # Setting idx range for each bin
         i1 = np.cumsum(self.npart) - self.npart
         i2 = np.cumsum(self.npart) - 1
 
-        self.time.avg = np.zeros(order+1, dtype=np.float32)
-
-        if timings: self.time.avg[0] = time.time()
+        if showtimings: timings.avg[0] = time.time()
 
         if order > 0:
             for ibin in range(0,self.nbins):
@@ -228,7 +227,7 @@ class Slices:
                     self.avgp2[ibin] = np.ma.average(p2[i1[ibin]:i2[ibin]], weights=q[i1[ibin]:i2[ibin]])
                     self.avgp3[ibin] = np.ma.average(p3[i1[ibin]:i2[ibin]], weights=q[i1[ibin]:i2[ibin]])
 
-            if timings: self.time.avg[1] = time.time()
+            if showtimings: timings.avg[1] = time.time()
 
 
         if order > 1:
@@ -276,7 +275,7 @@ class Slices:
                         self.avgx3p1[ibin] = np.ma.average(np.multiply(x3[i1[ibin]:i2[ibin]],p1[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
                         self.avgx3p2[ibin] = np.ma.average(np.multiply(x3[i1[ibin]:i2[ibin]],p2[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
 
-            if timings: self.time.avg[2] = time.time()
+            if showtimings: timings.avg[2] = time.time()
 
         if order > 2:
             for ibin in range(0,self.nbins):
@@ -298,7 +297,7 @@ class Slices:
                     self.avgx2p2sq[ibin] = np.ma.average(np.multiply(x2[i1[ibin]:i2[ibin]],np.power(p2[i1[ibin]:i2[ibin]],2)), weights=q[i1[ibin]:i2[ibin]])
                     self.avgx3p3sq[ibin] = np.ma.average(np.multiply(x3[i1[ibin]:i2[ibin]],np.power(p3[i1[ibin]:i2[ibin]],2)), weights=q[i1[ibin]:i2[ibin]])
 
-            if timings: self.time.avg[3] = time.time()            
+            if showtimings: timings.avg[3] = time.time()            
 
         if order > 3:
             for ibin in range(0,self.nbins):
@@ -316,23 +315,23 @@ class Slices:
                     self.avgx2sqp2sq[ibin] = np.ma.average(np.multiply(np.power(x2[i1[ibin]:i2[ibin]],2),np.power(p2[i1[ibin]:i2[ibin]],2)), weights=q[i1[ibin]:i2[ibin]])
                     self.avgx3sqp3sq[ibin] = np.ma.average(np.multiply(np.power(x3[i1[ibin]:i2[ibin]],2),np.power(p3[i1[ibin]:i2[ibin]],2)), weights=q[i1[ibin]:i2[ibin]])
             
-            if timings: self.time.avg[4] = time.time()
+            if showtimings: timings.avg[4] = time.time()
 
-        if timings:
-            self.time.endcm = time.time() 
+        if showtimings:
+            timings.endcm = time.time() 
             # Timing stuff
             print('--------- Timings --------- ')
-            print('Total time:\t\t%0.2e %s' % ((self.time.endcm-self.time.startcm) , 's'))
-            print('Searchsorted:\t\t%0.2e %s' % ((self.time.cm_afsearchsorted-self.time.startcm), 's'))
-            print('Sort part arr:\t\t%0.2e %s' % ((self.time.cm_afsortingpart-self.time.cm_afsearchsorted), 's'))
+            print('Total time:\t\t%0.2e %s' % ((timings.endcm-timings.startcm) , 's'))
+            print('Searchsorted:\t\t%0.2e %s' % ((timings.cm_afsearchsorted-timings.startcm), 's'))
+            print('Sort part arr:\t\t%0.2e %s' % ((timings.cm_afsortingpart-timings.cm_afsearchsorted), 's'))
             if order > 0:
-                print('Calc. 1st order moms:\t%0.2e %s' % ((self.time.avg[1]-self.time.avg[0]), 's'))
+                print('Calc. 1st order moms:\t%0.2e %s' % ((timings.avg[1]-timings.avg[0]), 's'))
             if order > 1:
-                print('Calc. 2nd order moms:\t%0.2e %s' % ((self.time.avg[2]-self.time.avg[1]), 's'))
+                print('Calc. 2nd order moms:\t%0.2e %s' % ((timings.avg[2]-timings.avg[1]), 's'))
             if order > 2:
-                print('Calc. 3rd order moms:\t%0.2e %s' % ((self.time.avg[3]-self.time.avg[2]), 's'))
+                print('Calc. 3rd order moms:\t%0.2e %s' % ((timings.avg[3]-timings.avg[2]), 's'))
             if order > 3:
-                print('Calc. 4th order moms:\t%0.2e %s' % ((self.time.avg[4]-self.time.avg[3]), 's'))
+                print('Calc. 4th order moms:\t%0.2e %s' % ((timings.avg[4]-timings.avg[3]), 's'))
         self.if_moms_calc = True
 
 # # Class to generate histograms
