@@ -4,6 +4,7 @@
 import os
 import sys
 import numpy as np
+import re
 import h5py
 
 
@@ -91,11 +92,13 @@ class H5File:
 
     def get_filename_time(self):
         name_w_time = os.path.splitext(os.path.split(self.file)[1])[0]
-        return float(name_w_time[-self.__n_time_chars:])
+        stridx = [m.start() for m in re.finditer('_', name_w_time)][-1]
+        return float(name_w_time[(stridx+1):])
 
     def get_filename_wo_time(self):
         name_w_time = os.path.splitext(os.path.split(self.file)[1])[0]
-        name_wo_time = name_w_time[0:-self.__n_time_chars]
+        stridx = [m.start() for m in re.finditer('_', name_w_time)][-1]
+        name_wo_time = name_w_time[0:stridx]
         return name_wo_time
 
     def is_subgrid(self):
@@ -961,7 +964,7 @@ class H5FList():
         return self.flist
 
     def get_uniques(self):
-        n_time_chars = 6;
+        n_time_chars = 8;
         fnames = []
         if self.flist == None:
             self.get()

@@ -191,7 +191,7 @@ def main():
 
         raw = HiRAW(file)
         raw.read_attrs()
-        raw.read_data()
+        raw.read_data(verbose=False)
 
         sm.time_array[i] = raw.get_time()
         slices = pp_raw_ana.Slices(raw, nbins=Nbins, zrange=zeta_range, cellvol=cellvol)
