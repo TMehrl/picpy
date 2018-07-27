@@ -27,7 +27,7 @@ class H5File:
         self.__g3dsubgrid_str = 'subgrid'
         # RAW types in filenames:
         self.__rawtypes = ['raw']
-        self.__n_time_chars = 6
+        self.__n_time_chars = 8
 
         self.file = file
         self.h5ftype = h5ftype
@@ -954,7 +954,7 @@ class H5FList():
                         else:
                            if verbose: print('Skipping: ' + file)
             elif not os.path.exists(path):
-                print('Error: Provided path does not exist!')
+                print('Error: Provided path "%s" does not exist!' % path)
                 sys.exit()
             else:
                 print('Error: Provided path is neither a file nor a directory!')
