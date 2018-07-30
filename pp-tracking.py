@@ -336,7 +336,7 @@ def main():
                 number = int(np.floor(len(e)/modnum))
                 cmap = plt.get_cmap('jet')
                 colors = [cmap(i) for i in np.linspace(0, 1, number)]
-                colors2 = = [cmap(i) for i in np.linspace(0, 4, 10000)]
+                colors2 = [cmap(i) for i in np.linspace(0, 4, 10000)]
                 start_segments = np.linspace(0,4,10000)
                 # for i, color in enumerate(colors, start=1):
                 #     plt.plot(x, i * x + i, color=color, label='$y = {i}x + {i}$'.format(i=i))
