@@ -337,7 +337,7 @@ def main():
                 cmap = plt.get_cmap('jet')
                 colors = [cmap(i) for i in np.linspace(0, 1, number)]
                 colors2 = [cmap(i) for i in np.linspace(0, 1, 10000)]
-                start_segments = np.linspace(0,6,10000)
+                start_segments = np.linspace(0,2,10000)
                 # for i, color in enumerate(colors, start=1):
                 #     plt.plot(x, i * x + i, color=color, label='$y = {i}x + {i}$'.format(i=i))
                 
@@ -442,7 +442,7 @@ def main():
             
                 # create a ScalarMappable and initialize a data structure
                 s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
-                s_m.set_array([0,6])
+                s_m.set_array([0,2])
             
                 cbar = plt.colorbar(s_m)
                 
