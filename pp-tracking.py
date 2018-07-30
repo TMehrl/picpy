@@ -6,6 +6,7 @@ import sys
 import numpy as np
 import argparse
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import pp_defs
@@ -20,7 +21,7 @@ import matplotlib.lines as mlines
 import scipy.optimize
 import scipy.special
 
-from decimal import *
+
 
 def binSlab_parser():
 
@@ -151,7 +152,7 @@ def plot_hipace_Ex(zeta_pos):
 
     Ex = ExmBy + By
     
-    # fig = plt.figure()
+    fig = plt.figure()
     # ax = fig.add_subplot(111)
     idx =np.abs(By_g3d2.get_zeta_arr() - zeta_pos).argmin()
     
@@ -401,7 +402,7 @@ def main():
 
             save_path_name = 'plots/g3d-slice/ionized_electron_density_tracked.pdf'
             fig.savefig(save_path_name, format='pdf')
-            plt.close(fig)
+        #    plt.close(fig)
             if args.verbose: 
                 sys.stdout.write('Saved: %s\n' % save_path_name)
                 sys.stdout.flush()
