@@ -266,7 +266,10 @@ def main():
             ''' get min and max value for universal colorbar later '''
             
             plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), ionized_density, cmap=cm.Blues) #
-            cbar1 = plt.colorbar(cm.Blues)
+            c_m = cm.Blues
+            s_m = matplotlib.cm.ScalarMappable(cmap=c_m, norm=norm)
+            s_m.set_array([])
+            cbar1 = plt.colorbar(s_m)
             if args.track_color == "u_tot":
                 cmin = min(w[k][:,8])
                 cmax = max(w[k][:,8])
