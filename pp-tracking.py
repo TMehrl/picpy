@@ -265,7 +265,7 @@ def main():
                 ax = fig.add_subplot(111, projection='3d')
             ''' get min and max value for universal colorbar later '''
             
-            plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), ionized_density, cmap=cm.Blues) #
+            plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.Blues) #
             c_m = cm.Blues
             s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
             s_m.set_array([])
