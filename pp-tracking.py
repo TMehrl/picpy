@@ -108,7 +108,25 @@ def binSlab_parser():
                         action='store',
                         dest="modlines",
                         type=int,
-                        default=1)   
+                        default=1) 
+    parser.add_argument(  '--zetamin',
+                        help='minimum of zeta',
+                        action='store',
+                        dest="zetamin",
+                        type=float,
+                        default=-12)   
+    parser.add_argument(  '--zetamax',
+                        help='maximum of zeta',
+                        action='store',
+                        dest="zetamax",
+                        type=float,
+                        default=0.5)   
+    parser.add_argument(  '--nx',
+                        help='number of longitudinal gridpoints',
+                        action='store',
+                        dest="nx",
+                        type=int,
+                        default=600)     
 
     return parser
 
