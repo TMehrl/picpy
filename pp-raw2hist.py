@@ -138,7 +138,15 @@ def r2h_2d_subparser(subparsers, parent_parser):
                           metavar=('NBINS1', 'NBINS1'),
                           nargs=2,
                           type=int,
-                          default=None)    
+                          default=None)
+    parser.add_argument(  '--range',
+                          help='Range in both dimensions.',
+                          action='store',
+                          dest="range",
+                          metavar=('XMIN', 'XMAX', 'YMIN', 'YMAX'),
+                          nargs=4,
+                          type=float,
+                          default=None)                                                        
     parser.add_argument(  "-s", "--save-path",
                           action="store",
                           dest="savepath",
@@ -186,6 +194,14 @@ def get_props(raw,psv_str):
     return psv, label, savename
 
 
+def get_zeta_range_str(zeta_range):
+    if zeta_range != None:
+        zr_str = ('_zeta_range_%0.2f_%0.2f' % (zeta_range[0], zeta_range[1]))
+    else:
+        zr_str = ''
+    return zr_str 
+
+
 def oneD(raw, args):
 
     psv, xlabel, savename = get_props(raw,args.psv)
@@ -204,6 +220,8 @@ def oneD(raw, args):
     ax.set_xlabel(xlabel, fontsize=14)
     plt.gcf().subplots_adjust(left=0.15, bottom=0.15)   
 
+    savename += get_zeta_range_str(args.zeta_range)
+
     saveas_eps_pdf(fig, args.savepath, savename, h5plot=True, verbose=True, fformat='pdf')
 
 
@@ -212,17 +230,20 @@ def twoD(raw, args):
 
     varx, xlabel, savenamex = get_props(raw,args.psv[0])
     vary, ylabel, savenamey = get_props(raw,args.psv[1])
-    savename = savenamex + '_' + savenamey
 
     if args.nbins == None:
-        print(raw.get_npart())
         nbins = np.int( np.sqrt(raw.get_npart()) / 2.0 )
     else:
         nbins = args.nbins
 
+    if args.range != None:
+        hrange = [[args.range[0], args.range[1]], [args.range[2], args.range[3]]]
+    else:
+        hrange = None
+
     if args.verbose:
         print("Generating 2d histogram...")
-    H, xedges, yedges = np.histogram2d(varx,vary,bins=nbins,weights=raw.q)
+    H, xedges, yedges = np.histogram2d(varx,vary,bins=nbins,weights=raw.q,range=hrange)
     x_array = xedges[0:-1] + (xedges[1] - xedges[0])/2
     y_array = yedges[0:-1] + (yedges[1] - yedges[0])/2
 
@@ -231,7 +252,7 @@ def twoD(raw, args):
     fig = plt.figure(figsize=(6,5))
     cax = plt.pcolor(x_array,
                      y_array,
-                     H, cmap='PuBu') 
+                     H.transpose(), cmap='PuBu') 
     plt.gcf().subplots_adjust(left=0.15, bottom=0.15)                                  
     #cax.cmap = self.colormap
     # if args.clog:
@@ -240,6 +261,9 @@ def twoD(raw, args):
     ax = plt.gca()
     ax.set_ylabel(ylabel, fontsize=14)
     ax.set_xlabel(xlabel, fontsize=14)
+    cbar = fig.colorbar(cax)
+    savename = savenamex + '_' + savenamey + get_zeta_range_str(args.zeta_range)
+
     saveas_png(fig, args.savepath, savename, verbose=True)
 
 

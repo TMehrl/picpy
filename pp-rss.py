@@ -191,12 +191,12 @@ def main():
 
         raw = HiRAW(file)
         raw.read_attrs()
-        raw.read_data()
+        raw.read_data(verbose=False)
 
         sm.time_array[i] = raw.get_time()
         slices = pp_raw_ana.Slices(raw, nbins=Nbins, zrange=zeta_range, cellvol=cellvol)
 
-        slices.calc_moments(order = mom_order, crossterms=crossterms, timings=args.timings )
+        slices.calc_moments(order = mom_order, crossterms=crossterms, showtimings=args.timings )
         sm.charge[i,:] = slices.charge
         sm.avgx1[i,:] = slices.avgx1
         sm.avgx2[i,:] = slices.avgx2

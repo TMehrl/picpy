@@ -4,6 +4,7 @@
 import os
 import sys
 import numpy as np
+import re
 import h5py
 
 
@@ -26,7 +27,7 @@ class H5File:
         self.__g3dsubgrid_str = 'subgrid'
         # RAW types in filenames:
         self.__rawtypes = ['raw']
-        self.__n_time_chars = 6
+        self.__n_time_chars = 8
 
         self.file = file
         self.h5ftype = h5ftype
@@ -91,11 +92,13 @@ class H5File:
 
     def get_filename_time(self):
         name_w_time = os.path.splitext(os.path.split(self.file)[1])[0]
-        return float(name_w_time[-self.__n_time_chars:])
+        stridx = [m.start() for m in re.finditer('_', name_w_time)][-1]
+        return float(name_w_time[(stridx+1):])
 
     def get_filename_wo_time(self):
         name_w_time = os.path.splitext(os.path.split(self.file)[1])[0]
-        name_wo_time = name_w_time[0:-self.__n_time_chars]
+        stridx = [m.start() for m in re.finditer('_', name_w_time)][-1]
+        name_wo_time = name_w_time[0:stridx]
         return name_wo_time
 
     def is_subgrid(self):
@@ -289,12 +292,14 @@ class HiRAW(HiFile):
     def get_npart(self):
         return self.__npart
 
-    def select_zeta_range(self, zeta_range):
+    def select_zeta_range(self, zeta_range, verbose=True):
         if not self.__data_is_read:
             self.read_data()
         if zeta_range != [] and len(zeta_range) == 2:
-            idx = np.where((self.x1 >= zeta_range[0]) & (self.x1 < zeta_range[1]))
-            self.__npart = len(idx)
+            idx = np.nonzero((self.x1 >= zeta_range[0]) & (self.x1 < zeta_range[1]))
+            self.__npart = np.size(idx)
+            if verbose:
+                print('%i particles in selected range [%0.2f, %0.2f]' % (self.__npart,zeta_range[0],zeta_range[1]))
             self.x1 = self.x1[idx]
             self.x2 = self.x2[idx]
             self.x3 = self.x3[idx]
@@ -949,7 +954,7 @@ class H5FList():
                         else:
                            if verbose: print('Skipping: ' + file)
             elif not os.path.exists(path):
-                print('Error: Provided path does not exist!')
+                print('Error: Provided path "%s" does not exist!' % path)
                 sys.exit()
             else:
                 print('Error: Provided path is neither a file nor a directory!')
@@ -959,7 +964,7 @@ class H5FList():
         return self.flist
 
     def get_uniques(self):
-        n_time_chars = 6;
+        n_time_chars = 8;
         fnames = []
         if self.flist == None:
             self.get()
