@@ -388,18 +388,19 @@ def main():
             #     # ax.plot(data_zeta, np.zeros(len(data_zeta)), data2)
         
             ''' Set colorbar ''' 
-            norm = matplotlib.colors.Normalize(
-            vmin=np.min(cmin),
-            vmax=np.max(cmax))
-        
-            # choose a colormap
-            c_m = chosencmap
-        
-            # create a ScalarMappable and initialize a data structure
-            s_m = matplotlib.cm.ScalarMappable(cmap=c_m, norm=norm)
-            s_m.set_array([])
-        
-            cbar = plt.colorbar(s_m)
+            if args.track_color != "none":
+                norm = matplotlib.colors.Normalize(
+                vmin=np.min(cmin),
+                vmax=np.max(cmax))
+            
+                # choose a colormap
+                c_m = chosencmap
+            
+                # create a ScalarMappable and initialize a data structure
+                s_m = matplotlib.cm.ScalarMappable(cmap=c_m, norm=norm)
+                s_m.set_array([])
+            
+                cbar = plt.colorbar(s_m)
             if args.track_color == "u_tot":
                 cbar.ax.set_ylabel(r'$|u|$')
             elif args.track_color == "beta_z":
