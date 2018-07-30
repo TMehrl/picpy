@@ -404,12 +404,15 @@ def main():
 
 
             save_path_name = 'plots/g3d-slice/ionized_electron_density_tracked.pdf'
+            print('bis kury vor dem safe')
             fig.savefig(save_path_name, format='pdf')
+            print('bis nach dem save')
         #    plt.close(fig)
             if args.verbose: 
                 sys.stdout.write('Saved: %s\n' % save_path_name)
                 sys.stdout.flush()
             plt.close(fig)
+            print('bis nach dem close fig')
             # cax = plt.plot( array)
             # 
             # ax = plt.gca()
