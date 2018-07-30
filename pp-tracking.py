@@ -343,7 +343,7 @@ def main():
                             plot_2D_colourline_beta(z,x,c)
                         elif args.track_color == "beta_y":
                             plot_2D_colourline_beta(z,x,c)
-                        elif args.track_color = 'none'
+                        elif args.track_color = 'none':
                             ax.plot(x, z, 'r', linewidth = 0.25)
                     else:
                         if args.track_color == "u_tot":
