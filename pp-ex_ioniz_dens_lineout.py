@@ -237,7 +237,15 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta
     
     ax.plot(np.append(-r_array[::-1], r_array), np.append(-(E[::-1]) ,E[:]))
     x, Ex =plot_hipace_Ex(zeta_pos) # input = zeta pos 
-    ax.plot(x, Ex)
+    #ax.plot(x, Ex)
+        # x, Ex =plot_hipace_Ex(-0.2) # input = zeta pos 
+        # ax.plot(x, Ex, label=r'$\zeta = -0.2$', 'r')
+        # x, Ex =plot_hipace_Ex(-1.0) # input = zeta pos 
+        # ax.plot(x, Ex, label=r'$\zeta = -1.0$', 'b')
+        # x, Ex =plot_hipace_Ex(-2.0) # input = zeta pos 
+        # ax.plot(x, Ex, label=r'$\zeta = -2.0$', 'g')
+    
+    
     
     h5lp = H5Plot()
     h5lp.inherit_matplotlib_line_plots(ax)
@@ -245,7 +253,8 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta
     #plt.show()
     #use zeta array for shaping the elctric field to get the same spacing etc.
     #print(Earray)
-    
+
+####### CALCULATING IONIZATION     
     ionization_rate =np.zeros(shape=np.shape(r_array))
     ionization_rate[:] = vcalc_ion_rate(E*E_0, 1, 13.659843449,13.659843449, 0,0 ) # complete formulae for hydrogen
     #print(ionization_rate[1])
@@ -256,19 +265,19 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta
     #print('Deltat is %0.3e' %deltat)
     #computing the ionization probability
     
-
+    
     savename = 'ion_probability_test'
     ion_probability = np.zeros(shape=(len(bunch_array) -1, len(ionization_rate)))
     for i in range(1,2): #len(bunch_array)):
         ion_probability[i-1,:] = 1.0 - np.exp(-ionization_rate[:] * deltat[i] )
         ax2.plot(np.append(-r_array[::-1], r_array), np.append((ion_probability[i-1,::-1]) ,ion_probability[i-1,:]), label=('prob at lb: ' + str(np.around(bunch_array[i], decimals = 1) ) ) )
         #ax.legend()
-        
-        
+    
+    
     h5lp = H5Plot()
     h5lp.inherit_matplotlib_line_plots(ax2)
     h5lp.write(savepath + '/' + savename + '.h5')
-    #plt.show()
+    # #plt.show()
 
 
 
