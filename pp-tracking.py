@@ -435,14 +435,14 @@ def main():
                 cbar = plt.colorbar(s_m)
                 
             else:
-                norm = matplotlib.colors.Normalize( vmin= 0, vmax=6)
+                # norm = matplotlib.colors.Normalize( vmin= 0, vmax=6)
             
                 # choose a colormap
                 c_m = cm.jet
             
                 # create a ScalarMappable and initialize a data structure
-                s_m = matplotlib.cm.ScalarMappable(cmap=c_m, norm=norm)
-                s_m.set_array([])
+                s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
+                s_m.set_array([0,6])
             
                 cbar = plt.colorbar(s_m)
                 
