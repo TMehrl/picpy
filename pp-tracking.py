@@ -95,6 +95,14 @@ def binSlab_parser():
                           default = "./DATA/density_ionized_electrons_plasma_H_000000.0.h5",
                           help = "Path to the ionized electron density data over which  \n"
                                  "the tracks should be laid. \n")
+    parser.add_argument(  '--clim',
+                          help='Colorbar axis limits',
+                          action='store',
+                          dest="clim",
+                          metavar=('CBMIN', 'CBMAX'),
+                          nargs=2,
+                          type=float,
+                          default=None)  
 
     return parser
 
@@ -265,11 +273,13 @@ def main():
                 ax = fig.add_subplot(111, projection='3d')
             ''' get min and max value for universal colorbar later '''
             
-            plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.Blues) #
+            plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu) #
             c_m = cm.Blues
             s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
             s_m.set_array([])
             cbar1 = plt.colorbar()
+            if args.clim:
+                plt.clim(args.clim[0], args.clim[1])
             if args.track_color == "u_tot":
                 cmin = min(w[k][:,8])
                 cmax = max(w[k][:,8])
