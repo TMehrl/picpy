@@ -957,7 +957,7 @@ class H5FList():
                 print('Error: Provided path "%s" does not exist!' % path)
                 sys.exit()
             else:
-                print('Error: Provided path is neither a file nor a directory!')
+                print('Error: Provided path "%s" is neither a file nor a directory!' % path)
                 sys.exit()
         # Alphabetically sorting list
         self.flist = sorted(flist)
