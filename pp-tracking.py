@@ -80,7 +80,7 @@ def binSlab_parser():
 
     parser.add_argument(  "-t", "--track_color",
                           dest = "track_color",
-                          default = "u_tot",
+                          default = "none",
                           help = "Select the attribute which is displayed as the color of the track \n"
                                  "Default is the total momentum u_tot, other available options are: \n"
                                  "beta_z")
@@ -102,7 +102,12 @@ def binSlab_parser():
                           metavar=('CBMIN', 'CBMAX'),
                           nargs=2,
                           type=float,
-                          default=None)  
+                          default=None) 
+    parser.add_argument(  '--modlines',
+                        help='number of lines modulo input',
+                        action='store',
+                        dest="modlines",
+                        default=1)   
 
     return parser
 
@@ -185,7 +190,7 @@ def plot_hipace_Ex(zeta_pos):
 
 def main():
     
-    modnum = 6
+    
     
     basic_cols=['#75b765', '#808080', '#ffd700']
     basic_cols=['#2020ff' ,'#808080', '#ff2020']
@@ -197,7 +202,8 @@ def main():
     parser = binSlab_parser() 
     args = parser.parse_args()
 
-    
+
+    modnum = args.modlines
     dens_path = args.dens_data
     
     ionized_density_g3d1 = Grid3d(dens_path)
@@ -292,6 +298,8 @@ def main():
                 cmin = -1
                 cmax = 1
                 chosencmap = my_cmap
+            elif args.track_color == "none":
+                print('no coloring option selected.')
             else:
                 print("This attribute doesn't exist or is not implemented yet")
                 break
@@ -335,6 +343,8 @@ def main():
                             plot_2D_colourline_beta(z,x,c)
                         elif args.track_color == "beta_y":
                             plot_2D_colourline_beta(z,x,c)
+                        elif args.track_color = 'none'
+                            ax.plot(x, z, 'r', linewidth = 0.25)
                     else:
                         if args.track_color == "u_tot":
                             plot_3D_colourline(z,y,x,c, cmin, cmax)
@@ -342,6 +352,8 @@ def main():
                             plot_3D_colourline_beta(z,y,x,c)
                         elif args.track_color == "beta_y":
                             plot_3D_colourline_beta(z,y,x,c)
+                        else: 
+                            plot_3D_colourline(z,y,x,c, cmin, cmax)
                     ###### ## ##ax.plot(z, y, x, label='particle track')
         
             # if args.twodproj:
