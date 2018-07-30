@@ -332,6 +332,14 @@ def main():
                 e = np.split(d[i], np.where(np.diff(d[i][:, 6]) != 0)[0]+1) 
                 #print(np.shape(e))
                 #print('particle tags %i (always look at 1 and ignore 0) %i'% (i, e[16][1, 6]))
+                
+                number = int(np.floor(len(e)/modnum))
+                cmap = plt.get_cmap('jet')
+                colors = [cmap(i) for i in np.linspace(0, 1, number)]
+
+                # for i, color in enumerate(colors, start=1):
+                #     plt.plot(x, i * x + i, color=color, label='$y = {i}x + {i}$'.format(i=i))
+                
                 for j in range(int(np.floor(len(e)/modnum))):
                     x=e[modnum*j][:,0]
                     y=e[modnum*j][:,1]
@@ -355,6 +363,7 @@ def main():
                     #     plot_3D_colourline(z,y,x,c, cmin, cmax)
         
                     # ################### TAKEN OUT TO FASTEN EVERYTHING FOR THE 1/R analysis!
+                    
                     if args.twodproj:
                         if args.track_color == "u_tot":
                             plot_2D_colourline(z,x,c, cmin, cmax)
@@ -363,7 +372,7 @@ def main():
                         elif args.track_color == "beta_y":
                             plot_2D_colourline_beta(z,x,c)
                         elif args.track_color == 'none':
-                            ax.plot(z, x, 'r', linewidth = 0.25)
+                            ax.plot(z, x, color=colors[j], linewidth = 0.25)
                     else:
                         if args.track_color == "u_tot":
                             plot_3D_colourline(z,y,x,c, cmin, cmax)
