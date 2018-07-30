@@ -395,7 +395,7 @@ def main():
         
             print(starting_positions)
             
-            plt.show()
+            #plt.show()
             # fname, fext = os.path.splitext(args.paths[0])
 
 
