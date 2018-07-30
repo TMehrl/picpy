@@ -121,7 +121,7 @@ def plot_2D_colourline(x,z,c, minc, maxc):
     c = cm.jet((c-minc)/(maxc-minc))
     ax = plt.gca()
     for i in np.arange(len(x)-1):
-        ax.plot([x[i],x[i+1]], [z[i],z[i+1]], c=c[i])
+        ax.plot([x[i],x[i+1]], [z[i],z[i+1]], c=c[i], linewidth=0.2)
     
     return
 
