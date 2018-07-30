@@ -267,7 +267,7 @@ def main():
             
             plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), ionized_density, cmap=cm.Blues) #
             c_m = cm.Blues
-            s_m = matplotlib.cm.ScalarMappable(cmap=c_m, norm=norm)
+            s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
             s_m.set_array([])
             cbar1 = plt.colorbar(s_m)
             if args.track_color == "u_tot":
