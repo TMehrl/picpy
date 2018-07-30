@@ -107,6 +107,7 @@ def binSlab_parser():
                         help='number of lines modulo input',
                         action='store',
                         dest="modlines",
+                        type=int,
                         default=1)   
 
     return parser
