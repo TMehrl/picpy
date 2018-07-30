@@ -405,7 +405,7 @@ def main():
 
             save_path_name = 'plots/g3d-slice/ionized_electron_density_tracked.pdf'
             print('bis kury vor dem safe')
-            fig.savefig(save_path_name, format='pdf')
+            fig.savefig(save_path_name, format='png')
             print('bis nach dem save')
         #    plt.close(fig)
             if args.verbose: 
