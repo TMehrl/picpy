@@ -442,7 +442,7 @@ def main():
             
                 # create a ScalarMappable and initialize a data structure
                 s_m = matplotlib.cm.ScalarMappable(cmap=c_m, norm=norm)
-                s_m.set_array()
+                s_m.set_array([])
             
                 cbar = plt.colorbar(s_m)
                 
