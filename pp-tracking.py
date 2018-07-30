@@ -235,10 +235,10 @@ def main():
     bin_fending = '.bin'
     
     
-    zeta_min = -12
+    zeta_min = args.zetamin
 
-    zeta_max = 0.5
-    zeta_gridpoints = 1200
+    zeta_max = args.zetamax
+    zeta_gridpoints = args.nx
     # zeta_min = -8
     # zeta_max = 4
     # zeta_gridpoints = 300
