@@ -269,7 +269,7 @@ def main():
             c_m = cm.Blues
             s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
             s_m.set_array([])
-            cbar1 = plt.colorbar(s_m)
+            cbar1 = plt.colorbar()
             if args.track_color == "u_tot":
                 cmin = min(w[k][:,8])
                 cmax = max(w[k][:,8])
@@ -403,7 +403,7 @@ def main():
             # fname, fext = os.path.splitext(args.paths[0])
 
 
-            save_path_name = 'plots/g3d-slice/ionized_electron_density_tracked.pdf'
+            save_path_name = 'plots/g3d-slice/ionized_electron_density_tracked.png'
             print('bis kury vor dem safe')
             fig.savefig(save_path_name, format='png')
             print('bis nach dem save')
