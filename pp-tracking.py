@@ -374,6 +374,8 @@ def main():
                             plot_2D_colourline_beta(z,x,c)
                         elif args.track_color == 'none':
                             index = np.argmin(abs(start_segments - x[-1]))
+                            
+                            print('index : %i' %index)
                             print('x0 ist %f' %x[-1])
                             ax.plot(z, x, color=colors2[index], linewidth = 0.3)
                     else:
