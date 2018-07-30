@@ -434,7 +434,7 @@ def main():
             else:
                 norm = matplotlib.colors.Normalize(
                 vmin=0
-                vmax=4
+                vmax=4 )
             
                 # choose a colormap
                 c_m = cm.jet
