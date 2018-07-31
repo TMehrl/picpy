@@ -126,7 +126,15 @@ def binSlab_parser():
                         action='store',
                         dest="nx",
                         type=int,
-                        default=600)     
+                        default=600)
+    parser.add_argument(  '--track_range',
+                          help='Give the length of the original tracking box',
+                          action='store',
+                          dest="track_range",
+                          metavar=('trackmin', 'trackmax'),
+                          nargs=2,
+                          type=float,
+                          default=None) 
 
     return parser
 
@@ -337,7 +345,7 @@ def main():
                 cmap = plt.get_cmap('jet')
                 colors = [cmap(i) for i in np.linspace(0, 1, number)]
                 colors2 = [cmap(i) for i in np.linspace(0, 1, 10000)]
-                start_segments = np.linspace(0,2,10000)
+                start_segments = np.linspace(args.track_range[0],args.track_range[1],10000)
                 # for i, color in enumerate(colors, start=1):
                 #     plt.plot(x, i * x + i, color=color, label='$y = {i}x + {i}$'.format(i=i))
                 
@@ -442,7 +450,7 @@ def main():
             
                 # create a ScalarMappable and initialize a data structure
                 s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
-                s_m.set_array([0,2])
+                s_m.set_array([args.track_range[0],args.track_range[1]])
             
                 cbar = plt.colorbar(s_m)
                 
