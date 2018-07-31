@@ -482,7 +482,7 @@ def main():
 
             save_path_name = 'plots/g3d-slice/ionized_electron_density_tracked.png'
             print('bis kury vor dem safe')
-            fig.savefig(save_path_name, format='png')
+            fig.savefig(save_path_name, format='png', dpi=400)
             print('bis nach dem save')
         #    plt.close(fig)
             if args.verbose: 
