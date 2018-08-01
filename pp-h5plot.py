@@ -102,7 +102,31 @@ def h5plot_parser():
                           type=int,                      
                           default=None,
                           nargs='+',
-                          help= """Line style number for each selected line. 0: '-', 1: '--', 2: '-.',  3: ':'""")  
+                          help= """Line style number for each selected line. 0: '-', 1: '--', 2: '-.',  3: ':'""")
+    # parser.add_argument(  "--lstyle", "--line-style",
+    #                       action='store',
+    #                       dest="lstyle",
+    #                       metavar="LINE-STYLE",                          
+    #                       choices=[ '-', '-.', ':'],
+    #                       nargs='+',
+    #                       default=None,
+    #                       help= """Line style number for each selected line (default: %(default)s).""")
+    parser.add_argument(  '--xlim',
+                          help='x-range of plot.',
+                          action='store',
+                          dest="xlim",
+                          metavar=('XMIN', 'XMAX'),
+                          nargs=2,
+                          type=float,
+                          default=None)
+    parser.add_argument(  '--ylim',
+                          help='y-range of plot.',
+                          action='store',
+                          dest="ylim",
+                          metavar=('YMIN', 'YMAX'),
+                          nargs=2,
+                          type=float,
+                          default=None)                               
     parser.add_argument(  "--ylog",
                           dest = "absylog",
                           action="store_true",
@@ -217,8 +241,12 @@ def main():
         i += 1
 
     ax = plt.gca()
+    if args.xlim != None:
+        ax.set_xlim(args.xlim[0],args.xlim[1])
+    if args.ylim != None:
+        ax.set_ylim(args.ylim[0],args.ylim[1])        
     ax.set_xlabel(h5lp[0].get_xlab(), fontsize=14)
-    ax.set_ylabel(h5lp[0].get_ylab(), fontsize=14)    
+    ax.set_ylabel(h5lp[0].get_ylab(), fontsize=14)   
     handles, labels = ax.get_legend_handles_labels()
     #plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
     plt.legend(frameon=False)

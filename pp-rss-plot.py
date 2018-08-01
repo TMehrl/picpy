@@ -188,20 +188,33 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True):
     t = slm.time_array
     tot_charge = np.sum(slm.charge, axis=1)
 
+
+
+
     if axdir == 2:
-        xsq = np.divide(np.sum(np.multiply(slm.avgx2sq, slm.charge), axis=1),tot_charge)
-        psq = np.divide(np.sum(np.multiply(slm.avgp2sq, slm.charge), axis=1),tot_charge)
-        xp = np.divide(np.sum(np.multiply(slm.avgx2p2, slm.charge), axis=1),tot_charge)
+        xavg = np.divide(np.sum(np.multiply(slm.avgx2, slm.charge), axis=1),tot_charge)
+        pavg = np.divide(np.sum(np.multiply(slm.avgp2, slm.charge), axis=1),tot_charge)
+
+        xsq_noncentral = np.divide(np.sum(np.multiply(slm.avgx2sq + np.power(slm.avgx2,2), slm.charge), axis=1),tot_charge)
+        psq_noncentral = np.divide(np.sum(np.multiply(slm.avgp2sq + np.power(slm.avgp2,2), slm.charge), axis=1),tot_charge)
+        xp_noncentral = np.divide(np.sum(np.multiply(slm.avgx2p2 + np.multiply(slm.avgx2,slm.avgp2), slm.charge), axis=1),tot_charge)
         emittance_all_slices = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) - np.power(slm.avgx2p2,2) )
         emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.charge), axis=1),tot_charge)
-        # Also define labels and savenames here!    
+        # TODO: Also define labels and savenames here!    
     elif axdir == 3:
-        xsq = np.divide(np.sum(np.multiply(slm.avgx3sq, slm.charge), axis=1),tot_charge)
-        psq = np.divide(np.sum(np.multiply(slm.avgp3sq, slm.charge), axis=1),tot_charge)
-        xp = np.divide(np.sum(np.multiply(slm.avgx3p3, slm.charge), axis=1),tot_charge)
+        xavg = np.divide(np.sum(np.multiply(slm.avgx3, slm.charge), axis=1),tot_charge)
+        pavg = np.divide(np.sum(np.multiply(slm.avgp3, slm.charge), axis=1),tot_charge)
+
+        xsq_noncentral = np.divide(np.sum(np.multiply(slm.avgx3sq + np.power(slm.avgx3,2), slm.charge), axis=1),tot_charge)
+        psq_noncentral = np.divide(np.sum(np.multiply(slm.avgp3sq + np.power(slm.avgp3,2), slm.charge), axis=1),tot_charge)
+        xp_noncentral = np.divide(np.sum(np.multiply(slm.avgx3p3 + np.multiply(slm.avgx3,slm.avgp3), slm.charge), axis=1),tot_charge)
         emittance_all_slices = np.sqrt( np.multiply(slm.avgx3sq, slm.avgp3sq) - np.power(slm.avgx3p3,2) )
         emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.charge), axis=1),tot_charge)
-        # Also define labels and savenames here!           
+        # TODO: Also define labels and savenames here!           
+
+    xsq = xsq_noncentral - np.power(xavg,2)
+    psq = psq_noncentral - np.power(pavg,2)
+    xp = xp_noncentral - np.multiply(xavg,pavg)
 
     fig_sx = plt.figure()    
     plt.plot(t, np.sqrt(xsq))
@@ -247,7 +260,7 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True):
     plt.close(fig_xp)
 
 
-    emittance_proj = np.sqrt(xsq*psq-np.power(xp,2))
+    emittance_proj = np.sqrt(np.multiply(xsq,psq)-np.power(xp,2))
     fig_e = plt.figure()    
     plt.plot(t, emittance_proj, label='projected emittance') 
     ax = plt.gca()
@@ -675,7 +688,7 @@ def main():
     
     if mom_order > 1:
         plot_save_slice_rms(slm, args.savepath)
-        plot_save_proj_rms(slm, args.savepath, h5plot=args.h5plot)        
+        plot_save_proj_rms(slm, args.savepath, axdir=2, h5plot=args.h5plot)        
         plot_save_slice_rms_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
 
     if mom_order > 3:
