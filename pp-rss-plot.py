@@ -105,7 +105,12 @@ def ps_parseopts():
                           dest="time",
                           nargs=1,
                           type=float,
-                          default=None)  
+                          default=None)
+    parser.add_argument(  "--use-time",
+                          action="store_false",
+                          dest="t_is_z",
+                          default=True,                          
+                          help = "Use time 't' for axes labels (instead of z).")                           
     parser.add_argument(  '--zeta-range',
                           help='zeta range',
                           action='store',
@@ -133,10 +138,15 @@ def magn_check(x):
     return not (-3.0 < math.log(1e-14 + np.max(abs(x)),10) < 3.0)    
 
 
-def plot_save_slice_rms(slm, savepath, verbose=True):
+def plot_save_slice_rms(slm, savepath, verbose=True, t_is_z=True):
 
     x = slm.zeta_array
     y = slm.time_array
+
+    if t_is_z:
+        xlabel_str = r'$k_p z$'
+    else:
+        xlabel_str = r'$\omega_p t$'
 
     sigma_x = np.sqrt( np.absolute( slm.avgx2sq ) )
     fig_sx = plt.figure()
@@ -147,7 +157,7 @@ def plot_save_slice_rms(slm, savepath, verbose=True):
                           vmin=0, vmax=np.amax(abs(sigma_x)) )
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-    ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
+    ax.set_ylabel(xlabel_str, fontsize=14)    
     cbar = fig_sx.colorbar( cax )
     cbar.ax.set_ylabel(r'$k_p \sigma_x$', fontsize=14)
     saveas_png(fig_sx, savepath, 'sigma_x')
@@ -162,7 +172,7 @@ def plot_save_slice_rms(slm, savepath, verbose=True):
                           vmin=0, vmax=np.amax(sigma_px) )
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-    ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
+    ax.set_ylabel(xlabel_str, fontsize=14)    
     cbar = fig_spx.colorbar( cax )
     cbar.ax.set_ylabel(r'$k_p \sigma_{p_x}$', fontsize=14)  
     saveas_png(fig_spx, savepath, 'sigma_px')
@@ -177,19 +187,21 @@ def plot_save_slice_rms(slm, savepath, verbose=True):
                           vmin=np.amin(emittance), vmax=np.amax(emittance) )
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-    ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
+    ax.set_ylabel(xlabel_str, fontsize=14)    
     cbar = fig_e.colorbar( cax )
     cbar.ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
     saveas_png(fig_e, savepath, 'slice_emittance_x')
 
 
-def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True):
+def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True, t_is_z=True):
     
     t = slm.time_array
     tot_charge = np.sum(slm.charge, axis=1)
 
-
-
+    if t_is_z:
+        xlabel_str = r'$k_p z$'
+    else:
+        xlabel_str = r'$\omega_p t$'
 
     if axdir == 2:
         xavg = np.divide(np.sum(np.multiply(slm.avgx2, slm.charge), axis=1),tot_charge)
@@ -219,7 +231,7 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True):
     fig_sx = plt.figure()    
     plt.plot(t, np.sqrt(xsq))
     ax = plt.gca()
-    ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_xlabel(xlabel_str, fontsize=14) 
     ax.set_ylabel(r'$k_p\sigma_x$', fontsize=14)
     if magn_check(np.sqrt(xsq)):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
@@ -227,13 +239,13 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True):
     else:
         plt.gcf().subplots_adjust(left=0.15) 
     
-    saveas_eps_pdf(fig_sx, savepath, 'sigma_x_proj')                  
+    saveas_eps_pdf(fig_sx, savepath, 'sigma_x_proj', h5plot=h5plot)                  
     plt.close(fig_sx)
 
     fig_sp = plt.figure()    
     plt.plot(t, np.sqrt(psq))
     ax = plt.gca()
-    ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_xlabel(xlabel_str, fontsize=14) 
     ax.set_ylabel(r'$\sigma_{p_x}/m_e c$', fontsize=14)
     if magn_check(np.sqrt(psq)):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
@@ -241,14 +253,14 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True):
     else:
         plt.gcf().subplots_adjust(left=0.15)  
     
-    saveas_eps_pdf(fig_sp, savepath, 'sigma_px_proj')                  
+    saveas_eps_pdf(fig_sp, savepath, 'sigma_px_proj', h5plot=h5plot)                  
     plt.close(fig_sp)
 
 
     fig_xp = plt.figure()    
     plt.plot(t, xp)
     ax = plt.gca()
-    ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_xlabel(xlabel_str, fontsize=14) 
     ax.set_ylabel(r'$ k_p \left \langle x\,p_x \right\rangle/m_e c$', fontsize=14)
     if magn_check(xp):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
@@ -256,7 +268,7 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True):
     else:
         plt.gcf().subplots_adjust(left=0.15)
     
-    saveas_eps_pdf(fig_xp, savepath, 'xpx_proj')   
+    saveas_eps_pdf(fig_xp, savepath, 'xpx_proj', h5plot=h5plot)   
     plt.close(fig_xp)
 
 
@@ -264,7 +276,7 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True):
     fig_e = plt.figure()    
     plt.plot(t, emittance_proj, label='projected emittance') 
     ax = plt.gca()
-    ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_xlabel(xlabel_str, fontsize=14) 
     ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
     if magn_check(emittance_proj):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
@@ -272,13 +284,13 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True):
     else:
         plt.gcf().subplots_adjust(left=0.15)  
     
-    saveas_eps_pdf(fig_e, savepath, 'emittance_proj')   
+    saveas_eps_pdf(fig_e, savepath, 'emittance_proj', h5plot=h5plot)   
     plt.close(fig_e)
 
     fig_esl = plt.figure()    
     plt.plot(t, emittance_sliced, label='sliced emittance') 
     ax = plt.gca()
-    ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_xlabel(xlabel_str, fontsize=14) 
     ax.set_ylabel(r'$k_p \epsilon_{x,\mathrm{sliced}}$', fontsize=14)
     if magn_check(emittance_sliced):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
@@ -286,14 +298,14 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True):
     else:
         plt.gcf().subplots_adjust(left=0.15)  
     
-    saveas_eps_pdf(fig_esl, savepath, 'emittance_sliced')   
+    saveas_eps_pdf(fig_esl, savepath, 'emittance_sliced', h5plot=h5plot)   
     plt.close(fig_esl)
 
     fig_e_slpr = plt.figure()    
     epp = plt.plot(t, emittance_proj, label='projected')
     esp = plt.plot(t, emittance_sliced, color = epp[0].get_color(), linestyle='--', label='sliced')    
     ax = plt.gca()
-    ax.set_xlabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_xlabel(xlabel_str, fontsize=14) 
     ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
     ax.legend()
     if magn_check(emittance_proj):
@@ -302,7 +314,7 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True):
     else:
         plt.gcf().subplots_adjust(left=0.15)  
     
-    saveas_eps_pdf(fig_e_slpr, savepath, 'emittance_sl_proj')   
+    saveas_eps_pdf(fig_e_slpr, savepath, 'emittance_sl_proj', h5plot=h5plot)   
     plt.close(fig_e_slpr)
 
 
@@ -336,7 +348,7 @@ def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(sigma_xy_lab, fontsize=14)     
-        saveas_eps_pdf(fig_sigma_xy, savepath, ('%s_time_%0.1f' % (sigma_xy_savename, slm.time_array[i])))
+        saveas_eps_pdf(fig_sigma_xy, savepath, ('%s_time_%0.1f' % (sigma_xy_savename, slm.time_array[i])), h5plot=h5plot)
         plt.close(fig_sigma_xy)
 
 
@@ -346,7 +358,7 @@ def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(sigma_pxy_lab, fontsize=14)     
-        saveas_eps_pdf(fig_sigma_pxy, savepath, ('%s_time_%0.1f' % (sigma_pxy_savename, slm.time_array[i])))
+        saveas_eps_pdf(fig_sigma_pxy, savepath, ('%s_time_%0.1f' % (sigma_pxy_savename, slm.time_array[i])), h5plot=h5plot)
         plt.close(fig_sigma_pxy)
 
 def plot_save_slice_exkurtosis_lines(slm, savepath, time = None, axdir=2, h5plot=True):
@@ -393,7 +405,7 @@ def plot_save_slice_exkurtosis_lines(slm, savepath, time = None, axdir=2, h5plot
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(exkurtosis_xy_lab, fontsize=14)     
-        saveas_eps_pdf(fig_exkurtosis_xy, savepath, ('%s_time_%0.1f' % (exkurtosis_xy_savename, slm.time_array[i])))
+        saveas_eps_pdf(fig_exkurtosis_xy, savepath, ('%s_time_%0.1f' % (exkurtosis_xy_savename, slm.time_array[i])), h5plot=h5plot)
         plt.close(fig_exkurtosis_xy)
 
 
@@ -403,7 +415,7 @@ def plot_save_slice_exkurtosis_lines(slm, savepath, time = None, axdir=2, h5plot
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(exkurtosis_pxy_lab, fontsize=14)     
-        saveas_eps_pdf(fig_exkurtosis_pxy, savepath, ('%s_time_%0.1f' % (exkurtosis_pxy_savename, slm.time_array[i])))
+        saveas_eps_pdf(fig_exkurtosis_pxy, savepath, ('%s_time_%0.1f' % (exkurtosis_pxy_savename, slm.time_array[i])), h5plot=h5plot)
         plt.close(fig_exkurtosis_pxy)
 
 
@@ -440,11 +452,17 @@ def plot_save_slice_quad_corr_lines(slm, savepath, time = None, axdir=2, h5plot=
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(quad_corr_xy_lab, fontsize=14)     
-        saveas_eps_pdf(fig_quad_corr_xy, savepath, ('%s_time_%0.1f' % (quad_corr_xy_savename, slm.time_array[i])))
+        saveas_eps_pdf(fig_quad_corr_xy, savepath, ('%s_time_%0.1f' % (quad_corr_xy_savename, slm.time_array[i])), h5plot=h5plot)
         plt.close(fig_quad_corr_xy)
 
 
-def plot_save_slice_centroids(slm, savepath, h5plot=True):
+def plot_save_slice_centroids(slm, savepath, h5plot=True, t_is_z=True):
+
+    if t_is_z:
+        xlabel_str = r'$k_p z$'
+    else:
+        xlabel_str = r'$\omega_p t$'
+
 
     Xb0 = np.ones(slm.avgx2[0,:].shape)
     Yb0 = np.ones(slm.avgx3[0,:].shape)
@@ -475,7 +493,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     cbar.ax.set_ylabel('$k_p X_b$', fontsize=14)
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-    ax.set_ylabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_ylabel(xlabel_str, fontsize=14) 
     saveas_png(figXb, savepath, 'Xb')
     plt.close(figXb)
 
@@ -490,7 +508,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     cbar.ax.set_ylabel('$k_p Y_b$', fontsize=14)
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-    ax.set_ylabel(r'$\omega_p t$', fontsize=14)     
+    ax.set_ylabel(xlabel_str, fontsize=14)     
     saveas_png(figYb, savepath, 'Yb')
     plt.close(figYb)
 
@@ -505,7 +523,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     cbar.ax.set_ylabel('$|X_b/X_{b,0}|$', fontsize=14)
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-    ax.set_ylabel(r'$\omega_p t$', fontsize=14)  
+    ax.set_ylabel(xlabel_str, fontsize=14)  
     saveas_png(figXbnorm, savepath, 'Xb_rel')
     plt.close(figXbnorm)
 
@@ -520,7 +538,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
     cbar.ax.set_ylabel('$|Y_b/Y_{b,0}|$', fontsize=14)
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-    ax.set_ylabel(r'$\omega_p t$', fontsize=14)
+    ax.set_ylabel(xlabel_str, fontsize=14)
     saveas_png(figYbnorm, savepath, 'Yb_rel')
     plt.close(figYbnorm)
 
@@ -534,7 +552,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
         plt.ylim(ymin*1.2, 0)        
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$k_p X_{b,0}$', fontsize=14)
-    saveas_eps_pdf(figXb0, savepath, 'Xb0')
+    saveas_eps_pdf(figXb0, savepath, 'Xb0', h5plot=h5plot)
     plt.close(figXb0)
 
     figYb0 = plt.figure()
@@ -547,33 +565,38 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True):
         plt.ylim(ymin*1.2, 0)    
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(r'$k_p Y_{b,0}$', fontsize=14)     
-    saveas_eps_pdf(figYb0, savepath, 'Yb0')
+    saveas_eps_pdf(figYb0, savepath, 'Yb0', h5plot=h5plot)
     plt.close(figYb0)
 
     figXbtail = plt.figure()
     plt.plot(slm.time_array, slm.avgx2[:,0])
     ax = plt.gca()
-    ax.set_xlabel(r'$\omega_p t$', fontsize=14)
+    ax.set_xlabel(xlabel_str, fontsize=14)
     ax.set_ylabel(r'$k_p X_{b,\mathrm{tail}}$', fontsize=14)
     if magn_check(slm.avgx2[:,0]):    
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
         plt.gcf().subplots_adjust(left=0.15)
-    saveas_eps_pdf(figXbtail, savepath, 'Xb_tail')    
+    saveas_eps_pdf(figXbtail, savepath, 'Xb_tail', h5plot=h5plot)    
     plt.close(figXbtail)
 
     figYbtail = plt.figure()
     plt.plot(slm.time_array, slm.avgx3[:,0])
     ax = plt.gca()
-    ax.set_xlabel(r'$\omega_p t$', fontsize=14)
+    ax.set_xlabel(xlabel_str, fontsize=14)
     ax.set_ylabel(r'$k_p Y_{b,\mathrm{tail}}$', fontsize=14) 
-    saveas_eps_pdf(figYbtail, savepath, 'Yb_tail')   
+    saveas_eps_pdf(figYbtail, savepath, 'Yb_tail', h5plot=h5plot)   
     plt.close(figYbtail)  
 
 
 
-def plot_save_slice_ene(slm, savepath, time = None):
+def plot_save_slice_ene(slm, savepath, time = None, h5plot=True, t_is_z=True):
+
+    if t_is_z:
+        xlabel_str = r'$k_p z$'
+    else:
+        xlabel_str = r'$\omega_p t$'
     
     gamma = np.sqrt( 1 + np.power(slm.avgp1,2) 
                        + np.power(slm.avgp2,2)
@@ -590,7 +613,7 @@ def plot_save_slice_ene(slm, savepath, time = None):
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(r'$\gamma$', fontsize=14)
-        saveas_eps_pdf(fig, savepath, ('gamma_time_%0.1f' % (slm.time_array[i])) )
+        saveas_eps_pdf(fig, savepath, ('gamma_time_%0.1f' % (slm.time_array[i])), h5plot=h5plot)
         plt.close(fig)    
 
 
@@ -603,16 +626,57 @@ def plot_save_slice_ene(slm, savepath, time = None):
                           vmin=np.amin(gamma), vmax=np.amax(gamma))
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-    ax.set_ylabel(r'$\omega_p t$', fontsize=14)    
+    ax.set_ylabel(xlabel_str, fontsize=14)    
     cbar = figG.colorbar( cax )
     cbar.ax.set_ylabel(r'$\gamma$', fontsize=14)
     saveas_png(figG, savepath, 'gamma')
     plt.close(figG)    
 
 
-def plot_curr_profile(slm, savepath, time = None):
+def plot_save_ene_ene_spread(slm, savepath, h5plot=True, t_is_z=True):
+
+    if t_is_z:
+        xlabel_str = r'$k_p z$'
+    else:
+        xlabel_str = r'$\omega_p t$'
+
+    t = slm.time_array
+    tot_charge = np.sum(slm.charge, axis=1)
+    
+    avg_gamma = np.divide(np.sum( np.multiply( slm.avgp1, slm.charge), axis=1),tot_charge)
+    sigma_gamma = np.divide(np.sqrt( np.abs( np.divide(np.sum( np.multiply( slm.avgp1sq + np.power(slm.avgp1,2), slm.charge), axis=1),tot_charge) - np.power(avg_gamma,2))),avg_gamma)
+
+    fig_sg = plt.figure()    
+    plt.plot(t, sigma_gamma)
+    ax = plt.gca()
+    if magn_check(sigma_gamma):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)     
+    ax.set_xlabel(xlabel_str, fontsize=14) 
+    ax.set_ylabel(r'$\sigma_\gamma$', fontsize=14)  
+    saveas_eps_pdf(fig_sg, savepath, 'sigma_gamma', h5plot=h5plot)                  
+    plt.close(fig_sg)
+
+
+    fig_g = plt.figure()    
+    plt.plot(t, avg_gamma)
+    ax = plt.gca()
+    ax.set_xlabel(xlabel_str, fontsize=14) 
+    ax.set_ylabel(r'$\gamma$', fontsize=14)    
+    saveas_eps_pdf(fig_g, savepath, 'avg_gamma', h5plot=h5plot)                  
+    plt.close(fig_g)
+
+
+def plot_curr_profile(slm, savepath, time = None, h5plot=True, t_is_z=True):
     dzeta = abs(slm.zeta_array[1] - slm.zeta_array[0]);
     curr = slm.charge / dzeta
+
+    if t_is_z:
+        xlabel_str = r'$k_p z$'
+    else:
+        xlabel_str = r'$\omega_p t$'
 
     # print('Q = %0.3e' % (np.sum(curr) * dzeta ))
 
@@ -632,7 +696,7 @@ def plot_curr_profile(slm, savepath, time = None):
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(r'$I_{b,0}/I_A$', fontsize=14)
-        saveas_eps_pdf(fig, savepath, ('Ib0_time_%0.1f' % (slm.time_array[i])) )
+        saveas_eps_pdf(fig, savepath, ('Ib0_time_%0.1f' % (slm.time_array[i])), h5plot=h5plot)
         plt.close(fig)    
 
 
@@ -647,7 +711,7 @@ def plot_curr_profile(slm, savepath, time = None):
     cbar.ax.set_ylabel('$I_b/I_A$', fontsize=14)
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-    ax.set_ylabel(r'$\omega_p t$', fontsize=14) 
+    ax.set_ylabel(xlabel_str, fontsize=14) 
     saveas_png(figIb, savepath, 'Ib')
     plt.close(figIb)
 
@@ -680,9 +744,9 @@ def main():
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif') 
 
-    plot_curr_profile(slm, args.savepath, time = args.time)
+    plot_curr_profile(slm, args.savepath, time = args.time, h5plot=args.h5plot)
 
-    plot_save_slice_ene(slm, args.savepath)
+    plot_save_slice_ene(slm, args.savepath, h5plot=args.h5plot)
 
     plot_save_slice_centroids(slm, args.savepath, h5plot=args.h5plot)
     
@@ -690,6 +754,7 @@ def main():
         plot_save_slice_rms(slm, args.savepath)
         plot_save_proj_rms(slm, args.savepath, axdir=2, h5plot=args.h5plot)        
         plot_save_slice_rms_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
+        plot_save_ene_ene_spread(slm, args.savepath, t_is_z=args.t_is_z)
 
     if mom_order > 3:
         plot_save_slice_exkurtosis_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
