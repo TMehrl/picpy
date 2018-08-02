@@ -355,7 +355,7 @@ def main():
                     z=e[modnum*j][:,5] # IN CASE OF UNIONIZED PLASMA USE THIS TERM
                     # starting_positions.append(x[ zeta_gridpoints -1]) #799])#
                     #z=zeta_array[zeta_gridpoints-len(y):] # IN CASE OF preionized PLASMA USE THIS TERM
-                    z=zeta_array[:len(y)]
+                    #z=zeta_array[:len(y)]
                     if args.track_color == "u_tot":
                         c=e[modnum*j][:,8]
                     elif args.track_color == "beta_z":
