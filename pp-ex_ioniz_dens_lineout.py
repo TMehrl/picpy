@@ -217,7 +217,7 @@ def plot_hipace_Ex(zeta_pos):
 def gauss_E_field(r, sigma, I_b):
     return -2*I_b*1/r * (1-np.exp(-r**2/(2*sigma**2)))
 
-def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta_pos):
+def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta_pos, I_beam):
     ELECTRON_CHARGE_IN_COUL   =    1.60217657e-19
     ELECTRON_MASS_IN_KG       =    9.10938291e-31
     VAC_PERMIT_FARAD_PER_M    =    8.854187817e-12
@@ -256,7 +256,7 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta
             else:
                 E[i] = np.real(c3prime) / r_array[i]
         else:
-            E[i] = gauss_E_field(r_array[i], rbunch, args.I_beam)
+            E[i] = gauss_E_field(r_array[i], rbunch, I_beam)
     
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -321,7 +321,7 @@ def main():
     
     
 
-    calc_transversal_probability_density(args.rmax, args.nx/2, args.nb, args.ni, args.rbunch, args.lbunch, args.zeta_pos) #parameters from hipace.c ##(r_max, nx, nb, ni, rbunch, lbunch)
+    calc_transversal_probability_density(args.rmax, args.nx/2, args.nb, args.ni, args.rbunch, args.lbunch, args.zeta_pos, args.I_beam) #parameters from hipace.c ##(r_max, nx, nb, ni, rbunch, lbunch)
 
 
 if __name__ == "__main__":
