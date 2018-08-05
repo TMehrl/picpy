@@ -256,7 +256,7 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta
             else:
                 E[i] = np.real(c3prime) / r_array[i]
         else:
-            E[i] = gauss_E_field(r_array[i], rbunch, args.I_beam):
+            E[i] = gauss_E_field(r_array[i], rbunch, args.I_beam)
     
     fig = plt.figure()
     ax = fig.add_subplot(111)
