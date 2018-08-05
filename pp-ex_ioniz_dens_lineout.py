@@ -217,7 +217,7 @@ def plot_hipace_Ex(zeta_pos):
 def gauss_E_field(r, sigma, I_b):
     return -2*I_b*1/r * (1-np.exp(-r**2/(2*sigma**2)))
 
-def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta_pos, I_beam):
+def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta_pos, I_beam, canbeam, ionization):
     ELECTRON_CHARGE_IN_COUL   =    1.60217657e-19
     ELECTRON_MASS_IN_KG       =    9.10938291e-31
     VAC_PERMIT_FARAD_PER_M    =    8.854187817e-12
@@ -250,7 +250,7 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta
     
     E = np.zeros(shape = np.shape(r_array))
     for i in range(len(r_array)):
-        if args.canbeam:
+        if canbeam:
             if(r_array[i] <= rbunch):
                 E[i] = np.real(c1prime) * r_array[i] 
             else:
@@ -281,7 +281,7 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta
     #print(Earray)
 
 ####### CALCULATING IONIZATION   
-    if args.ionization:
+    if ionization:
         ionization_rate =np.zeros(shape=np.shape(r_array))
         ionization_rate[:] = vcalc_ion_rate(E*E_0, 1, 13.659843449,13.659843449, 0,0 ) # complete formulae for hydrogen
         #print(ionization_rate[1])
@@ -321,7 +321,7 @@ def main():
     
     
 
-    calc_transversal_probability_density(args.rmax, args.nx/2, args.nb, args.ni, args.rbunch, args.lbunch, args.zeta_pos, args.I_beam) #parameters from hipace.c ##(r_max, nx, nb, ni, rbunch, lbunch)
+    calc_transversal_probability_density(args.rmax, args.nx/2, args.nb, args.ni, args.rbunch, args.lbunch, args.zeta_pos, args.I_beam, args.canbeam, args.ionization) #parameters from hipace.c ##(r_max, nx, nb, ni, rbunch, lbunch)
 
 
 if __name__ == "__main__":
