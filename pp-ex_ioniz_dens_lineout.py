@@ -116,7 +116,7 @@ def binSlab_parser():
                          # action="store_true",
                           type = float,
                           default=0,
-                          help = "Radius of the bunch as in hipace input script (Default: %(default)s).")
+                          help = "Radius or Sigma_r of the bunch as in hipace input script (Default: %(default)s).")
 
     parser.add_argument(  "--lbunch",
                         dest = "lbunch",
@@ -130,6 +130,26 @@ def binSlab_parser():
                         type = float,
                         default= -0.2,
                         help = "bunch length (Default: %(default)s).")
+    parser.add_argument(  "--I_beam",
+                        dest = "I_beam",
+                        #action="store_true",
+                        type = float,
+                        default= 0.5,
+                        help = "bunch current in I_b/I_A (Default: %(default)s).")
+
+    parser.add_argument(  "--ionization",
+                        dest = "ionization",
+                        #action="store_true",
+                         action="store_true",
+                         default=False,
+                         help = "Save and plot ionization probability as hdf5 file (Default: %(default)s).")
+    parser.add_argument(  "--canbeam",
+                        dest = "canbeam",
+                        #action="store_true",
+                         action="store_true",
+                         default=False,
+                         help = "Save and plot ionization probability as hdf5 file (Default: %(default)s).")
+
 
     return parser
 
@@ -193,6 +213,9 @@ def plot_hipace_Ex(zeta_pos):
     idx =np.abs(By_g3d2.get_zeta_arr() - zeta_pos).argmin()
     
     return By_g3d2.get_x_arr(2), Ex[:,idx]
+    
+def gauss_E_field(r, sigma, I_b):
+    return -2*I_b*1/r * (1-np.exp(-r**2/(2*sigma**2)))
 
 def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta_pos):
     ELECTRON_CHARGE_IN_COUL   =    1.60217657e-19
@@ -227,17 +250,20 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta
     
     E = np.zeros(shape = np.shape(r_array))
     for i in range(len(r_array)):
-        if(r_array[i] <= rbunch):
-            E[i] = np.real(c1prime) * r_array[i] 
+        if args.canbeam:
+            if(r_array[i] <= rbunch):
+                E[i] = np.real(c1prime) * r_array[i] 
+            else:
+                E[i] = np.real(c3prime) / r_array[i]
         else:
-            E[i] = np.real(c3prime) / r_array[i] 
+            E[i] = gauss_E_field(r_array[i], rbunch, args.I_beam):
     
     fig = plt.figure()
     ax = fig.add_subplot(111)
     
     ax.plot(np.append(-r_array[::-1], r_array), np.append(-(E[::-1]) ,E[:]))
     x, Ex =plot_hipace_Ex(zeta_pos) # input = zeta pos 
-    #ax.plot(x, Ex)
+    ax.plot(x, Ex)
         # x, Ex =plot_hipace_Ex(-0.2) # input = zeta pos 
         # ax.plot(x, Ex, label=r'$\zeta = -0.2$', 'r')
         # x, Ex =plot_hipace_Ex(-1.0) # input = zeta pos 
@@ -254,30 +280,31 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta
     #use zeta array for shaping the elctric field to get the same spacing etc.
     #print(Earray)
 
-####### CALCULATING IONIZATION     
-    ionization_rate =np.zeros(shape=np.shape(r_array))
-    ionization_rate[:] = vcalc_ion_rate(E*E_0, 1, 13.659843449,13.659843449, 0,0 ) # complete formulae for hydrogen
-    #print(ionization_rate[1])
-    
-    
-    fig2 = plt.figure()
-    ax2 = fig2.add_subplot(111)
-    #print('Deltat is %0.3e' %deltat)
-    #computing the ionization probability
-    
-    
-    savename = 'ion_probability_test'
-    ion_probability = np.zeros(shape=(len(bunch_array) -1, len(ionization_rate)))
-    for i in range(1,2): #len(bunch_array)):
-        ion_probability[i-1,:] = 1.0 - np.exp(-ionization_rate[:] * deltat[i] )
-        ax2.plot(np.append(-r_array[::-1], r_array), np.append((ion_probability[i-1,::-1]) ,ion_probability[i-1,:]), label=('prob at lb: ' + str(np.around(bunch_array[i], decimals = 1) ) ) )
-        #ax.legend()
-    
-    
-    h5lp = H5Plot()
-    h5lp.inherit_matplotlib_line_plots(ax2)
-    h5lp.write(savepath + '/' + savename + '.h5')
-    # #plt.show()
+####### CALCULATING IONIZATION   
+    if args.ionization:
+        ionization_rate =np.zeros(shape=np.shape(r_array))
+        ionization_rate[:] = vcalc_ion_rate(E*E_0, 1, 13.659843449,13.659843449, 0,0 ) # complete formulae for hydrogen
+        #print(ionization_rate[1])
+        
+        
+        fig2 = plt.figure()
+        ax2 = fig2.add_subplot(111)
+        #print('Deltat is %0.3e' %deltat)
+        #computing the ionization probability
+        
+        
+        savename = 'ion_probability_test'
+        ion_probability = np.zeros(shape=(len(bunch_array) -1, len(ionization_rate)))
+        for i in range(1,2): #len(bunch_array)):
+            ion_probability[i-1,:] = 1.0 - np.exp(-ionization_rate[:] * deltat[i] )
+            ax2.plot(np.append(-r_array[::-1], r_array), np.append((ion_probability[i-1,::-1]) ,ion_probability[i-1,:]), label=('prob at lb: ' + str(np.around(bunch_array[i], decimals = 1) ) ) )
+            #ax.legend()
+        
+        
+        h5lp = H5Plot()
+        h5lp.inherit_matplotlib_line_plots(ax2)
+        h5lp.write(savepath + '/' + savename + '.h5')
+        # #plt.show()
 
 
 
