@@ -80,7 +80,7 @@ def binSlab_parser():
 
     parser.add_argument(  "-t", "--track_color",
                           dest = "track_color",
-                          default = "u_tot",
+                          default = "none",
                           help = "Select the attribute which is displayed as the color of the track \n"
                                  "Default is the total momentum u_tot, other available options are: \n"
                                  "beta_z")
@@ -95,6 +95,46 @@ def binSlab_parser():
                           default = "./DATA/density_ionized_electrons_plasma_H_000000.0.h5",
                           help = "Path to the ionized electron density data over which  \n"
                                  "the tracks should be laid. \n")
+    parser.add_argument(  '--clim',
+                          help='Colorbar axis limits',
+                          action='store',
+                          dest="clim",
+                          metavar=('CBMIN', 'CBMAX'),
+                          nargs=2,
+                          type=float,
+                          default=None) 
+    parser.add_argument(  '--modlines',
+                        help='number of lines modulo input',
+                        action='store',
+                        dest="modlines",
+                        type=int,
+                        default=1) 
+    parser.add_argument(  '--zetamin',
+                        help='minimum of zeta',
+                        action='store',
+                        dest="zetamin",
+                        type=float,
+                        default=-12)   
+    parser.add_argument(  '--zetamax',
+                        help='maximum of zeta',
+                        action='store',
+                        dest="zetamax",
+                        type=float,
+                        default=0.5)   
+    parser.add_argument(  '--nx',
+                        help='number of longitudinal gridpoints',
+                        action='store',
+                        dest="nx",
+                        type=int,
+                        default=600)
+    parser.add_argument(  '--track_range',
+                          help='Give the length of the original tracking box',
+                          action='store',
+                          dest="track_range",
+                          metavar=('trackmin', 'trackmax'),
+                          nargs=2,
+                          type=float,
+                          default=None) 
 
     return parser
 
@@ -113,7 +153,7 @@ def plot_2D_colourline(x,z,c, minc, maxc):
     c = cm.jet((c-minc)/(maxc-minc))
     ax = plt.gca()
     for i in np.arange(len(x)-1):
-        ax.plot([x[i],x[i+1]], [z[i],z[i+1]], c=c[i])
+        ax.plot([x[i],x[i+1]], [z[i],z[i+1]], c=c[i], linewidth=0.2)
     
     return
 
@@ -177,7 +217,7 @@ def plot_hipace_Ex(zeta_pos):
 
 def main():
     
-    modnum = 6
+    
     
     basic_cols=['#75b765', '#808080', '#ffd700']
     basic_cols=['#2020ff' ,'#808080', '#ff2020']
@@ -189,7 +229,8 @@ def main():
     parser = binSlab_parser() 
     args = parser.parse_args()
 
-    
+
+    modnum = args.modlines
     dens_path = args.dens_data
     
     ionized_density_g3d1 = Grid3d(dens_path)
@@ -202,10 +243,10 @@ def main():
     bin_fending = '.bin'
     
     
-    zeta_min = -12
+    zeta_min = args.zetamin
 
-    zeta_max = 0.5
-    zeta_gridpoints = 1200
+    zeta_max = args.zetamax
+    zeta_gridpoints = args.nx
     # zeta_min = -8
     # zeta_max = 4
     # zeta_gridpoints = 300
@@ -265,11 +306,13 @@ def main():
                 ax = fig.add_subplot(111, projection='3d')
             ''' get min and max value for universal colorbar later '''
             
-            plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), ionized_density, cmap=cm.Blues) #
+            plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu) #
             c_m = cm.Blues
             s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
             s_m.set_array([])
-            cbar1 = plt.colorbar(s_m)
+            cbar1 = plt.colorbar()
+            if args.clim:
+                plt.clim(args.clim[0], args.clim[1])
             if args.track_color == "u_tot":
                 cmin = min(w[k][:,8])
                 cmax = max(w[k][:,8])
@@ -282,6 +325,8 @@ def main():
                 cmin = -1
                 cmax = 1
                 chosencmap = my_cmap
+            elif args.track_color == "none":
+                print('no coloring option selected.')
             else:
                 print("This attribute doesn't exist or is not implemented yet")
                 break
@@ -295,13 +340,22 @@ def main():
                 e = np.split(d[i], np.where(np.diff(d[i][:, 6]) != 0)[0]+1) 
                 #print(np.shape(e))
                 #print('particle tags %i (always look at 1 and ignore 0) %i'% (i, e[16][1, 6]))
+                
+                number = int(np.floor(len(e)/modnum))
+                cmap = plt.get_cmap('jet')
+                colors = [cmap(i) for i in np.linspace(0, 1, number)]
+                colors2 = [cmap(i) for i in np.linspace(0, 1, 10000)]
+                start_segments = np.linspace(args.track_range[0],args.track_range[1],10000)
+                # for i, color in enumerate(colors, start=1):
+                #     plt.plot(x, i * x + i, color=color, label='$y = {i}x + {i}$'.format(i=i))
+                
                 for j in range(int(np.floor(len(e)/modnum))):
                     x=e[modnum*j][:,0]
                     y=e[modnum*j][:,1]
                     z=e[modnum*j][:,5] # IN CASE OF UNIONIZED PLASMA USE THIS TERM
                     # starting_positions.append(x[ zeta_gridpoints -1]) #799])#
-                    z=zeta_array[zeta_gridpoints-len(y):] # IN CASE OF preionized PLASMA USE THIS TERM
-                    z=zeta_array[:len(y)]
+                    #z=zeta_array[zeta_gridpoints-len(y):] # IN CASE OF preionized PLASMA USE THIS TERM
+                    #z=zeta_array[:len(y)]
                     if args.track_color == "u_tot":
                         c=e[modnum*j][:,8]
                     elif args.track_color == "beta_z":
@@ -318,6 +372,7 @@ def main():
                     #     plot_3D_colourline(z,y,x,c, cmin, cmax)
         
                     # ################### TAKEN OUT TO FASTEN EVERYTHING FOR THE 1/R analysis!
+                    
                     if args.twodproj:
                         if args.track_color == "u_tot":
                             plot_2D_colourline(z,x,c, cmin, cmax)
@@ -325,6 +380,12 @@ def main():
                             plot_2D_colourline_beta(z,x,c)
                         elif args.track_color == "beta_y":
                             plot_2D_colourline_beta(z,x,c)
+                        elif args.track_color == 'none':
+                            index = np.argmin(abs(start_segments - x[-1]))
+                            
+                            print('index : %i' %index)
+                            print('x0 ist %f' %x[-1])
+                            ax.plot(z, x, color=colors2[index], linewidth = 0.3)
                     else:
                         if args.track_color == "u_tot":
                             plot_3D_colourline(z,y,x,c, cmin, cmax)
@@ -332,6 +393,8 @@ def main():
                             plot_3D_colourline_beta(z,y,x,c)
                         elif args.track_color == "beta_y":
                             plot_3D_colourline_beta(z,y,x,c)
+                        else: 
+                            plot_3D_colourline(z,y,x,c, cmin, cmax)
                     ###### ## ##ax.plot(z, y, x, label='particle track')
         
             # if args.twodproj:
@@ -365,18 +428,32 @@ def main():
             #     # ax.plot(data_zeta, np.zeros(len(data_zeta)), data2)
         
             ''' Set colorbar ''' 
-            norm = matplotlib.colors.Normalize(
-            vmin=np.min(cmin),
-            vmax=np.max(cmax))
-        
-            # choose a colormap
-            c_m = chosencmap
-        
-            # create a ScalarMappable and initialize a data structure
-            s_m = matplotlib.cm.ScalarMappable(cmap=c_m, norm=norm)
-            s_m.set_array([])
-        
-            cbar = plt.colorbar(s_m)
+            if args.track_color != "none":
+                norm = matplotlib.colors.Normalize(
+                vmin=np.min(cmin),
+                vmax=np.max(cmax))
+            
+                # choose a colormap
+                c_m = chosencmap
+            
+                # create a ScalarMappable and initialize a data structure
+                s_m = matplotlib.cm.ScalarMappable(cmap=c_m, norm=norm)
+                s_m.set_array([])
+            
+                cbar = plt.colorbar(s_m)
+                
+            else:
+                # norm = matplotlib.colors.Normalize( vmin= 0, vmax=6)
+            
+                # choose a colormap
+                c_m = cm.jet
+            
+                # create a ScalarMappable and initialize a data structure
+                s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
+                s_m.set_array([args.track_range[0],args.track_range[1]])
+            
+                cbar = plt.colorbar(s_m)
+                
             if args.track_color == "u_tot":
                 cbar.ax.set_ylabel(r'$|u|$')
             elif args.track_color == "beta_z":
@@ -403,13 +480,16 @@ def main():
             # fname, fext = os.path.splitext(args.paths[0])
 
 
-            save_path_name = 'plots/g3d-slice/ionized_electron_density_tracked.pdf'
-            fig.savefig(save_path_name, format='pdf')
+            save_path_name = 'plots/g3d-slice/ionized_electron_density_tracked.png'
+            print('bis kury vor dem safe')
+            fig.savefig(save_path_name, format='png', dpi=400)
+            print('bis nach dem save')
         #    plt.close(fig)
             if args.verbose: 
                 sys.stdout.write('Saved: %s\n' % save_path_name)
                 sys.stdout.flush()
             plt.close(fig)
+            print('bis nach dem close fig')
             # cax = plt.plot( array)
             # 
             # ax = plt.gca()
