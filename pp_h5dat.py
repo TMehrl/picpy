@@ -917,6 +917,8 @@ class H5Plot:
     def get_line_plots(self):
         return zip(self.__lp_X, self.__lp_Y, self.__lp_labels, self.__lp_linestyles, self.__lp_colors)
 
+    def get_data(self, idx):
+        return self.__lp_X[idx], self.__lp_Y[idx]      
 
 class H5FList():
     def __init__(self, paths, h5ftype=None):

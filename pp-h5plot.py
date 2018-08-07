@@ -13,7 +13,7 @@ from matplotlib.ticker import FormatStrFormatter
 from pp_h5dat import H5FList
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
-
+from pp_plt_tools import saveas_eps_pdf
 
 
 def flip(items, ncol):
@@ -137,8 +137,8 @@ def h5plot_parser():
                           action="store_true",
                           default=False,
                           help = "Plot difference w.r.t. first line plot (default: %(default)s).")
-    parser.add_argument(  "--latexoff",
-                          dest = "latexoff",
+    parser.add_argument(  "--latexon",
+                          dest = "latexon",
                           action="store_true",
                           default=False,
                           help = "Use LaTeX font (Default: %(default)s).")                                                                       
@@ -172,7 +172,7 @@ def main():
     save_append_str = ''
     type_str = 'comp'
 
-    if not args.latexoff:
+    if args.latexon:
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif') 
 
@@ -197,9 +197,9 @@ def main():
         h5lp[i].read(path)
 
         if args.cno == None:
-            argcolor = plt.cm.Dark2(i)
+            argcolor = plt.cm.tab20c(i)
         else:
-            argcolor = plt.cm.Dark2(args.cno[i])
+            argcolor = plt.cm.tab20c(args.cno[i])
         
         j = 0
         for (x, y, label, linestyle, color) in h5lp[i].get_line_plots():
@@ -210,7 +210,7 @@ def main():
             if label == '_line0':
                 label = path
 
-            if not args.latexoff:
+            if args.latexon:
                 if label[0] != '$' or label[-1] != '$':
                     label = r'$\textrm{' + label + '}$'
 
@@ -255,16 +255,11 @@ def main():
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)          
     plt.show()
-    fname, fext = os.path.splitext(args.paths[0])
+    spath, fname  = os.path.split(args.paths[0])
 
-
-    save_path_name = fname + save_append_str + '_' + type_str + '.' + args.file_format
-    fig.savefig(save_path_name, format=args.file_format)
+    save_name = fname + save_append_str + '_' + type_str
+    saveas_eps_pdf(fig, savepath=spath, savename=save_name)
     plt.close(fig)
-    if args.verbose: 
-        sys.stdout.write('Saved: %s\n' % save_path_name)
-        sys.stdout.flush()
-
 
 if __name__ == "__main__":
     main()

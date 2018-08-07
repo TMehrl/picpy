@@ -106,6 +106,12 @@ def ps_parseopts():
                           nargs=1,
                           type=float,
                           default=None)
+    parser.add_argument(  '--zeta-pos',
+                          help='zeta position for which rms plots are to be generated',
+                          action='store',
+                          dest="zeta_pos",
+                          type=float,
+                          default=None)    
     parser.add_argument(  "--use-time",
                           action="store_false",
                           dest="t_is_z",
@@ -456,7 +462,7 @@ def plot_save_slice_quad_corr_lines(slm, savepath, time = None, axdir=2, h5plot=
         plt.close(fig_quad_corr_xy)
 
 
-def plot_save_slice_centroids(slm, savepath, h5plot=True, t_is_z=True):
+def plot_save_slice_centroids(slm, savepath, h5plot=True, zeta_pos=None, t_is_z=True):
 
     if t_is_z:
         xlabel_str = r'$k_p z$'
@@ -568,25 +574,39 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, t_is_z=True):
     saveas_eps_pdf(figYb0, savepath, 'Yb0', h5plot=h5plot)
     plt.close(figYb0)
 
+    if zeta_pos != None:
+        zetaidx = [(np.abs(slm.zeta_array - zeta_pos)).argmin()]
+        Xb_savename = 'Xb_zeta_%0.2f' % zeta_pos
+        Yb_savename = 'Yb_zeta_%0.2f' % zeta_pos 
+    else:
+        zetaidx = 0
+        Xb_savename = 'Xb_tail'
+        Yb_savename = 'Yb_tail'
+
     figXbtail = plt.figure()
-    plt.plot(slm.time_array, slm.avgx2[:,0])
+    plt.plot(slm.time_array, slm.avgx2[:,zetaidx])
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14)
     ax.set_ylabel(r'$k_p X_{b,\mathrm{tail}}$', fontsize=14)
-    if magn_check(slm.avgx2[:,0]):    
+    if magn_check(slm.avgx2[:,zetaidx]):    
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
         plt.gcf().subplots_adjust(left=0.15)
-    saveas_eps_pdf(figXbtail, savepath, 'Xb_tail', h5plot=h5plot)    
+    saveas_eps_pdf(figXbtail, savepath, Xb_savename, h5plot=h5plot)    
     plt.close(figXbtail)
 
     figYbtail = plt.figure()
-    plt.plot(slm.time_array, slm.avgx3[:,0])
+    plt.plot(slm.time_array, slm.avgx3[:,zetaidx])
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14)
-    ax.set_ylabel(r'$k_p Y_{b,\mathrm{tail}}$', fontsize=14) 
-    saveas_eps_pdf(figYbtail, savepath, 'Yb_tail', h5plot=h5plot)   
+    ax.set_ylabel(r'$k_p Y_{b,\mathrm{tail}}$', fontsize=14)
+    if magn_check(slm.avgx3[:,zetaidx]):    
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)    
+    saveas_eps_pdf(figYbtail, savepath, Yb_savename, h5plot=h5plot)   
     plt.close(figYbtail)  
 
 
@@ -748,7 +768,7 @@ def main():
 
     plot_save_slice_ene(slm, args.savepath, h5plot=args.h5plot)
 
-    plot_save_slice_centroids(slm, args.savepath, h5plot=args.h5plot)
+    plot_save_slice_centroids(slm, args.savepath, h5plot=args.h5plot, zeta_pos=args.zeta_pos)
     
     if mom_order > 1:
         plot_save_slice_rms(slm, args.savepath)
