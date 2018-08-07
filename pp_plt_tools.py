@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
 
-def saveas_eps_pdf(fig, savepath, savename, h5plot=True, verbose=True, fformat='pdf'):
+
+def saveas_eps_pdf(fig, savepath, savename, h5plot=True, verbose=True, fformat='pdf', transparent=True):
 
     fformat_list = ['eps','pdf']
 
@@ -19,7 +20,7 @@ def saveas_eps_pdf(fig, savepath, savename, h5plot=True, verbose=True, fformat='
 
     mkdirs_if_nexist(savepath)
     fig.savefig( savepath + '/' + savename + '.' + fformat,
-                  format=fformat)
+                  format=fformat, transparent=transparent)
       
     if verbose: 
         sys.stdout.write('Saved "%s.%s" at: %s/\n' % (savename, fformat, savepath))
