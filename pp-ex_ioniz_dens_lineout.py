@@ -261,9 +261,9 @@ def calc_transversal_probability_density(r_max, nx, nb, ni, rbunch, lbunch, zeta
     fig = plt.figure()
     ax = fig.add_subplot(111)
     
-    ax.plot(np.append(-r_array[::-1], r_array), np.append(-(E[::-1]) ,E[:]), 'r--')
+    ax.plot(np.append(-r_array[::-1], r_array), np.append(-(E[::-1]) ,E[:]), 'r--', label='analytic field')
     x, Ex =plot_hipace_Ex(zeta_pos) # input = zeta pos 
-    ax.plot(x, Ex)
+    ax.plot(x, Ex, label='hipacee')
         # x, Ex =plot_hipace_Ex(-0.2) # input = zeta pos 
         # ax.plot(x, Ex, label=r'$\zeta = -0.2$', 'r')
         # x, Ex =plot_hipace_Ex(-1.0) # input = zeta pos 
