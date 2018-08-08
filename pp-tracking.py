@@ -215,7 +215,7 @@ def main():
         ionized_density = np.transpose(ionized_density_g3d1.read(x2=0.0))
         print(density_files)
         time_stamp = density_files.split("_")[-1].split(".h5")[0]
-        
+        time_stamp = time_stamp.split(".")[0]
         print('time_stamp')
         print(time_stamp)
         
