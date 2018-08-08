@@ -116,7 +116,17 @@ def binSlab_parser():
                           metavar=('trackmin', 'trackmax'),
                           nargs=2,
                           type=float,
-                          default=None) 
+                          default=None)
+    parser.add_argument(  "--manual",
+                          dest = "manual",
+                          action="store_true",
+                          default=False,
+                          help = "Enables manual trackdata vs data plot (timestamps don't have to agree) (Default: %(default)s).")
+    parser.add_argument(  "--old_timestamp",
+                          dest = "old_timestamp",
+                          action="store_true",
+                          default=False,
+                          help = "Enables tracking of TRACKDATA with old timestamp (Default: %(default)s).")
 
     return parser
 
@@ -215,7 +225,8 @@ def main():
         ionized_density = np.transpose(ionized_density_g3d1.read(x2=0.0))
         print(density_files)
         time_stamp = density_files.split("_")[-1].split(".h5")[0]
-        time_stamp = time_stamp.split(".")[0]
+        if --old_timestamp:
+            time_stamp = time_stamp.split(".")[0]
         print('time_stamp')
         print(time_stamp)
         
@@ -232,12 +243,12 @@ def main():
             for files in os.listdir(dirname):
                 if filename != '':
                     if filename in files:
-                        if time_stamp in files:
+                        if (time_stamp in files) or args.manual:
                             print('Reading: %s/%s' % (dirname, files))
                             filepath = dirname + slash + files
                             array = np.append(array,np.fromfile(filepath,dtype=np.float32))
                 else:
-                    if time_stamp in files:
+                    if (time_stamp in files) or args.manual:
                         print('Reading: %s/%s' % (dirname, files))
                         filepath = dirname + slash + files
                         array = np.append(array,np.fromfile(filepath,dtype=np.float32))
