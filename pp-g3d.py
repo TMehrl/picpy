@@ -104,10 +104,10 @@ def g3d_parser():
                           type=float,
                           nargs=2,
                           default=None)     
-    parser.add_argument(  "--h5",
+    parser.add_argument(  "--h5off",
                           dest = "h5plot",
                           action="store_true",
-                          default=True,
+                          default=False,
                           help = "Save plot as hdf5 file (Default: %(default)s).")
     parser.add_argument(  "-s", "--save-path",
                           action="store",
@@ -845,7 +845,7 @@ class G3d_plot_line(G3d_plot):
             sys.stdout.write('Saved "%s.%s" at: %s\n' % (savename, saveformat, savepath ))
             sys.stdout.flush()
 
-        if self.args.h5plot: 
+        if not self.args.h5plot: 
             h5lp = H5Plot()
             h5lp.inherit_matplotlib_line_plots(ax)
             h5lp.write(savepath + '/' + savename + '.h5')
