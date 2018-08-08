@@ -120,7 +120,13 @@ def g3d_parser():
                           dest = "latexfont",
                           action="store_true",
                           default=False,
-                          help = "Use LaTeX font (Default: %(default)s).")                                                                                    
+                          help = "Use LaTeX font (Default: %(default)s).")
+    parser.add_argument(  "--dpi",
+                          action='store',
+                          dest="dpi",
+                          default=300,
+                          type=int,
+                          help= """Dots per inch for png output (default: %(default)s).""")  
     return parser
 
 def g3d_slice_subparser(subparsers, parent_parser):
@@ -169,12 +175,6 @@ def g3d_slice_subparser(subparsers, parent_parser):
                                     'eps',],
                           default='png',
                           help= """Format of output file (default: %(default)s).""")
-    parser.add_argument(  "--dpi",
-                          action='store',
-                          dest="dpi",
-                          default=300,
-                          type=int,
-                          help= """Dots per inch for png output (default: %(default)s).""")    
     parser.add_argument(  "--ptype",
                           default="pcolor",
                           dest="ptype",
