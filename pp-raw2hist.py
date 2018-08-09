@@ -219,8 +219,10 @@ def oneD(raw, args):
     ax = plt.gca()    
     ax.set_xlabel(xlabel, fontsize=14)
     plt.gcf().subplots_adjust(left=0.15, bottom=0.15)   
-
-    savename += get_zeta_range_str(args.zeta_range)  + str(raw.get_time())
+    
+    raw.read_attrs()
+    timestamp = '_%08.1f' % (raw.get_time()) 
+    savename += get_zeta_range_str(args.zeta_range)  + timestamp
 
     saveas_eps_pdf(fig, args.savepath, savename, h5plot=True, verbose=True, fformat='pdf')
 
@@ -262,7 +264,10 @@ def twoD(raw, args):
     ax.set_ylabel(ylabel, fontsize=14)
     ax.set_xlabel(xlabel, fontsize=14)
     cbar = fig.colorbar(cax)
-    savename = savenamex + '_' + savenamey + get_zeta_range_str(args.zeta_range) + str(raw.get_time())
+    
+    raw.read_attrs()
+    timestamp = '_%08.1f' % (raw.get_time()) 
+    savename = savenamex + '_' + savenamey + get_zeta_range_str(args.zeta_range) + timestamp
 
     saveas_png(fig, args.savepath, savename, verbose=True)
 
