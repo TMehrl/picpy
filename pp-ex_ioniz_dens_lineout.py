@@ -101,7 +101,7 @@ def binSlab_parser():
                           dest = "nx",
                          # action="store_true",
                           type = float,
-                          default=0,
+                          default=512,
                           help = "number of transverse gridpoints in hipace input script (Default: %(default)s).")
                           
     parser.add_argument(  "--ni",
