@@ -186,7 +186,7 @@ def get_props(raw,psv_str):
     elif psv_str == 'py':
        label = r'$p_y/m c$' 
        psv = raw.p3
-       savename = 'pz'
+       savename = 'py'
     elif psv_str == 'pz':
        label = r'$p_z/m c$' 
        psv = raw.p1
