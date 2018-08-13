@@ -127,6 +127,23 @@ def binSlab_parser():
                           action="store_true",
                           default=False,
                           help = "Enables tracking of TRACKDATA with old timestamp (Default: %(default)s).")
+    parser.add_argument(  "--xlim",
+                          help='Customize x-axis limits',
+                          action='store',
+                          dest="xlim",
+                          metavar=('xmin', 'xmax'),
+                          type=float,
+                          nargs=2,
+                          default=None)  
+    parser.add_argument(  "--ylim",
+                          help='Customize y-axis limits',
+                          action='store',
+                          dest="ylim",
+                          metavar=('ymin', 'ymax'),
+                          type=float,
+                          nargs=2,
+                          default=None)  
+
 
     return parser
 
@@ -280,13 +297,18 @@ def main():
                     ax = fig.add_subplot(111, projection='3d')
                 ''' get min and max value for universal colorbar later '''
                 
-                plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu) #
-                c_m = cm.Blues
-                s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
-                s_m.set_array([])
-                cbar1 = plt.colorbar()
-                if args.clim:
-                    plt.clim(args.clim[0], args.clim[1])
+                if args.twodproj:
+                    plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu) #
+                    c_m = cm.Blues
+                    s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
+                    s_m.set_array([])
+                    cbar1 = plt.colorbar()
+                    if args.clim:
+                        plt.clim(args.clim[0], args.clim[1])
+                    if args.xlim:
+                        plt.xlim(args.xlim[0], args.xlim[1])
+                    if args.ylim:
+                        plt.ylim(args.ylim[0], args.ylim[1])
                 if args.track_color == "u_tot":
                     cmin = min(w[k][:,8])
                     cmax = max(w[k][:,8])
@@ -403,6 +425,9 @@ def main():
                     ax.set_zlabel(' x ')
                 ax.set_xlabel(r'$\zeta$')
                 ax.set_ylabel(' y ')
+                
+                if not args.twodproj:
+                    plt.show()
                 
                 savepath = 'plots/g3d-slice'
                 mkdirs_if_nexist(savepath)
