@@ -71,13 +71,6 @@ def binSlab_parser():
                           action="store_true",
                           default=True,
                           help = "If data is w/o halo (default: %(default)s).")                                                       
-    parser.add_argument(  "--2Dproj",
-                          dest = "twodproj",
-                          default = False,
-                          action="store_true",
-                          help = "Plots a 2D projection of the particle" 
-                          "trajectories instead of full 3D plot. \n"
-                          "Use only if acquired data is based on a single slice! (default: %(default)s).")
     parser.add_argument(  "-t", "--track_color",
                           dest = "track_color",
                           default = "none",
@@ -143,48 +136,35 @@ def binSlab_parser():
                           type=float,
                           nargs=2,
                           default=None)  
-
+    parser.add_argument(  '--lw',
+                        help='linewidth of the particle tracks',
+                        action='store',
+                        dest="linewidth",
+                        type=float,
+                        default=0.3) 
 
     return parser
 
 
-def plot_3D_colourline(x,y,z,c, minc, maxc):
+    
+def plot_2D_colourline(x,z,c, minc, maxc, lw):
     
     c = cm.jet((c-minc)/(maxc-minc))
     ax = plt.gca()
     for i in np.arange(len(x)-1):
-        ax.plot([x[i],x[i+1]], [y[i],y[i+1]], [z[i],z[i+1]], c=c[i])
-    
-    return
-    
-def plot_2D_colourline(x,z,c, minc, maxc):
-    
-    c = cm.jet((c-minc)/(maxc-minc))
-    ax = plt.gca()
-    for i in np.arange(len(x)-1):
-        ax.plot([x[i],x[i+1]], [z[i],z[i+1]], c=c[i], linewidth=0.2)
+        ax.plot([x[i],x[i+1]], [z[i],z[i+1]], c=c[i], linewidth=lw)
     
     return
 
-def plot_3D_colourline_beta(x,y,z,c):
+    
+def plot_2D_colourline_beta(x,z,c, lw):
     basic_cols=['#2020ff' ,'#808080', '#ff2020']
     basic_cols=['#0000ff' , '#00ffff','#808080', '#ffff00', '#ff0000']
     my_cmap = LinearSegmentedColormap.from_list('mycmap', basic_cols)
     c = my_cmap((c+1)/(2))
     ax = plt.gca()
     for i in np.arange(len(x)-1):
-        ax.plot([x[i],x[i+1]], [y[i],y[i+1]], [z[i],z[i+1]], c=c[i])
-    
-    return
-    
-def plot_2D_colourline_beta(x,z,c):
-    basic_cols=['#2020ff' ,'#808080', '#ff2020']
-    basic_cols=['#0000ff' , '#00ffff','#808080', '#ffff00', '#ff0000']
-    my_cmap = LinearSegmentedColormap.from_list('mycmap', basic_cols)
-    c = my_cmap((c+1)/(2))
-    ax = plt.gca()
-    for i in np.arange(len(x)-1):
-        ax.plot([x[i],x[i+1]], [z[i],z[i+1]], c=c[i])
+        ax.plot([x[i],x[i+1]], [z[i],z[i+1]], c=c[i], linewidth=lw)
     
     return
 
@@ -291,24 +271,25 @@ def main():
             for k in range(len(w)):
             
                 fig = plt.figure()
-                if args.twodproj:
-                    ax = fig.add_subplot(111)
-                else:
-                    ax = fig.add_subplot(111, projection='3d')
+                ax = fig.add_subplot(111)
                 ''' get min and max value for universal colorbar later '''
                 
-                if args.twodproj:
-                    plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu) #
-                    c_m = cm.Blues
-                    s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
-                    s_m.set_array([])
-                    cbar1 = plt.colorbar()
-                    if args.clim:
-                        plt.clim(args.clim[0], args.clim[1])
-                    if args.xlim:
-                        plt.xlim(args.xlim[0], args.xlim[1])
-                    if args.ylim:
-                        plt.ylim(args.ylim[0], args.ylim[1])
+                
+                plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu) #
+                c_m = cm.Blues
+                s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
+                s_m.set_array([])
+                cbar1 = plt.colorbar()
+                if args.clim:
+                    plt.clim(args.clim[0], args.clim[1])
+                if args.xlim:
+                    plt.xlim(args.xlim[0], args.xlim[1])
+                if args.ylim:
+                    plt.ylim(args.ylim[0], args.ylim[1])
+                    
+                
+                cbar1.ax.set_title(r'$n_p/n_0$')
+                                                    
                 if args.track_color == "u_tot":
                     cmin = min(w[k][:,8])
                     cmax = max(w[k][:,8])
@@ -357,29 +338,21 @@ def main():
                         print("laenge track proc tag %i part tag %i ist %i" %(i, modnum*j, len(z)))
 
                         
-                        if args.twodproj:
-                            if args.track_color == "u_tot":
-                                plot_2D_colourline(z,x,c, cmin, cmax)
-                            elif args.track_color == "beta_z":
-                                plot_2D_colourline_beta(z,x,c)
-                            elif args.track_color == "beta_y":
-                                plot_2D_colourline_beta(z,x,c)
-                            elif args.track_color == 'none':
-                                if len(x)>0:
-                                    index = np.argmin(abs(start_segments - x[-1]))
-                                    
-                                    # print('index : %i' %index)
-                                    # print('x0 ist %f' %x[-1])
-                                    ax.plot(z, x, color=colors2[index], linewidth = 0.3)
-                        else:
-                            if args.track_color == "u_tot":
-                                plot_3D_colourline(z,y,x,c, cmin, cmax)
-                            elif args.track_color == "beta_z":
-                                plot_3D_colourline_beta(z,y,x,c)
-                            elif args.track_color == "beta_y":
-                                plot_3D_colourline_beta(z,y,x,c)
-                            else: 
-                                plot_3D_colourline(z,y,x,c, cmin, cmax)
+                
+                        if args.track_color == "u_tot":
+                            plot_2D_colourline(z,x,c, cmin, cmax, args.linewidth)
+                        elif args.track_color == "beta_z":
+                            plot_2D_colourline_beta(z,x,c, args.linewidth)
+                        elif args.track_color == "beta_y":
+                            plot_2D_colourline_beta(z,x,c, args.linewidth)
+                        elif args.track_color == 'none':
+                            if len(x)>0:
+                                index = np.argmin(abs(start_segments - x[-1]))
+                                
+                                # print('index : %i' %index)
+                                # print('x0 ist %f' %x[-1])
+                                ax.plot(z, x, color=colors2[index], linewidth = 0.3)
+
 
             
                 ''' Set colorbar ''' 
@@ -410,24 +383,17 @@ def main():
                     cbar = plt.colorbar(s_m)
                     
                 if args.track_color == "u_tot":
-                    cbar.ax.set_ylabel(r'$|u|$')
+                    cbar.ax.set_title(r'$|u|$')
                 elif args.track_color == "beta_z":
-                    cbar.ax.set_ylabel(r'$\beta_z$')
+                    cbar.ax.set_title(r'$\beta_z$')
                 elif args.track_color == "beta_y":
-                    cbar.ax.set_ylabel(r'$\beta_y$')
-            
-            
-                        #ax.set_xlim(-8, 0)
-                # # ax.set_xlim(0, 300)
-                #ax.set_ylim(-1/2, 6)
-                # ax.grid()
-                if not args.twodproj:
-                    ax.set_zlabel(' x ')
-                ax.set_xlabel(r'$\zeta$')
-                ax.set_ylabel(' y ')
-                
-                if not args.twodproj:
-                    plt.show()
+                    cbar.ax.set_title(r'$\beta_y$')
+                else:
+                    cbar.ax.set_title(r'$k_p\,x_0$')
+
+                ax.set_xlabel(r'$k_p\,\zeta$')
+                ax.set_ylabel(r'$k_p\,x$')
+
                 
                 savepath = 'plots/g3d-slice'
                 mkdirs_if_nexist(savepath)
