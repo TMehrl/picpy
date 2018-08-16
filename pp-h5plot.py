@@ -59,7 +59,7 @@ def h5plot_parser():
                           action="store",
                           dest="savepath",
                           metavar="PATH",
-                          default='plots/g3d-line-vs-theo',
+                          default=None,
                           help = """Path to which generated files will be saved.
                               (Default: %(default)s)""")
     parser.add_argument(  "-f", "--format",
@@ -295,7 +295,10 @@ def main():
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)          
     plt.show()
+
     spath, fname  = os.path.split(args.paths[0])
+    if args.savepath != None:
+        spath = args.savepath
 
     save_name = fname + save_append_str + '_' + type_str
     saveas_eps_pdf(fig, savepath=spath, savename=save_name)
