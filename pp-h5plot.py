@@ -126,7 +126,19 @@ def h5plot_parser():
                           metavar=('YMIN', 'YMAX'),
                           nargs=2,
                           type=float,
-                          default=None)                               
+                          default=None)  
+    parser.add_argument(  '--xlab',
+                          help='Set x label.',
+                          action='store',
+                          dest="xlab",
+                          metavar='XLAB',
+                          default=None)  
+    parser.add_argument(  '--ylab',
+                          help='Set y label.',
+                          action='store',
+                          dest="ylab",
+                          metavar='YLAB',
+                          default=None)                                                         
     parser.add_argument(  "--ylog",
                           dest = "absylog",
                           action="store_true",
@@ -137,6 +149,11 @@ def h5plot_parser():
                           action="store_true",
                           default=False,
                           help = "Plot difference w.r.t. first line plot (default: %(default)s).")
+    parser.add_argument(  "--abs",
+                          dest = "abs",
+                          action="store_true",
+                          default=False,
+                          help = "Plot absolute values of line plots (default: %(default)s).")    
     parser.add_argument(  "--latexon",
                           dest = "latexon",
                           action="store_true",
@@ -220,6 +237,9 @@ def main():
                 else:
                     y -= np.interp(x,x0,y0)
 
+            if args.abs:
+                y = np.abs(y)
+
             if args.lstyle == None:
                 linestyle_code = linestyles[i%len(linestyles)]
             else:
@@ -241,12 +261,32 @@ def main():
         i += 1
 
     ax = plt.gca()
+
     if args.xlim != None:
         ax.set_xlim(args.xlim[0],args.xlim[1])
     if args.ylim != None:
-        ax.set_ylim(args.ylim[0],args.ylim[1])        
-    ax.set_xlabel(h5lp[0].get_xlab(), fontsize=14)
-    ax.set_ylabel(h5lp[0].get_ylab(), fontsize=14)   
+        ax.set_ylim(args.ylim[0],args.ylim[1])
+
+    if args.xlab != None:
+        xlab = args.xlab
+    else:
+        xlab = h5lp[0].get_xlab()
+
+    if args.ylab != None:
+        ylab = args.ylab
+    else:
+        ylab = h5lp[0].get_ylab()
+
+    if args.latexon:
+        if xlab[0] != '$' or xlab[-1] != '$':
+                    xlab = r'$' + xlab + '$'
+
+    if args.latexon:
+        if ylab[0] != '$' or ylab[-1] != '$':
+                    ylab = r'$' + ylab + '$'
+
+    ax.set_xlabel(xlab, fontsize=14)
+    ax.set_ylabel(ylab, fontsize=14)   
     handles, labels = ax.get_legend_handles_labels()
     #plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
     plt.legend(frameon=False)
