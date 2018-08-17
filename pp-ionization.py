@@ -174,7 +174,7 @@ def main():
   #plt.clim(0,3)
   #plt.imshow(neutral_density)
   plt.show()
-  
+  plt.close(fig)
   
   '''
   #### Test to plot the By field 
@@ -214,7 +214,7 @@ def main():
   cb.set_label(label = r'$ |E|$', fontsize = 14)
   plt.savefig('./plots/pp-ionization/E_magnitude.png')
   plt.show()
-
+  plt.close(fig)
   
   ## Computing the ionization rate:
   ionization_rate = np.nan_to_num(omega_alpha / (2.0 * np.pi) *4.0 * E_alpha/ E_magnitude * np.exp (-2.0/3.0 * E_alpha/ E_magnitude ) )# this is just correct for hydrogen!
@@ -230,7 +230,7 @@ def main():
   cb.set_label(label = 'Ionization rate [1/s]', fontsize = 14)
   plt.savefig('./plots/pp-ionization/ion_rate.png')
   plt.show()
-  
+  plt.close(fig)
   
   #plotting the rate vs electric field in general
   #E_magnitude2 = 10**np.array(list(range(10, 15)))
@@ -258,7 +258,7 @@ def main():
   #plt.clim(0,1)
   cb.set_label(label = 'Ionization probability', fontsize = 14)
   plt.show()
-
+  plt.close(fig)
 
   #calculate the cumulative probability:
   cum_prob = (1 - np.cumprod(1-ion_probability[:,::-1], axis=1))[:,::-1] #np.flip(np.flip(ion_probability, 1).cumsum(), 1) #
@@ -273,7 +273,7 @@ def main():
   cb.set_label(label = 'Ionization probability', fontsize = 14)
   plt.savefig('./plots/pp-ionization/cum_ion_prob.png')
   plt.show()
-
+  plt.close(fig)
   
   ### Plotting the ionization probability:
   plt.pcolormesh(By_g3d.get_zeta_arr(), By_g3d.get_x_arr(2), ion_probability, cmap=cm.Reds) #here cmap reds, since it is not divering
@@ -284,7 +284,7 @@ def main():
   cb.set_label(label = 'Ionization probability', fontsize = 14)
   plt.savefig('./plots/pp-ionization/ion_prob.png')
   plt.show()
-
+  plt.close(fig)
   
   
   
@@ -309,7 +309,7 @@ def main():
   cb.set_label(label = r'$N_{H^+ analyt} - N_{H^+ HiPace}$', fontsize = 14)
   plt.savefig('./plots/pp-ionization/diff_ion_prob.png')
   plt.show()
-
+  plt.close(fig)
   print('summed absolut difference: %f' %(np.sum(abs(differenz)))) 
   '''
   Idee, aus E_magnitude kann die Rate berechnet werden, aus der Rate die Wahrscheinlichkeit.
