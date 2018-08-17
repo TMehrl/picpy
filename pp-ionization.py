@@ -180,7 +180,7 @@ def main():
   plt.xlabel(r'$k_p \zeta$', fontsize =14)
   cb = plt.colorbar()
   cb.set_label(label = r'$n_p/n_0$', fontsize = 14)
-  plt.savefig('./plots/pp-ionization/E_magnitude.png')
+  plt.savefig('./plots/pp-ionization/charge_density.png')
   #plt.clim(0,3)
   #plt.imshow(neutral_density)
   plt.show()
