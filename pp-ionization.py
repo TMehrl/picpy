@@ -191,10 +191,10 @@ def main():
 
 #check for directory 
 
-  if not os.path.exists('plots'):
-    os.makedirs('plots')
-  if not os.path.exists('plots/pp-ionization/'):
-    os.makedirs('plots/pp-ionization/')
+  if not os.path.exists('./plots'):
+    os.makedirs('./plots')
+  if not os.path.exists('./plots/pp-ionization/'):
+    os.makedirs('./plots/pp-ionization/')
 
   ## computing the Magnitude of E:
  
@@ -212,7 +212,7 @@ def main():
   plt.xlabel(r'$k_p \zeta$', fontsize =14)
   cb = plt.colorbar()
   cb.set_label(label = r'$ |E|$', fontsize = 14)
-  plt.savefig('plots/pp-ionization/E_magnitude.png')
+  plt.savefig('./plots/pp-ionization/E_magnitude.png')
   plt.show()
 
   
@@ -228,7 +228,7 @@ def main():
   plt.xlabel(r'$k_p \zeta$', fontsize =14)
   cb = plt.colorbar()
   cb.set_label(label = 'Ionization rate [1/s]', fontsize = 14)
-  plt.savefig('plots/pp-ionization/ion_rate.png')
+  plt.savefig('./plots/pp-ionization/ion_rate.png')
   plt.show()
   
   
@@ -271,7 +271,7 @@ def main():
   cb = plt.colorbar(ticks = cbarvektor) 
   #plt.clim(0,1.01)
   cb.set_label(label = 'Ionization probability', fontsize = 14)
-  plt.savefig('plots/pp-ionization/cum_ion_prob.png')
+  plt.savefig('./plots/pp-ionization/cum_ion_prob.png')
   plt.show()
 
   
@@ -282,7 +282,7 @@ def main():
   cb = plt.colorbar(ticks = cbarvektor) 
   plt.clim(0,1)
   cb.set_label(label = 'Ionization probability', fontsize = 14)
-  plt.savefig('plots/pp-ionization/ion_prob.png')
+  plt.savefig('./plots/pp-ionization/ion_prob.png')
   plt.show()
 
   
@@ -307,7 +307,7 @@ def main():
   cb = plt.colorbar() 
   plt.clim(vmin,vmax)
   cb.set_label(label = r'$N_{H^+ analyt} - N_{H^+ HiPace}$', fontsize = 14)
-  plt.savefig('plots/pp-ionization/diff_ion_prob.png')
+  plt.savefig('./plots/pp-ionization/diff_ion_prob.png')
   plt.show()
 
   print('summed absolut difference: %f' %(np.sum(abs(differenz)))) 
