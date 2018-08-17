@@ -169,6 +169,8 @@ def main():
   
   
   neutral_density = np.transpose(neutral_density_g3d.read(x2=0.0))
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
   plt.pcolormesh(By_g3d.get_zeta_arr(), By_g3d.get_x_arr(2), neutral_density, cmap=cm.Blues) #
   cb = plt.colorbar() 
   #plt.clim(0,3)
@@ -207,6 +209,8 @@ def main():
   #print(number_above_5_6_e10)
   print('The maximum magnitude of the electric field is %0.3e' % np.max(E_magnitude))
   ### Plotting the magnitude 
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
   plt.contourf(By_g3d.get_zeta_arr(), By_g3d.get_x_arr(2), E_magnitude, 200, cmap=cm.Reds) # here cmap reds, since it is not divering
   plt.ylabel(r'$k_p x$', fontsize =14)
   plt.xlabel(r'$k_p \zeta$', fontsize =14)
@@ -223,6 +227,8 @@ def main():
   
   #print('The maximum ionization rate is %0.3e' % np.max(ionization_rate))
   ### Plotting the ionization rate:
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
   plt.contourf(By_g3d.get_zeta_arr(), By_g3d.get_x_arr(2), ionization_rate, 200, cmap=cm.Reds) # here cmap reds, since it is not divering
   plt.ylabel(r'$k_p x$', fontsize =14)
   plt.xlabel(r'$k_p \zeta$', fontsize =14)
@@ -248,6 +254,8 @@ def main():
   ion_probability = 1.0 - np.exp(-ionization_rate * deltat )
   #print('The maximum ionization probability is %0.3e' % np.max(ion_probability))
   ### Plotting the ionization probability:
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
   plt.contourf(By_g3d.get_zeta_arr(), By_g3d.get_x_arr(2), ion_probability, 200,cmap=cm.Reds) # here cmap reds, since it is not divering  vmin=0, vmax=1,
   plt.ylabel(r'$k_p x$', fontsize =14)
   plt.xlabel(r'$k_p \zeta$', fontsize =14)
@@ -265,6 +273,8 @@ def main():
   
   
   ### Plotting the ionization probability:
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
   plt.contourf(By_g3d.get_zeta_arr(), By_g3d.get_x_arr(2), cum_prob, 200, cmap=cm.Reds) # here cmap reds, since it is not divering
   plt.ylabel(r'$k_p x$', fontsize =14)
   plt.xlabel(r'$k_p \zeta$', fontsize =14)
@@ -276,6 +286,8 @@ def main():
   plt.close(fig)
   
   ### Plotting the ionization probability:
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
   plt.pcolormesh(By_g3d.get_zeta_arr(), By_g3d.get_x_arr(2), ion_probability, cmap=cm.Reds) #here cmap reds, since it is not divering
   plt.ylabel(r'$k_p x$', fontsize =14)
   plt.xlabel(r'$k_p \zeta$', fontsize =14)
@@ -300,7 +312,8 @@ def main():
   midpoint = 1 - vmax/(vmax + np.abs(vmin))
   shifted_cmap = shiftedColorMap(cm.seismic, midpoint=midpoint, name='shifted')
   
-  
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
   plt.contourf(By_g3d.get_zeta_arr(), By_g3d.get_x_arr(2), differenz, 200, cmap=shifted_cmap ) # cm.seismic) # here cmap reds, since it is not diverging
   plt.ylabel(r'$k_p x$', fontsize =14)
   plt.xlabel(r'$k_p \zeta$', fontsize =14)
