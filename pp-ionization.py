@@ -324,7 +324,7 @@ def main():
   plt.xlabel(r'$k_p \zeta$', fontsize =16)
   cb = plt.colorbar() 
   plt.clim(vmin,vmax)
-  cb.set_label(label = r'$N_{H^+ analyt} - N_{H^+ HiPace}$', fontsize = 16)
+  cb.set_label(label = r'$P_{ADK} - n_p/n_0$', fontsize = 16)
   plt.savefig('./plots/pp-ionization/diff_ion_prob.png')
   plt.show()
   plt.close(fig)
