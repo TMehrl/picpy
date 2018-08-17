@@ -285,7 +285,7 @@ def main():
   plt.xlabel(r'$k_p \zeta$', fontsize =16)
   cb = plt.colorbar(ticks = cbarvektor) 
   #plt.clim(0,1.01)
-  cb.set_label(label = 'Ionization probability', fontsize = 16)
+  cb.set_label(label = r'$P_{ADK}$', fontsize = 16)
   plt.savefig('./plots/pp-ionization/cum_ion_prob.png')
   plt.show()
   plt.close(fig)
