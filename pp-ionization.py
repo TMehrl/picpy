@@ -5,7 +5,7 @@ import os
 import math
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib import cm
@@ -121,21 +121,21 @@ def main():
   
   omega_alpha               =    4.13e16; # [s^-1]
   E_alpha                   =    5.1e11; # [V/m]
-  elec_density              =    5e+22 # [1/m^3]
+  elec_density              =    1e+23 # [1/m^3]
   omega_p = np.sqrt(4* np.pi * elec_density * (ELECTRON_CHARGE_IN_COUL**2)/ (VAC_PERMIT_FARAD_PER_M * ELECTRON_MASS_IN_KG)); # calculation of the plasma frequency
   #print('omega_p is %0.3e' %omega_p)
   E_0 = omega_p * ELECTRON_MASS_IN_KG * SPEED_OF_LIGHT_IN_M_PER_S / ELECTRON_CHARGE_IN_COUL;                        #calculation of the denormalization factor for the electric field
   #print('E_0 is %0.3e' %E_0)
   kp = SPEED_OF_LIGHT_IN_M_PER_S/omega_p
   #home path Path definitions
-  Ez_path = '/Users/diederse/desy/PIC-sim/HiPACE/tests/interaction_tests2/Cs_new2/DATA/field_Ez_000000.h5'
-  ExmBy_path = '/Users/diederse/desy/PIC-sim/HiPACE/tests/interaction_tests2/Cs_new2/DATA/field_ExmBy_000000.h5'
-  EypBx_path = '/Users/diederse/desy/PIC-sim/HiPACE/tests/interaction_tests2/Cs_new2/DATA/field_EypBx_000000.h5'
-  Bx_path = '/Users/diederse/desy/PIC-sim/HiPACE/tests/interaction_tests2/Cs_new2/DATA/field_Bx_000000.h5'
-  By_path = '/Users/diederse/desy/PIC-sim/HiPACE/tests/interaction_tests2/Cs_new2/DATA/field_By_000000.h5'
+  Ez_path = './DATA/field_Ez_000000.0.h5'
+  ExmBy_path = './DATA/field_ExmBy_000000.0.h5'
+  EypBx_path = './DATA/field_EypBx_000000.0.h5'
+  Bx_path = './DATA/field_Bx_000000.0.h5'
+  By_path = './DATA/field_By_000000.0.h5'
   
   #neutral_density_path = '/Users/diederse/desy/PIC-sim/HiPACE/tests/interaction_tests2/Cs/DATA/density_plasma_neutral_000000.h5'
-  neutral_density_path = '/Users/diederse/desy/PIC-sim/HiPACE/tests/interaction_tests2/Cs_new2/DATA/density_ionized_electrons_plasma_Cs_000000.h5'
+  neutral_density_path = './DATA/density_plasma_H_000000.0.h5'
   ### nersc path HAS TO BE MOUNTED
   
   #Ez_path = '/Users/diederse/mountpoints/ed_scratch/simulations/hipace/tests/neutral1/DATA/field_Ez_000000.h5'
@@ -150,28 +150,28 @@ def main():
   #vektorized function for calc ion rate
   vectorfunc = np.vectorize(calc_ion_rate)
   
-  #Ez_g3d = Grid3d(Ez_path)
-  #ExmBy_g3d = Grid3d(ExmBy_path)
-  #EypBx_g3d = Grid3d(EypBx_path)
-  #Bx_g3d = Grid3d(Bx_path)
+  Ez_g3d = Grid3d(Ez_path)
+  ExmBy_g3d = Grid3d(ExmBy_path)
+  EypBx_g3d = Grid3d(EypBx_path)
+  Bx_g3d = Grid3d(Bx_path)
   By_g3d = Grid3d(By_path)
 
   neutral_density_g3d = Grid3d(neutral_density_path)
   
   
-  '''
+  
   #Reading in the data
   Ez = np.transpose(Ez_g3d.read(x2=0.0))
   ExmBy = np.transpose(ExmBy_g3d.read(x2=0.0))
   EypBx = np.transpose(EypBx_g3d.read(x2=0.0))
   Bx = np.transpose(Bx_g3d.read(x2=0.0))
   By = np.transpose(By_g3d.read(x2=0.0))  
-  '''
+  
   
   neutral_density = np.transpose(neutral_density_g3d.read(x2=0.0))
-  plt.pcolormesh(By_g3d.get_zeta_arr(), By_g3d.get_x_arr(2), neutral_density, cmap=cm.Blues_r) #
+  plt.pcolormesh(By_g3d.get_zeta_arr(), By_g3d.get_x_arr(2), neutral_density, cmap=cm.Blues) #
   cb = plt.colorbar() 
-  plt.clim(0,-3)
+  #plt.clim(0,3)
   #plt.imshow(neutral_density)
   plt.show()
   
@@ -197,7 +197,7 @@ def main():
     os.makedirs('plots/pp-ionization/')
 
   ## computing the Magnitude of E:
-  '''
+ 
   E_magnitude = np.sqrt((ExmBy + By)**2 + (EypBx - Bx)**2 + Ez**2 )* E_0
   
   number_above_5_6_e10 =  np.where( E_magnitude > 5.7e10)
@@ -215,11 +215,11 @@ def main():
   plt.savefig('plots/pp-ionization/E_magnitude.png')
   plt.show()
 
-  '''
+  
   ## Computing the ionization rate:
   ionization_rate = np.nan_to_num(omega_alpha / (2.0 * np.pi) *4.0 * E_alpha/ E_magnitude * np.exp (-2.0/3.0 * E_alpha/ E_magnitude ) )# this is just correct for hydrogen!
-  ionization_rate = vectorfunc(E_magnitude, 1, 13.659843449,13.659843449, 0,0 ) # complete formulae for hydrogen
-  ionization_rate = vectorfunc(E_magnitude, 2, 54.4177650, 24.58738880, 0,0 ) 
+  #ionization_rate = vectorfunc(E_magnitude, 1, 13.659843449,13.659843449, 0,0 ) # complete formulae for hydrogen
+  #ionization_rate = vectorfunc(E_magnitude, 2, 54.4177650, 24.58738880, 0,0 ) 
   
   #print('The maximum ionization rate is %0.3e' % np.max(ionization_rate))
   ### Plotting the ionization rate:
@@ -238,7 +238,7 @@ def main():
   #plt.plot(E_magnitude2, ionization_rate_plot)
   #plt.show()
 
-  '''
+ 
   cbarvektor = np.linspace(0,1,11, endpoint = True)
   #print(By_g3d.get_zeta_arr())
   #print(np.abs(By_g3d.get_zeta_arr()[1] -By_g3d.get_zeta_arr()[0]))
@@ -291,7 +291,7 @@ def main():
 
   
   #Plotting the differences between HiPACE and analytical model 
-  differenz = ( cum_prob + 1 ) - neutral_density # cum prob + 1 because it is preionized to level 1
+  differenz = ( cum_prob  ) - neutral_density # cum prob + 1 because it is preionized to level 1
   
   
   #producing a asymmetric Colorbar
@@ -310,7 +310,7 @@ def main():
   plt.savefig('plots/pp-ionization/diff_ion_prob.png')
   plt.show()
 
-  '''
+  print('summed absolut difference: %f' %(np.sum(abs(differenz)))) 
   '''
   Idee, aus E_magnitude kann die Rate berechnet werden, aus der Rate die Wahrscheinlichkeit.
   Ueber eine kumultative Summe von Rechts nach links kann dann das Bild produziert werden, 
