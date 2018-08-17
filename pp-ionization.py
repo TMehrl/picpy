@@ -158,7 +158,10 @@ def main():
 
   neutral_density_g3d = Grid3d(neutral_density_path)
   
-  
+  if not os.path.exists('./plots'):
+      os.makedirs('./plots')
+  if not os.path.exists('./plots/pp-ionization/'):
+      os.makedirs('./plots/pp-ionization/')
   
   #Reading in the data
   Ez = np.transpose(Ez_g3d.read(x2=0.0))
@@ -173,6 +176,11 @@ def main():
   ax = fig.add_subplot(111)
   plt.pcolormesh(By_g3d.get_zeta_arr(), By_g3d.get_x_arr(2), neutral_density, cmap=cm.Blues) #
   cb = plt.colorbar() 
+  plt.ylabel(r'$k_p x$', fontsize =14)
+  plt.xlabel(r'$k_p \zeta$', fontsize =14)
+  cb = plt.colorbar()
+  cb.set_label(label = r'$n_p/n_0$', fontsize = 14)
+  plt.savefig('./plots/pp-ionization/E_magnitude.png')
   #plt.clim(0,3)
   #plt.imshow(neutral_density)
   plt.show()
@@ -193,10 +201,7 @@ def main():
 
 #check for directory 
 
-  if not os.path.exists('./plots'):
-    os.makedirs('./plots')
-  if not os.path.exists('./plots/pp-ionization/'):
-    os.makedirs('./plots/pp-ionization/')
+
 
   ## computing the Magnitude of E:
  
@@ -221,8 +226,8 @@ def main():
   plt.close(fig)
   
   ## Computing the ionization rate:
-  ionization_rate = np.nan_to_num(omega_alpha / (2.0 * np.pi) *4.0 * E_alpha/ E_magnitude * np.exp (-2.0/3.0 * E_alpha/ E_magnitude ) )# this is just correct for hydrogen!
-  #ionization_rate = vectorfunc(E_magnitude, 1, 13.659843449,13.659843449, 0,0 ) # complete formulae for hydrogen
+  #ionization_rate = np.nan_to_num(omega_alpha / (2.0 * np.pi) *4.0 * E_alpha/ E_magnitude * np.exp (-2.0/3.0 * E_alpha/ E_magnitude ) )# this is just correct for hydrogen!
+  ionization_rate = vectorfunc(E_magnitude, 1, 13.659843449,13.659843449, 0,0 ) # complete formulae for hydrogen
   #ionization_rate = vectorfunc(E_magnitude, 2, 54.4177650, 24.58738880, 0,0 ) 
   
   #print('The maximum ionization rate is %0.3e' % np.max(ionization_rate))
