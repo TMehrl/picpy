@@ -77,11 +77,6 @@ def binSlab_parser():
                           help = "Select the attribute which is displayed as the color of the track \n"
                                  "Default is the total momentum u_tot, other available options are: \n"
                                  "beta_z")
-    parser.add_argument(  "--h5",
-                          dest = "h5plot",
-                          action="store_true",
-                          default=True,
-                          help = "Save plot as hdf5 file (Default: %(default)s).")
     parser.add_argument(  "--dens_data",
                           dest = "dens_data",
                           nargs = '*',
@@ -95,7 +90,21 @@ def binSlab_parser():
                           metavar=('CBMIN', 'CBMAX'),
                           nargs=2,
                           type=float,
-                          default=None) 
+                          default=None)
+    parser.add_argument(  "--beam_data",
+                        dest = "beam_data",
+                        nargs = '*',
+                        default = "./DATA/density_drive_beam_000000.0.h5",
+                        help = "Path to the beam density data over which  \n"
+                               "the tracks should be laid. \n")
+    parser.add_argument(  '--cblim',
+                        help='Colorbar axis limits for beam density colorbar',
+                        action='store',
+                        dest="cblim",
+                        metavar=('CBMIN', 'CBMAX'),
+                        nargs=2,
+                        type=float,
+                        default=None)
     parser.add_argument(  '--modlines',
                         help='number of lines modulo input',
                         action='store',
@@ -141,7 +150,12 @@ def binSlab_parser():
                         action='store',
                         dest="linewidth",
                         type=float,
-                        default=0.3) 
+                        default=0.3)
+    parser.add_argument(  "--tracksoff",
+                          dest = "tracksoff",
+                          action="store_true",
+                          default=False,
+                          help = "Dismiss particle tracks (Default: %(default)s).")
 
     return parser
 
@@ -167,26 +181,6 @@ def plot_2D_colourline_beta(x,z,c, lw):
         ax.plot([x[i],x[i+1]], [z[i],z[i+1]], c=c[i], linewidth=lw)
     
     return
-
-
-def plot_hipace_Ex(zeta_pos):
-    ExmBy_path = './DATA/field_ExmBy_000000.h5'
-    By_path = './DATA/field_By_000000.h5'
-    
-    ExmBy_g3d2 = Grid3d(ExmBy_path)
-    By_g3d2 = Grid3d(By_path)
-    
-    ExmBy = np.transpose(ExmBy_g3d2.read(x2=0.0))
-    By = np.transpose(By_g3d2.read(x2=0.0))  
-
-    Ex = ExmBy + By
-    
-    fig = plt.figure()
-
-    idx =np.abs(By_g3d2.get_zeta_arr() - zeta_pos).argmin()
-    
-    return By_g3d2.get_x_arr(2), Ex[:,idx]
-
 
 
 
@@ -221,11 +215,17 @@ def main():
         ionized_density_g3d1 = Grid3d(density_files)
         ionized_density = np.transpose(ionized_density_g3d1.read(x2=0.0))
         print(density_files)
-        time_stamp = density_files.split("_")[-1].split(".h5")[0]
+        timestamp = density_files.split("_")[-1].split(".h5")[0]
         if args.old_timestamp:
-            time_stamp = time_stamp.split(".")[0]
-        print('time_stamp')
-        print(time_stamp)
+            timestamp = timestamp.split(".")[0]
+        print('timestamp')
+        print(timestamp)
+        
+        if args.beam_data:
+            for beam_density_files in args.beam_data:
+                if timestamp in beam_density_files:
+                    beam_density_g3d1 = Grid3d(beam_density_files)
+                    beam_density = np.transpose(beam_density_g3d1.read(x2=0.0))
         
         for filepath in args.path:
 
@@ -240,12 +240,12 @@ def main():
             for files in os.listdir(dirname):
                 if filename != '':
                     if filename in files:
-                        if (time_stamp in files) or args.manual:
+                        if (timestamp in files) or args.manual:
                             print('Reading: %s/%s' % (dirname, files))
                             filepath = dirname + slash + files
                             array = np.append(array,np.fromfile(filepath,dtype=np.float32))
                 else:
-                    if (time_stamp in files) or args.manual:
+                    if (timestamp in files) or args.manual:
                         print('Reading: %s/%s' % (dirname, files))
                         filepath = dirname + slash + files
                         array = np.append(array,np.fromfile(filepath,dtype=np.float32))
@@ -275,7 +275,7 @@ def main():
                 ''' get min and max value for universal colorbar later '''
                 
                 
-                plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu) #
+                plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu, alpha=1) #
                 c_m = cm.Blues
                 s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
                 s_m.set_array([])
@@ -289,107 +289,126 @@ def main():
                     
                 
                 cbar1.ax.set_title(r'$n_p/n_0$')
-                                                    
-                if args.track_color == "u_tot":
-                    cmin = min(w[k][:,8])
-                    cmax = max(w[k][:,8])
-                    chosencmap = cm.jet
-                elif args.track_color == "beta_z":
-                    cmin = -1
-                    cmax = 1
-                    chosencmap = my_cmap
-                elif args.track_color == "beta_y":
-                    cmin = -1
-                    cmax = 1
-                    chosencmap = my_cmap
-                elif args.track_color == "none":
-                    print('no coloring option selected.')
-                else:
-                    print("This attribute doesn't exist or is not implemented yet")
-                    break
+                
+                if args.beam_data:
+                    max_density = np.max(np.abs(beam_density))
+                    print(max_density)
+                    print(np.shape(beam_density[(np.abs(beam_density)<=0.05*max_density)]))
+                    #mask_array = np.reshape(beam_density[np.abs(beam_density)<=0.05*max_density], np.shape(beam_density))
+                    #print(np.shape(mask_array))
+                    print(np.where(np.abs(beam_density)<=0.05*max_density))
+                    print(np.shape(beam_density))
+                    beam_density2 = np.ma.masked_array(beam_density, mask=beam_density[(beam_density)<=0.1*np.max(np.abs(beam_density))] )
+                    beam_density[np.abs(beam_density)<= 0.05*np.max(np.abs(beam_density))] = np.nan
+                    plt.pcolormesh(beam_density_g3d1.get_zeta_arr(), beam_density_g3d1.get_x_arr(2), np.abs(beam_density), cmap=cm.Reds, alpha=1) #
+                    cbar2 = plt.colorbar()
+                    if args.cblim:
+                        plt.clim(args.cblim[0], args.cblim[1])            
+                    cbar2.ax.set_title(r'$n_b/n_0$')
+                
+                
+                if not args.tracksoff:
+                
+                    if args.track_color == "u_tot":
+                        cmin = min(w[k][:,8])
+                        cmax = max(w[k][:,8])
+                        chosencmap = cm.jet
+                    elif args.track_color == "beta_z":
+                        cmin = -1
+                        cmax = 1
+                        chosencmap = my_cmap
+                    elif args.track_color == "beta_y":
+                        cmin = -1
+                        cmax = 1
+                        chosencmap = my_cmap
+                    elif args.track_color == "none":
+                        print('no coloring option selected.')
+                    else:
+                        print("This attribute doesn't exist or is not implemented yet")
+                        break
 
-                ''' Splitting the array into each particle trajectory by proc tag'''
-                d= np.split(w[k], np.where(np.diff(w[k][:, 7]) != 0)[0]+1) 
-            
-                for i in range(len(d)):
-            
-                    ''' Splitting the array into each particle trajectory by part tag'''
-                    e = np.split(d[i], np.where(np.diff(d[i][:, 6]) != 0)[0]+1) 
-
-                    
-                    number = int(np.floor(len(e)/modnum))
-                    cmap = plt.get_cmap('jet')
-                    colors = [cmap(i) for i in np.linspace(0, 1, number)]
-                    colors2 = [cmap(i) for i in np.linspace(0, 1, 10000)]
-                    start_segments = np.linspace(args.track_range[0],args.track_range[1],10000)
-
-                    
-                    for j in range(int(np.floor(len(e)/modnum))):
-                        x=e[modnum*j][:,0]
-                        y=e[modnum*j][:,1]
-                        z=e[modnum*j][:,5] 
-                        
-                        if args.track_color == "u_tot":
-                            c=e[modnum*j][:,8]
-                        elif args.track_color == "beta_z":
-                            c=e[modnum*j][:,4]/np.sqrt(1+e[modnum*j][:,8]**2)
-                        elif args.track_color == "beta_y":
-                            c=e[modnum*j][:,2]/np.sqrt(1+e[modnum*j][:,8]**2)
-                        print("laenge track proc tag %i part tag %i ist %i" %(i, modnum*j, len(z)))
+                    ''' Splitting the array into each particle trajectory by proc tag'''
+                    d= np.split(w[k], np.where(np.diff(w[k][:, 7]) != 0)[0]+1) 
+                
+                    for i in range(len(d)):
+                
+                        ''' Splitting the array into each particle trajectory by part tag'''
+                        e = np.split(d[i], np.where(np.diff(d[i][:, 6]) != 0)[0]+1) 
 
                         
-                
-                        if args.track_color == "u_tot":
-                            plot_2D_colourline(z,x,c, cmin, cmax, args.linewidth)
-                        elif args.track_color == "beta_z":
-                            plot_2D_colourline_beta(z,x,c, args.linewidth)
-                        elif args.track_color == "beta_y":
-                            plot_2D_colourline_beta(z,x,c, args.linewidth)
-                        elif args.track_color == 'none':
-                            if len(x)>0:
-                                index = np.argmin(abs(start_segments - x[-1]))
-                                
-                                # print('index : %i' %index)
-                                # print('x0 ist %f' %x[-1])
-                                ax.plot(z, x, color=colors2[index], linewidth = 0.3)
+                        number = int(np.floor(len(e)/modnum))
+                        cmap = plt.get_cmap('jet')
+                        colors = [cmap(i) for i in np.linspace(0, 1, number)]
+                        colors2 = [cmap(i) for i in np.linspace(0, 1, 10000)]
+                        start_segments = np.linspace(args.track_range[0],args.track_range[1],10000)
+
+                        
+                        for j in range(int(np.floor(len(e)/modnum))):
+                            x=e[modnum*j][:,0]
+                            y=e[modnum*j][:,1]
+                            z=e[modnum*j][:,5] 
+                            
+                            if args.track_color == "u_tot":
+                                c=e[modnum*j][:,8]
+                            elif args.track_color == "beta_z":
+                                c=e[modnum*j][:,4]/np.sqrt(1+e[modnum*j][:,8]**2)
+                            elif args.track_color == "beta_y":
+                                c=e[modnum*j][:,2]/np.sqrt(1+e[modnum*j][:,8]**2)
+                            print("laenge track proc tag %i part tag %i ist %i" %(i, modnum*j, len(z)))
+
+                            
+                    
+                            if args.track_color == "u_tot":
+                                plot_2D_colourline(z,x,c, cmin, cmax, args.linewidth)
+                            elif args.track_color == "beta_z":
+                                plot_2D_colourline_beta(z,x,c, args.linewidth)
+                            elif args.track_color == "beta_y":
+                                plot_2D_colourline_beta(z,x,c, args.linewidth)
+                            elif args.track_color == 'none':
+                                if len(x)>0:
+                                    index = np.argmin(abs(start_segments - x[-1]))
+                                    
+                                    # print('index : %i' %index)
+                                    # print('x0 ist %f' %x[-1])
+                                    ax.plot(z, x, color=colors2[index], linewidth = 0.3)
 
 
-            
-                ''' Set colorbar ''' 
-                if args.track_color != "none":
-                    norm = matplotlib.colors.Normalize(
-                    vmin=np.min(cmin),
-                    vmax=np.max(cmax))
                 
-                    # choose a colormap
-                    c_m = chosencmap
-                
-                    # create a ScalarMappable and initialize a data structure
-                    s_m = matplotlib.cm.ScalarMappable(cmap=c_m, norm=norm)
-                    s_m.set_array([])
-                
-                    cbar = plt.colorbar(s_m)
+                    ''' Set colorbar ''' 
+                    if args.track_color != "none":
+                        norm = matplotlib.colors.Normalize(
+                        vmin=np.min(cmin),
+                        vmax=np.max(cmax))
                     
-                else:
-                    # norm = matplotlib.colors.Normalize( vmin= 0, vmax=6)
-                
-                    # choose a colormap
-                    c_m = cm.jet
-                
-                    # create a ScalarMappable and initialize a data structure
-                    s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
-                    s_m.set_array([args.track_range[0],args.track_range[1]])
-                
-                    cbar = plt.colorbar(s_m)
+                        # choose a colormap
+                        c_m = chosencmap
                     
-                if args.track_color == "u_tot":
-                    cbar.ax.set_title(r'$|u|$')
-                elif args.track_color == "beta_z":
-                    cbar.ax.set_title(r'$\beta_z$')
-                elif args.track_color == "beta_y":
-                    cbar.ax.set_title(r'$\beta_y$')
-                else:
-                    cbar.ax.set_title(r'$k_p\,x_0$')
+                        # create a ScalarMappable and initialize a data structure
+                        s_m = matplotlib.cm.ScalarMappable(cmap=c_m, norm=norm)
+                        s_m.set_array([])
+                    
+                        cbar = plt.colorbar(s_m)
+                        
+                    else:
+                        # norm = matplotlib.colors.Normalize( vmin= 0, vmax=6)
+                    
+                        # choose a colormap
+                        c_m = cm.jet
+                    
+                        # create a ScalarMappable and initialize a data structure
+                        s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
+                        s_m.set_array([args.track_range[0],args.track_range[1]])
+                    
+                        cbar = plt.colorbar(s_m)
+                        
+                    if args.track_color == "u_tot":
+                        cbar.ax.set_title(r'$|u|$')
+                    elif args.track_color == "beta_z":
+                        cbar.ax.set_title(r'$\beta_z$')
+                    elif args.track_color == "beta_y":
+                        cbar.ax.set_title(r'$\beta_y$')
+                    else:
+                        cbar.ax.set_title(r'$k_p\,x_0$')
 
                 ax.set_xlabel(r'$k_p\,\zeta$')
                 ax.set_ylabel(r'$k_p\,x$')
@@ -397,8 +416,11 @@ def main():
                 
                 savepath = 'plots/g3d-slice'
                 mkdirs_if_nexist(savepath)
-                        
-                save_path_name = savepath + '/ionized_electron_density_tracked_' + time_stamp + '.png'
+                if not args.tracksoff:
+                    tracked = 'tracked_'
+                else:
+                    tracked = ''
+                save_path_name = savepath + '/ionized_electron_density_' + tracked + timestamp + '.png'
                 print('Saving figure...')
                 fig.savefig(save_path_name, format='png', dpi=400)
                 print('Writing file...')
