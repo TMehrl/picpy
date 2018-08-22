@@ -287,19 +287,19 @@ def main():
                 max_density = np.max(np.abs(ionized_density))
                 min_density = 0
                 if args.clim:
-                    levels = MaxNLocator(nbins=512).tick_values(min_density, max_density)
+                    levels = MaxNLocator(nbins=512).tick_values(args.clim[0], args.clim[1])
                     max_level = max_density
                     vmin = args.clim[0]
                     vmax = args.clim[1]
                 else:
-                    levels = MaxNLocator(nbins=512).tick_values(min_density, max_density)
+                    levels = MaxNLocator(nbins=900).tick_values(0, max_density)
                     max_level = max_density
                     vmin = 0
                     vmax = max_density
                 if args.ptype == 'pcolormesh':
                     plot1 = plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu, alpha=1) #
                 elif args.ptype == 'contourf':
-                    plot1 = plt.contourf(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu, levels=levels, vmin=vmin, vmax=vmax)
+                    plot1 = plt.contourf(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu, levels=levels, vmin=vmin, vmax=vmax, extend='both')
                 else:
                     print('This type is not implemented yet')
                 
@@ -338,7 +338,7 @@ def main():
                     my_cmap = ListedColormap(my_cmap)
                     
                     if args.cblim:
-                        levels = MaxNLocator(nbins=512).tick_values(0, max_density)
+                        levels = MaxNLocator(nbins=512).tick_values(args.cblim[0], args.cblim[1])
                         max_level = max_density
                         vmin = args.cblim[0]
                         vmax = args.cblim[1]
@@ -350,7 +350,7 @@ def main():
                     if args.ptype == 'pcolormesh':
                         plt.pcolormesh(beam_density_g3d1.get_zeta_arr(), beam_density_g3d1.get_x_arr(2), np.abs(beam_density), cmap=my_cmap, vmin=vmin, vmax=vmax)
                     elif args.ptype == 'contourf':
-                        plt.contourf(beam_density_g3d1.get_zeta_arr(), beam_density_g3d1.get_x_arr(2), np.abs(beam_density), cmap=my_cmap, levels=levels, vmin=vmin, vmax=vmax) #np.arange(0, max_level,1/1000) #
+                        plt.contourf(beam_density_g3d1.get_zeta_arr(), beam_density_g3d1.get_x_arr(2), np.abs(beam_density), cmap=my_cmap, levels=levels, vmin=vmin, vmax=vmax, extend='both') #np.arange(0, max_level,1/1000) #
                     else:
                         print('This type is not implemented yet')
             
