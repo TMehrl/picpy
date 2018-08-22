@@ -14,10 +14,10 @@ from pp_h5dat import mkdirs_if_nexist
 from pp_h5dat import H5Plot
 from mpl_toolkits.mplot3d import Axes3D
 from pp_h5dat import Grid3d
-
+from matplotlib.colors import ListedColormap
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.lines as mlines
-
+from matplotlib.ticker import MaxNLocator
 import scipy.optimize
 import scipy.special
 
@@ -66,6 +66,12 @@ def binSlab_parser():
                           default='./plots_debug/',
                           help = """Path to which generated files will be saved.
                               (default: %(default)s)""")
+    parser.add_argument(  "--save-name",
+                          action="store",
+                          dest="savename",
+                          metavar="SNAME",
+                          default='/ionized_electron_density_',
+                          help = """Name of the file + eventually 'tracked' + timestamp""")
     parser.add_argument(  "--nohalo",
                           dest = "nohalo",
                           action="store_true",
@@ -156,6 +162,11 @@ def binSlab_parser():
                           action="store_true",
                           default=False,
                           help = "Dismiss particle tracks (Default: %(default)s).")
+    parser.add_argument(  "--ptype",
+                          default="contourf",
+                          dest="ptype",
+                          choices=[ "pcolormesh", "contourf"],
+                          help= "Plot color type (default: %(default)s).") 
 
     return parser
 
@@ -273,15 +284,38 @@ def main():
                 fig = plt.figure()
                 ax = fig.add_subplot(111)
                 ''' get min and max value for universal colorbar later '''
-                
-                
-                plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu, alpha=1) #
-                c_m = cm.Blues
-                s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
-                s_m.set_array([])
-                cbar1 = plt.colorbar()
+                max_density = np.max(np.abs(ionized_density))
+                min_density = 0
                 if args.clim:
-                    plt.clim(args.clim[0], args.clim[1])
+                    levels = MaxNLocator(nbins=512).tick_values(min_density, max_density)
+                    max_level = max_density
+                    vmin = args.clim[0]
+                    vmax = args.clim[1]
+                else:
+                    levels = MaxNLocator(nbins=512).tick_values(min_density, max_density)
+                    max_level = max_density
+                    vmin = 0
+                    vmax = max_density
+                if args.ptype == 'pcolormesh':
+                    plot1 = plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu, alpha=1) #
+                elif args.ptype == 'contourf':
+                    plot1 = plt.contourf(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu, levels=levels, vmin=vmin, vmax=vmax)
+                else:
+                    print('This type is not implemented yet')
+                
+                cbarmap = plt.cm.ScalarMappable(cmap=cm.PuBu)
+                cbarmap.set_array(np.abs(ionized_density))
+                if args.clim:
+                    cbarmap.set_clim(args.clim[0], args.clim[1])
+                    cbar1= plt.colorbar(cbarmap) #, boundaries=np.arange(args.clim[0],args.clim[1]+0.0001,0.0001))
+                    plot1.set_clim([args.clim[0], args.clim[1]])
+                    #cbar1.set_ticks(levels)
+                else:
+                    cbarmap.set_clim([0, max_density])
+                    cbar1= plt.colorbar(cbarmap) #, boundaries=np.arange(0,max_density+0.0001,0.0001))
+                    #cbar1.set_ticks(levels)
+                    plot1.set_clim([0, max_density])
+            
                 if args.xlim:
                     plt.xlim(args.xlim[0], args.xlim[1])
                 if args.ylim:
@@ -292,18 +326,49 @@ def main():
                 
                 if args.beam_data:
                     max_density = np.max(np.abs(beam_density))
-                    print(max_density)
-                    print(np.shape(beam_density[(np.abs(beam_density)<=0.05*max_density)]))
-                    #mask_array = np.reshape(beam_density[np.abs(beam_density)<=0.05*max_density], np.shape(beam_density))
-                    #print(np.shape(mask_array))
-                    print(np.where(np.abs(beam_density)<=0.05*max_density))
-                    print(np.shape(beam_density))
-                    beam_density2 = np.ma.masked_array(beam_density, mask=beam_density[(beam_density)<=0.1*np.max(np.abs(beam_density))] )
-                    beam_density[np.abs(beam_density)<= 0.05*np.max(np.abs(beam_density))] = np.nan
-                    plt.pcolormesh(beam_density_g3d1.get_zeta_arr(), beam_density_g3d1.get_x_arr(2), np.abs(beam_density), cmap=cm.Reds, alpha=1) #
-                    cbar2 = plt.colorbar()
+                    
+                    cmap = plt.cm.Reds
+
+                    # Get the colormap colors
+                    my_cmap = cmap(np.arange(cmap.N))
+
+                    # Set alpha
+                    my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
+                    # Create new colormap
+                    my_cmap = ListedColormap(my_cmap)
+                    
                     if args.cblim:
-                        plt.clim(args.cblim[0], args.cblim[1])            
+                        levels = MaxNLocator(nbins=512).tick_values(0, max_density)
+                        max_level = max_density
+                        vmin = args.cblim[0]
+                        vmax = args.cblim[1]
+                    else:
+                        levels = MaxNLocator(nbins=512).tick_values(0, max_density)
+                        max_level = max_density
+                        vmin = 0
+                        vmax = max_density
+                    if args.ptype == 'pcolormesh':
+                        plt.pcolormesh(beam_density_g3d1.get_zeta_arr(), beam_density_g3d1.get_x_arr(2), np.abs(beam_density), cmap=my_cmap, vmin=vmin, vmax=vmax)
+                    elif args.ptype == 'contourf':
+                        plt.contourf(beam_density_g3d1.get_zeta_arr(), beam_density_g3d1.get_x_arr(2), np.abs(beam_density), cmap=my_cmap, levels=levels, vmin=vmin, vmax=vmax) #np.arange(0, max_level,1/1000) #
+                    else:
+                        print('This type is not implemented yet')
+            
+                    
+                    cbarmap = plt.cm.ScalarMappable(cmap=my_cmap)
+                    cbarmap.set_array(np.abs(beam_density))
+                    if args.cblim:
+                        # Note on colorbar: boundaries have to be set manually, because otherwise there will be ugly stripes
+                        # afterwards the ticks have to set manually as well, set them at the correct place
+                        cbar2 = plt.colorbar(cbarmap, boundaries=np.arange(args.cblim[0],args.cblim[1]+0.0001,0.0001), 
+                        ticks=np.arange(args.cblim[0],args.cblim[1]+(args.cblim[1]-args.cblim[0])/5,(args.cblim[1]-args.cblim[0])/5) )
+                        cbar2.set_clim([args.cblim[0], args.cblim[1]])
+                    else:
+                        #cbarmap.set_clim(0, max_density)
+                        cbar2= plt.colorbar(cbarmap, boundaries=np.arange(0,max_density+0.0001,0.0001),
+                        ticks=np.arange(0,max_density+(max_density)/5,(max_density)/5) )
+                        cbar2.set_clim([0, max_density])
+        
                     cbar2.ax.set_title(r'$n_b/n_0$')
                 
                 
@@ -420,7 +485,11 @@ def main():
                     tracked = 'tracked_'
                 else:
                     tracked = ''
-                save_path_name = savepath + '/ionized_electron_density_' + tracked + timestamp + '.png'
+                if args.savename:
+                    savename = '/' + args.savename + '_'
+                else:
+                    savename = '/ionized_electron_density_'
+                save_path_name = savepath + savename + tracked + timestamp + '.png'
                 print('Saving figure...')
                 fig.savefig(save_path_name, format='png', dpi=400)
                 print('Writing file...')
