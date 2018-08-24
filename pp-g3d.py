@@ -271,6 +271,9 @@ def gen_pretty_grid_name( gname ):
     else:
         return gname
 
+def round_figures(x, n): 
+    """Returns x rounded to n significant figures."""
+    return round(x, int(n - math.ceil(math.log10(abs(x)))))
 
 # Returning boolean: if file extension is hdf5 extension
 def is_h5_file(fext):
@@ -566,6 +569,8 @@ class G3d_plot_slice(G3d_plot):
         ax.set_xlabel(self.xlabel, fontsize=14)
         cbar = fig.colorbar(cax)
         cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )
+        #cbar.ax.set_clim = 
+        cbar.set_ticks (np.arange(self.clim[0],self.clim[1]+(self.clim[1]-self.clim[0])/5,round_figures((self.clim[1]-self.clim[0])/5, 2 ) ) )
         if self.args.xlim != None:
             plt.xlim(self.args.xlim[0], self.args.xlim[1])
         if self.args.ylim != None:

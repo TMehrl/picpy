@@ -20,7 +20,7 @@ import matplotlib.lines as mlines
 from matplotlib.ticker import MaxNLocator
 import scipy.optimize
 import scipy.special
-
+import math
 
 
 def binSlab_parser():
@@ -193,7 +193,9 @@ def plot_2D_colourline_beta(x,z,c, lw):
     
     return
 
-
+def round_figures(x, n): 
+    """Returns x rounded to n significant figures."""
+    return round(x, int(n - math.ceil(math.log10(abs(x)))))
 
 def main():
     
@@ -292,7 +294,7 @@ def main():
                     vmin = args.clim[0]
                     vmax = args.clim[1]
                 else:
-                    levels = MaxNLocator(nbins=900).tick_values(0, max_density)
+                    levels = MaxNLocator(nbins=512).tick_values(0, max_density)
                     max_level = max_density
                     vmin = 0
                     vmax = max_density
@@ -361,12 +363,12 @@ def main():
                         # Note on colorbar: boundaries have to be set manually, because otherwise there will be ugly stripes
                         # afterwards the ticks have to set manually as well, set them at the correct place
                         cbar2 = plt.colorbar(cbarmap, boundaries=np.arange(args.cblim[0],args.cblim[1]+0.0001,0.0001), 
-                        ticks=np.arange(args.cblim[0],args.cblim[1]+(args.cblim[1]-args.cblim[0])/5,(args.cblim[1]-args.cblim[0])/5) )
+                        ticks=np.arange(args.cblim[0],args.cblim[1]+(args.cblim[1]-args.cblim[0])/5, round_figures((args.cblim[1]-args.cblim[0])/5, 2) ) )
                         cbar2.set_clim([args.cblim[0], args.cblim[1]])
                     else:
                         #cbarmap.set_clim(0, max_density)
                         cbar2= plt.colorbar(cbarmap, boundaries=np.arange(0,max_density+0.0001,0.0001),
-                        ticks=np.arange(0,max_density+(max_density)/5,(max_density)/5) )
+                        ticks=np.arange(0,max_density+(max_density)/5, round_figures((max_density)/5, 2) ) ) 
                         cbar2.set_clim([0, max_density])
         
                     cbar2.ax.set_title(r'$n_b/n_0$')
