@@ -534,7 +534,7 @@ class G3d_plot_slice(G3d_plot):
                                  self.slice,
                                  vmin=self.clim[0], vmax=self.clim[1])
         elif self.args.ptype == 'contourf':
-            levels = MaxNLocator(nbins=256, steps=[1, 2, 4, 5, 10]).tick_values(self.clim[0], self.clim[1]+(self.clim[1]-self.clim[0])/256)
+            levels = MaxNLocator(nbins=256, steps=[1, 2, 4, 5, 10]).tick_values(self.clim[0], self.clim[1])
             cax = plt.contourf( self.x_array,
                                 self.y_array,
                                 self.slice,
