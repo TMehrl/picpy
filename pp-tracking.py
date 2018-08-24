@@ -100,7 +100,7 @@ def binSlab_parser():
     parser.add_argument(  "--beam_data",
                         dest = "beam_data",
                         nargs = '*',
-                        default = "./DATA/density_drive_beam_000000.0.h5",
+                        default = False,
                         help = "Path to the beam density data over which  \n"
                                "the tracks should be laid. \n")
     parser.add_argument(  '--cblim',
