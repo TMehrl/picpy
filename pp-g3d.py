@@ -540,7 +540,8 @@ class G3d_plot_slice(G3d_plot):
                                 self.slice,
                                 levels=levels,
                                 vmin=self.clim[0], vmax=self.clim[1],
-                                cmap=self.colormap)
+                                cmap=self.colormap,
+                                extend='both')
         elif self.args.ptype == 'pcolor':
             cax = plt.pcolor( self.x_array,
                                 self.y_array,
