@@ -122,7 +122,7 @@ def main():
   omega_alpha               =    4.13e16; # [s^-1]
   E_alpha                   =    5.1e11; # [V/m]
   elec_density              =    1e+23 # [1/m^3]
-  omega_p = np.sqrt(4* np.pi * elec_density * (ELECTRON_CHARGE_IN_COUL**2)/ (VAC_PERMIT_FARAD_PER_M * ELECTRON_MASS_IN_KG)); # calculation of the plasma frequency
+  omega_p = np.sqrt( elec_density * (ELECTRON_CHARGE_IN_COUL**2)/ (VAC_PERMIT_FARAD_PER_M * ELECTRON_MASS_IN_KG)); # calculation of the plasma frequency
   #print('omega_p is %0.3e' %omega_p)
   E_0 = omega_p * ELECTRON_MASS_IN_KG * SPEED_OF_LIGHT_IN_M_PER_S / ELECTRON_CHARGE_IN_COUL;                        #calculation of the denormalization factor for the electric field
   #print('E_0 is %0.3e' %E_0)
