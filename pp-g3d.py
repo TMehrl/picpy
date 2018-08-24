@@ -176,7 +176,7 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           default='png',
                           help= """Format of output file (default: %(default)s).""")
     parser.add_argument(  "--ptype",
-                          default="pcolor",
+                          default="contourf",
                           dest="ptype",
                           choices=[ "pcolor", "pcolormesh", "imshow", "pcolorfast", "contourf"],
                           help= "Plot color type (default: %(default)s).")                        
