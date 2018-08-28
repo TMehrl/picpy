@@ -176,7 +176,7 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           default='png',
                           help= """Format of output file (default: %(default)s).""")
     parser.add_argument(  "--ptype",
-                          default="pcolor",
+                          default="contourf",
                           dest="ptype",
                           choices=[ "pcolor", "pcolormesh", "imshow", "pcolorfast", "contourf"],
                           help= "Plot color type (default: %(default)s).")                        
@@ -271,6 +271,9 @@ def gen_pretty_grid_name( gname ):
     else:
         return gname
 
+def round_figures(x, n): 
+    """Returns x rounded to n significant figures."""
+    return round(x, int(n - math.ceil(math.log10(abs(x)))))
 
 # Returning boolean: if file extension is hdf5 extension
 def is_h5_file(fext):
@@ -534,13 +537,14 @@ class G3d_plot_slice(G3d_plot):
                                  self.slice,
                                  vmin=self.clim[0], vmax=self.clim[1])
         elif self.args.ptype == 'contourf':
-            levels = MaxNLocator(nbins=256).tick_values(self.clim[0], self.clim[1])
+            levels = MaxNLocator(nbins='512', steps=[1, 2, 4, 5, 10]).tick_values(self.clim[0], self.clim[1])
             cax = plt.contourf( self.x_array,
                                 self.y_array,
                                 self.slice,
                                 levels=levels,
                                 vmin=self.clim[0], vmax=self.clim[1],
-                                cmap=self.colormap)
+                                cmap=self.colormap,
+                                extend='max')
         elif self.args.ptype == 'pcolor':
             cax = plt.pcolor( self.x_array,
                                 self.y_array,
@@ -565,6 +569,8 @@ class G3d_plot_slice(G3d_plot):
         ax.set_xlabel(self.xlabel, fontsize=14)
         cbar = fig.colorbar(cax)
         cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )
+        #cbar.ax.set_clim = 
+        cbar.set_ticks (np.arange(self.clim[0],self.clim[1]+(self.clim[1]-self.clim[0])/5,round_figures((self.clim[1]-self.clim[0])/5, 2 ) ) )
         if self.args.xlim != None:
             plt.xlim(self.args.xlim[0], self.args.xlim[1])
         if self.args.ylim != None:

@@ -328,13 +328,13 @@ def main():
                 cbar = plt.colorbar(s_m)
                 
             if args.track_color == "u_tot":
-                cbar.ax.set_ylabel(r'$|u|$')
+                cbar.ax.set_title(r'$|u|$', fontsize=18)
             elif args.track_color == "beta_z":
-                cbar.ax.set_ylabel(r'$\beta_z$')
+                cbar.ax.set_title(r'$\beta_z$', fontsize=18)
             elif args.track_color == "beta_y":
-                cbar.ax.set_ylabel(r'$\beta_y$')
+                cbar.ax.set_title(r'$\beta_y$', fontsize=18)
             else:
-                cbar.ax.set_ylabel(r'$k_p\,x_0$')
+                cbar.ax.set_title(r'$k_p\,x_0$', fontsize=18)
         
         
                     #ax.set_xlim(-8, 0)
@@ -345,9 +345,9 @@ def main():
             if args.ylim:
                 ax.set_zlim(args.ylim[0], args.ylim[1])
 
-            ax.set_zlabel(r'$k_p\,y$')
-            ax.set_xlabel(r'$k_p\,\zeta$')
-            ax.set_ylabel(r'$k_p\,x$')
+            ax.set_zlabel(r'$k_p\,y$', fontsize=18)
+            ax.set_xlabel(r'$k_p\,\zeta$', fontsize=18)
+            ax.set_ylabel(r'$k_p\,x$', fontsize=18)
 
             plt.show()
             
