@@ -62,6 +62,13 @@ def h5plot_parser():
                           default=None,
                           help = """Path to which generated files will be saved.
                               (Default: %(default)s)""")
+    parser.add_argument(  "-n", "--save-name",
+                          action="store",
+                          dest="savename",
+                          metavar="PATH",
+                          default=None,
+                          help = """Name of saved file.
+                              (Default: %(default)s)""")    
     parser.add_argument(  "-f", "--format",
                           action='store',
                           dest="file_format",
@@ -126,7 +133,15 @@ def h5plot_parser():
                           metavar=('YMIN', 'YMAX'),
                           nargs=2,
                           type=float,
-                          default=None)  
+                          default=None)
+    parser.add_argument(  '--fig-size',
+                          help='Size of figure in inch.',
+                          action='store',
+                          dest="figsize",
+                          metavar=('WIDTH', 'HEIGHT'),
+                          nargs=2,
+                          type=float,
+                          default=None)    
     parser.add_argument(  '--xlab',
                           help='Set x label.',
                           action='store',
@@ -158,7 +173,19 @@ def h5plot_parser():
                           dest = "latexon",
                           action="store_true",
                           default=False,
-                          help = "Use LaTeX font (Default: %(default)s).")                                                                       
+                          help = "Use LaTeX font (Default: %(default)s).")
+    parser.add_argument(  "--xfac",
+                          dest = "xfac",
+                          action="store",
+                          type=float,                          
+                          default=1.0,
+                          help = "Multiply y-values with specified factor (Default: %(default)s).")   
+    parser.add_argument(  "--yfac",
+                          dest = "yfac",
+                          action="store",
+                          type=float,                          
+                          default=1.0,
+                          help = "Multiply y-values with specified factor (Default: %(default)s).")                                                                                                 
     return parser
 
  
@@ -173,7 +200,12 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    fig = plt.figure(figsize=(6,5))
+    if args.figsize == None:
+        figsize = (6,5)
+    else:
+        figsize = args.figsize
+
+    fig = plt.figure(figsize=figsize)
 
     if (args.line_no != None) and (len(args.line_no) != len(args.paths)):
         print('ERROR: number of selected lines must be equal to the number of provided hdf5 files!')
@@ -220,6 +252,11 @@ def main():
         
         j = 0
         for (x, y, label, linestyle, color) in h5lp[i].get_line_plots():
+            
+            # For normalizations etc.:
+            x = args.xfac * x
+            y = args.yfac * y
+
             if args.labels != None:
                 save_append_str += '_' + args.labels[i]
                 label = args.labels[i]
@@ -290,17 +327,20 @@ def main():
     handles, labels = ax.get_legend_handles_labels()
     #plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
     plt.legend(frameon=False)
-    plt.gcf().subplots_adjust(left=0.15, bottom=0.15)       
+    plt.gcf().subplots_adjust(left=0.17, bottom=0.17)       
     if not (-3.0 < math.log(np.max(abs(y)),10) < 3.0):
-        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
-        plt.gcf().subplots_adjust(left=0.18)          
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))     
     plt.show()
 
     spath, fname  = os.path.split(args.paths[0])
     if args.savepath != None:
         spath = args.savepath
 
-    save_name = fname + save_append_str + '_' + type_str
+    if args.savename != None:
+        save_name = args.savename
+    else:
+        save_name = fname + save_append_str + '_' + type_str
+        
     saveas_eps_pdf(fig, savepath=spath, savename=save_name)
     plt.close(fig)
 
