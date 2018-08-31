@@ -185,7 +185,17 @@ def h5plot_parser():
                           action="store",
                           type=float,                          
                           default=1.0,
-                          help = "Multiply y-values with specified factor (Default: %(default)s).")                                                                                                 
+                          help = "Multiply y-values with specified factor (Default: %(default)s).")
+    parser.add_argument(  "--noleg",
+                          dest = "noleg",
+                          action="store_true",
+                          default=False,
+                          help = "Disable legend (Default: %(default)s).")
+    parser.add_argument(  "--flipleg",
+                          dest = "flipleg",
+                          action="store_true",
+                          default=False,
+                          help = "Flip legend entries (Default: %(default)s).")                                                                                                                                                   
     return parser
 
  
@@ -325,8 +335,12 @@ def main():
     ax.set_xlabel(xlab, fontsize=14)
     ax.set_ylabel(ylab, fontsize=14)   
     handles, labels = ax.get_legend_handles_labels()
-    #plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
-    plt.legend(frameon=False)
+    if args.noleg != True:
+        if args.flipleg == True:
+            plt.legend(handles[::-1], labels[::-1],frameon=False)
+            #plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
+        else:
+            plt.legend(frameon=False)
     plt.gcf().subplots_adjust(left=0.17, bottom=0.17)       
     if not (-3.0 < math.log(np.max(abs(y)),10) < 3.0):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))     
