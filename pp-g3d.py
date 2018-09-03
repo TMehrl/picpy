@@ -538,13 +538,24 @@ class G3d_plot_slice(G3d_plot):
                                  vmin=self.clim[0], vmax=self.clim[1])
         elif self.args.ptype == 'contourf':
             levels = MaxNLocator(nbins='512', steps=[1, 2, 4, 5, 10]).tick_values(self.clim[0], self.clim[1])
+            if min(self.slice) < self.clim[0] and max(self.slice) > self.clim[1]:
+                extend = 'both'
+            elif min(self.slice) < self.clim[0] and max(self.slice) <= self.clim[1]:
+                extend = 'min'
+            elif min(self.slice) >= self.clim[0] and max(self.slice) > self.clim[1]:
+                extend = 'max'
+            elif min(self.slice) >= self.clim[0] and max(self.slice) <= self.clim[1]:
+                extend = 'neither'
+            else:
+                print('Error: unexpected case, couldn\'t extend in the correct way!')
+                extend = 'neither'
             cax = plt.contourf( self.x_array,
                                 self.y_array,
                                 self.slice,
                                 levels=levels,
                                 vmin=self.clim[0], vmax=self.clim[1],
                                 cmap=self.colormap,
-                                extend='max')
+                                extend=extend)
         elif self.args.ptype == 'pcolor':
             cax = plt.pcolor( self.x_array,
                                 self.y_array,

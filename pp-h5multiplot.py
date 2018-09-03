@@ -187,7 +187,7 @@ def h5plot_parser():
                           dest="n0",
                           default=1e23,
                           type=float,
-                          help= """Plasma density n0 in order to calculate length of simulation (default: %(default)s).""")
+                          help= """Plasma density n0 in order to calculate length of simulation (default: %(default)s) [1/m^3].""")
     parser.add_argument(  "--maketitle",
                           dest = "maketitle",
                           action="store_true",
