@@ -176,7 +176,7 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           default='png',
                           help= """Format of output file (default: %(default)s).""")
     parser.add_argument(  "--ptype",
-                          default="pcolor",
+                          default="contourf",
                           dest="ptype",
                           choices=[ "pcolor", "pcolormesh", "imshow", "pcolorfast", "contourf"],
                           help= "Plot color type (default: %(default)s).")                        
@@ -538,13 +538,15 @@ class G3d_plot_slice(G3d_plot):
                                  vmin=self.clim[0], vmax=self.clim[1])
         elif self.args.ptype == 'contourf':
             levels = MaxNLocator(nbins='512', steps=[1, 2, 4, 5, 10]).tick_values(self.clim[0], self.clim[1])
-            if min(self.slice) < self.clim[0] and max(self.slice) > self.clim[1]:
+            
+            #selecting correct extend method
+            if np.amin(self.slice) < self.clim[0] and np.amax(self.slice) > self.clim[1]:
                 extend = 'both'
-            elif min(self.slice) < self.clim[0] and max(self.slice) <= self.clim[1]:
+            elif np.amin(self.slice) < self.clim[0] and np.amax(self.slice) <= self.clim[1]:
                 extend = 'min'
-            elif min(self.slice) >= self.clim[0] and max(self.slice) > self.clim[1]:
+            elif np.amin(self.slice) >= self.clim[0] and np.amax(self.slice) > self.clim[1]:
                 extend = 'max'
-            elif min(self.slice) >= self.clim[0] and max(self.slice) <= self.clim[1]:
+            elif np.amin(self.slice) >= self.clim[0] and np.amax(self.slice) <= self.clim[1]:
                 extend = 'neither'
             else:
                 print('Error: unexpected case, couldn\'t extend in the correct way!')
@@ -580,8 +582,11 @@ class G3d_plot_slice(G3d_plot):
         ax.set_xlabel(self.xlabel, fontsize=14)
         cbar = fig.colorbar(cax)
         cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )
-        #cbar.ax.set_clim = 
-        cbar.set_ticks (np.arange(self.clim[0],self.clim[1]+(self.clim[1]-self.clim[0])/5,round_figures((self.clim[1]-self.clim[0])/5, 2 ) ) )
+        
+        #manually setting cbar ticks to avoid cutoff of the last tick
+        ticks = MaxNLocator().tick_values(self.clim[0], self.clim[1])
+        cbar.set_ticks ( ticks )
+        
         if self.args.xlim != None:
             plt.xlim(self.args.xlim[0], self.args.xlim[1])
         if self.args.ylim != None:
