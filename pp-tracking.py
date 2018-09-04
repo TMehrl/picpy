@@ -214,7 +214,8 @@ def main():
     density_path = args.dens_data
     
 
-
+    if not args.tracksoff and not args.track_range:
+        print('ERROR: tracks not turned off, but no tracking range given. Provide tracking range with --track_range to get correct colormap.')
 
     # NHC=2
     proc_suffix_str = '_proc_'
@@ -222,7 +223,7 @@ def main():
     bin_fending = '.bin'
 
 
-    # print(datan)
+
     for density_files in args.dens_data:
 
         ionized_density_g3d1 = Grid3d(density_files)
@@ -231,8 +232,6 @@ def main():
         timestamp = density_files.split("_")[-1].split(".h5")[0]
         if args.old_timestamp:
             timestamp = timestamp.split(".")[0]
-        print('timestamp')
-        print(timestamp)
         
         if args.beam_data:
             for beam_density_files in args.beam_data:
@@ -282,7 +281,10 @@ def main():
             
             
             for k in range(len(w)):
-            
+                
+                # if not args.tracksoff and args.dens_data and args.beam_data:
+                #     fig = plt.figure(figsize=(9,5))
+                # else:
                 fig = plt.figure()
                 ax = fig.add_subplot(111)
                 ''' get min and max value for universal colorbar later '''
@@ -293,15 +295,29 @@ def main():
                     max_level = max_density
                     vmin = args.clim[0]
                     vmax = args.clim[1]
+                    #selecting correct extend method
+                    if min_density < args.clim[0] and max_density > args.clim[1]:
+                        extend = 'both'
+                    elif min_density < args.clim[0] and max_density <= args.clim[1]:
+                        extend = 'min'
+                    elif min_density >= args.clim[0] and max_density > args.clim[1]:
+                        extend = 'max'
+                    elif min_density >= args.clim[0] and max_density <= args.clim[1]:
+                        extend = 'neither'
+                    else:
+                        print('Error: unexpected case, couldn\'t extend in the correct way!')
+                        extend = 'neither'
+                    
                 else:
                     levels = MaxNLocator(nbins=512).tick_values(0, max_density)
                     max_level = max_density
-                    vmin = 0
+                    vmin = min_density
                     vmax = max_density
+                    extend = 'neither'
                 if args.ptype == 'pcolormesh':
                     plot1 = plt.pcolormesh(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu, alpha=1) #
                 elif args.ptype == 'contourf':
-                    plot1 = plt.contourf(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu, levels=levels, vmin=vmin, vmax=vmax, extend='both')
+                    plot1 = plt.contourf(ionized_density_g3d1.get_zeta_arr(), ionized_density_g3d1.get_x_arr(2), np.abs(ionized_density), cmap=cm.PuBu, levels=levels, vmin=vmin, vmax=vmax, extend=extend)
                 else:
                     print('This type is not implemented yet')
                 
@@ -309,13 +325,16 @@ def main():
                 cbarmap.set_array(np.abs(ionized_density))
                 if args.clim:
                     cbarmap.set_clim(args.clim[0], args.clim[1])
-                    cbar1= plt.colorbar(cbarmap) #, boundaries=np.arange(args.clim[0],args.clim[1]+0.0001,0.0001))
+                    cbar1= plt.colorbar(cbarmap, boundaries=np.arange(args.clim[0],args.clim[1]+0.0002,0.0001), extend=extend, fraction=0.046, pad=0.1)
+                    ticks = MaxNLocator().tick_values(vmin, vmax)
+                    cbar1.set_ticks ( ticks )
                     plot1.set_clim([args.clim[0], args.clim[1]])
-                    #cbar1.set_ticks(levels)
+
                 else:
                     cbarmap.set_clim([0, max_density])
-                    cbar1= plt.colorbar(cbarmap) #, boundaries=np.arange(0,max_density+0.0001,0.0001))
-                    #cbar1.set_ticks(levels)
+                    cbar1= plt.colorbar(cbarmap, boundaries=np.arange(0,max_density+0.0002,0.0001), extend=extend, fraction=0.046, pad=0.1)
+                    ticks = MaxNLocator().tick_values(vmin, vmax)
+                    cbar1.set_ticks ( ticks )
                     plot1.set_clim([0, max_density])
             
                 if args.xlim:
@@ -344,15 +363,28 @@ def main():
                         max_level = max_density
                         vmin = args.cblim[0]
                         vmax = args.cblim[1]
+                        #selecting correct extend method
+                        if min_density < args.cblim[0] and max_density > args.cblim[1]:
+                            extend = 'both'
+                        elif min_density < args.cblim[0] and max_density <= args.cblim[1]:
+                            extend = 'min'
+                        elif min_density >= args.cblim[0] and max_density > args.cblim[1]:
+                            extend = 'max'
+                        elif min_density >= args.cblim[0] and max_density <= args.cblim[1]:
+                            extend = 'neither'
+                        else:
+                            print('Error: unexpected case, couldn\'t extend in the correct way!')
+                            extend = 'neither'
                     else:
                         levels = MaxNLocator(nbins=512).tick_values(0, max_density)
                         max_level = max_density
                         vmin = 0
                         vmax = max_density
+                        extend = 'neither'
                     if args.ptype == 'pcolormesh':
                         plt.pcolormesh(beam_density_g3d1.get_zeta_arr(), beam_density_g3d1.get_x_arr(2), np.abs(beam_density), cmap=my_cmap, vmin=vmin, vmax=vmax)
                     elif args.ptype == 'contourf':
-                        plt.contourf(beam_density_g3d1.get_zeta_arr(), beam_density_g3d1.get_x_arr(2), np.abs(beam_density), cmap=my_cmap, levels=levels, vmin=vmin, vmax=vmax, extend='both') #np.arange(0, max_level,1/1000) #
+                        plt.contourf(beam_density_g3d1.get_zeta_arr(), beam_density_g3d1.get_x_arr(2), np.abs(beam_density), cmap=my_cmap, levels=levels, vmin=vmin, vmax=vmax, extend=extend) 
                     else:
                         print('This type is not implemented yet')
             
@@ -362,13 +394,16 @@ def main():
                     if args.cblim:
                         # Note on colorbar: boundaries have to be set manually, because otherwise there will be ugly stripes
                         # afterwards the ticks have to set manually as well, set them at the correct place
-                        cbar2 = plt.colorbar(cbarmap, boundaries=np.arange(args.cblim[0],args.cblim[1]+0.0001,0.0001), 
-                        ticks=np.arange(args.cblim[0],args.cblim[1]+(args.cblim[1]-args.cblim[0])/5, round_figures((args.cblim[1]-args.cblim[0])/5, 2) ) )
+                        cbarmap.set_clim(args.cblim[0], args.cblim[1])
+                        cbar2 = plt.colorbar(cbarmap, boundaries=np.arange(args.cblim[0],args.cblim[1]+0.0002,0.0001), extend=extend, fraction=0.046, pad=0.1 ) 
+                        ticks = MaxNLocator().tick_values(vmin, vmax)
+                        cbar2.set_ticks ( ticks )
                         cbar2.set_clim([args.cblim[0], args.cblim[1]])
                     else:
                         #cbarmap.set_clim(0, max_density)
-                        cbar2= plt.colorbar(cbarmap, boundaries=np.arange(0,max_density+0.0001,0.0001),
-                        ticks=np.arange(0,max_density+(max_density)/5, round_figures((max_density)/5, 2) ) ) 
+                        cbar2= plt.colorbar(cbarmap, boundaries=np.arange(0,max_density+0.0001,0.0001), fraction=0.046, pad=0.1 ) 
+                        ticks = MaxNLocator().tick_values(vmin, vmax)
+                        cbar2.set_ticks ( ticks )
                         cbar2.set_clim([0, max_density])
         
                     cbar2.ax.set_title(r'$n_b/n_0$')
@@ -454,7 +489,7 @@ def main():
                         s_m = matplotlib.cm.ScalarMappable(cmap=c_m, norm=norm)
                         s_m.set_array([])
                     
-                        cbar = plt.colorbar(s_m)
+                        cbar = plt.colorbar(s_m, fraction=0.052, pad=0.06)
                         
                     else:
                         # norm = matplotlib.colors.Normalize( vmin= 0, vmax=6)
@@ -466,7 +501,7 @@ def main():
                         s_m = matplotlib.cm.ScalarMappable(cmap=c_m)
                         s_m.set_array([args.track_range[0],args.track_range[1]])
                     
-                        cbar = plt.colorbar(s_m)
+                        cbar = plt.colorbar(s_m, fraction=0.052, pad=0.06)
                         
                     if args.track_color == "u_tot":
                         cbar.ax.set_title(r'$|u|$')
