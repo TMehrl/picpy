@@ -192,7 +192,12 @@ def h5plot_parser():
                           dest = "maketitle",
                           action="store_true",
                           default=False,
-                          help = "Writes title with time and length (Default: %(default)s).") 
+                          help = "Writes title with time and length (Default: %(default)s).")
+    parser.add_argument(  "--manual",
+                          dest = "manual",
+                          action="store_true",
+                          default=False,
+                          help = "Allows manual combination of plots, timestamps don't have to agree (Default: %(default)s).")
     return parser
 
  
@@ -249,7 +254,8 @@ def main():
         
         if args.data2:
             for files in args.data2:
-                if timestamp in files:
+                if timestamp in files or args.manual:
+                    print('Reading second data set...')
                     h5secondlp = H5Plot()
                     h5secondlp.read(files)
 
