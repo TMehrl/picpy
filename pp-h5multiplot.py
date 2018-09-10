@@ -198,6 +198,11 @@ def h5plot_parser():
                           action="store_true",
                           default=False,
                           help = "Allows manual combination of plots, timestamps don't have to agree (Default: %(default)s).")
+    parser.add_argument(  "--show",
+                          dest = "show",
+                          action="store_true",
+                          default=False,
+                          help = "Shows plot before saving. (Default: %(default)s).")    
     return parser
 
  
@@ -395,18 +400,24 @@ def main():
             title = 'Time: ' + str(time) + r'$\,\omega_p^{-1}$ ' + '   Distance: ' + str(np.around(distance,2)) + r'$\,$cm'
             plt.title(title)
             
-
+        if args.show:
+            plt.show()
+            
         spath, fname  = os.path.split(args.paths[0])
         if args.savepath != None:
             spath = args.savepath
 
-        save_name = type_str + '_' + fname + save_append_str + '_' +  timestamp
-        
+        if not args.manual:
+            save_name = type_str + '_' + fname + save_append_str + '_' +  timestamp
+        else:
+            save_name = type_str + '_' + fname + save_append_str
         
         if saveformat==args.file_format:
             saveas_png(fig, spath, save_name, args.dpi)
         else:
             saveas_eps_pdf(fig, savepath=spath, savename=save_name)
+        
+
         
         plt.close(fig)
 

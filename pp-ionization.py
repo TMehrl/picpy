@@ -127,6 +127,10 @@ def main():
   E_0 = omega_p * ELECTRON_MASS_IN_KG * SPEED_OF_LIGHT_IN_M_PER_S / ELECTRON_CHARGE_IN_COUL;                        #calculation of the denormalization factor for the electric field
   #print('E_0 is %0.3e' %E_0)
   kp = SPEED_OF_LIGHT_IN_M_PER_S/omega_p
+  
+  vectorfunc = np.vectorize(calc_ion_rate)
+  ionization_rate_crit = vectorfunc(3.2e10, 1, 13.659843449,13.659843449, 0,0 )
+  print('ionization rate at crit field: %f' %ionization_rate_crit)
   #home path Path definitions
   Ez_path = './DATA/field_Ez_000000.0.h5'
   ExmBy_path = './DATA/field_ExmBy_000000.0.h5'
@@ -148,8 +152,7 @@ def main():
   
   
   #vektorized function for calc ion rate
-  vectorfunc = np.vectorize(calc_ion_rate)
-  
+
   Ez_g3d = Grid3d(Ez_path)
   ExmBy_g3d = Grid3d(ExmBy_path)
   EypBx_g3d = Grid3d(EypBx_path)
@@ -257,6 +260,11 @@ def main():
   print('Deltat is %0.3e' %deltat)
   #computing the ionization probability
   ion_probability = 1.0 - np.exp(-ionization_rate * deltat )
+  
+  ionization_prob_crit = 1.0 - np.exp(-ionization_rate_crit * deltat )
+  print('ionization prob  at crit field: %f' %ionization_prob_crit)
+  crit_ionization = ion_probability
+  crit_ionization[:,:] = ionization_prob_crit
   #print('The maximum ionization probability is %0.3e' % np.max(ion_probability))
   ### Plotting the ionization probability:
   fig = plt.figure()
@@ -289,6 +297,25 @@ def main():
   plt.savefig('./plots/pp-ionization/cum_ion_prob.png')
   plt.show()
   plt.close(fig)
+  
+  '''START  ONLY FOR CRITICAL IONIZATION PROBABILITY CHECK '''
+  #calculate the cumulative probability:
+  cum_prob_crit = (1 - np.cumprod(1-crit_ionization[:,::-1], axis=1))[:,::-1] #np.flip(np.flip(ion_probability, 1).cumsum(), 1) #
+  
+  
+  ### Plotting the ionization probability:
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
+  plt.contourf(By_g3d.get_zeta_arr(), By_g3d.get_x_arr(2), cum_prob_crit, 200, cmap=cm.Reds) # here cmap reds, since it is not divering
+  plt.ylabel(r'$k_p x$', fontsize =16)
+  plt.xlabel(r'$k_p \zeta$', fontsize =16)
+  cb = plt.colorbar(ticks = cbarvektor) 
+  #plt.clim(0,1.01)
+  cb.set_label(label = r'$P_{ADK}$', fontsize = 16)
+  plt.savefig('./plots/pp-ionization/cum_ion_prob_crit.png')
+  plt.show()
+  plt.close(fig)
+  ''' END ONLY FOR CRITICAL IONIZATION PROBABILITY CHECK '''
   
   ### Plotting the ionization probability:
   fig = plt.figure()
