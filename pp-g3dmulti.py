@@ -1148,24 +1148,25 @@ def slice(args):
                     g3d_p.save_fig(fig)
                     plt.close(fig)
         else:
-            fig = g3d_p.update_fig()
-            if args.data2:
-                fig.set_size_inches(8.5, 6)
-                for data2_files in args.data2:
-                    if timestamp in data2_files or args.manual:
-                        g3d_p2 = G3d_plot_slice(data2_files, args)
-                        g3d_p2.set_cmap( update=True, clim_input=args.clim2 )
-                        fig = g3d_p2.update_fig( fig=fig, update=True)
-                        if args.data3:
-                            fig.set_size_inches(9, 6)
-                            for data3_files in args.data3:
-                                if timestamp in data3_files or args.manual:
-                                    g3d_p3 = G3d_plot_slice(data3_files, args)
-                                    g3d_p3.set_cmap( update=True, clim_input=args.clim3 )
-                                    fig = g3d_p3.update_fig( fig=fig, update=True)
+            if not args.diff:
+                fig = g3d_p.update_fig()
+                if args.data2:
+                    fig.set_size_inches(8.5, 6)
+                    for data2_files in args.data2:
+                        if timestamp in data2_files or args.manual:
+                            g3d_p2 = G3d_plot_slice(data2_files, args)
+                            g3d_p2.set_cmap( update=True, clim_input=args.clim2 )
+                            fig = g3d_p2.update_fig( fig=fig, update=True)
+                            if args.data3:
+                                fig.set_size_inches(9, 6)
+                                for data3_files in args.data3:
+                                    if timestamp in data3_files or args.manual:
+                                        g3d_p3 = G3d_plot_slice(data3_files, args)
+                                        g3d_p3.set_cmap( update=True, clim_input=args.clim3 )
+                                        fig = g3d_p3.update_fig( fig=fig, update=True)
             
-            g3d_p.save_fig(fig)
-            plt.close(fig)
+                g3d_p.save_fig(fig)
+                plt.close(fig)
 
 
 def line(args):
