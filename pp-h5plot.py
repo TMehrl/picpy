@@ -14,11 +14,9 @@ from pp_h5dat import H5FList
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
 from pp_plt_tools import saveas_eps_pdf
-
-
-def flip(items, ncol):
-    return itertools.chain(*[items[i::ncol] for i in range(ncol)])
-
+from pp_plt_tools import colors
+from pp_plt_tools import color_names_sorted
+from pp_plt_tools import show_color_palette
 
 # class PositionalAction(argparse.Action):
 #     def __call__(self,parser,namespace,values,option_string=None):
@@ -102,6 +100,19 @@ def h5plot_parser():
                           default=None,
                           nargs='+',
                           help= """Color number for each selected line.""")
+    parser.add_argument(  "--cna", "--color-name",
+                          action='store',
+                          dest="cna",
+                          metavar="CNAMES",
+                          type=str,                      
+                          default=None,
+                          nargs='+',
+                          help= """Color names for each line (choose amongst: %s)""" % color_names_sorted)
+    parser.add_argument(  "--show-palette", '--show-colors',
+                          dest = "showpalette",
+                          action="store_true",
+                          default=False,
+                          help = "Show color palette and exit.")     
     parser.add_argument(  "--lstyle", "--line-style",
                           action='store',
                           dest="lstyle",
@@ -110,14 +121,6 @@ def h5plot_parser():
                           default=None,
                           nargs='+',
                           help= """Line style number for each selected line. 0: '-', 1: '--', 2: '-.',  3: ':'""")
-    # parser.add_argument(  "--lstyle", "--line-style",
-    #                       action='store',
-    #                       dest="lstyle",
-    #                       metavar="LINE-STYLE",                          
-    #                       choices=[ '-', '-.', ':'],
-    #                       nargs='+',
-    #                       default=None,
-    #                       help= """Line style number for each selected line (default: %(default)s).""")
     parser.add_argument(  '--xlim',
                           help='x-range of plot.',
                           action='store',
@@ -195,7 +198,19 @@ def h5plot_parser():
                           dest = "flipleg",
                           action="store_true",
                           default=False,
-                          help = "Flip legend entries (Default: %(default)s).")                                                                                                                                                   
+                          help = "Flip legend entries (Default: %(default)s).")
+    parser.add_argument(  "--adj-left",
+                          dest = "adjleft",
+                          action="store",
+                          type=float,                          
+                          default=0.19,
+                          help = "Adjust left plot margin (Default: %(default)s).")
+    parser.add_argument(  "--adj-bottom",
+                          dest = "adjbottom",
+                          action="store",
+                          type=float,                          
+                          default=0.19,
+                          help = "Adjust bottom plot margin (Default: %(default)s).")                                                                                                                          
     return parser
 
  
@@ -205,9 +220,12 @@ def main():
     parser = h5plot_parser()
     args = parser.parse_args()
 
-
     if len(sys.argv)==1:
         parser.print_help()
+        sys.exit(1)
+
+    if args.showpalette:
+        show_color_palette()
         sys.exit(1)
 
     if args.figsize == None:
@@ -255,10 +273,12 @@ def main():
         h5lp.append(H5Plot())
         h5lp[i].read(path)
 
-        if args.cno == None:
-            argcolor = plt.cm.tab20c(i)
-        else:
-            argcolor = plt.cm.tab20c(args.cno[i])
+        if (args.cno == None) and (args.cna == None):
+            argcolor = colors[list(colors)[i]]
+        elif (args.cno != None):
+            argcolor = colors[list(colors)[args.cno[i]]]
+        elif (args.cna != None):
+            argcolor = colors[args.cna[i]]
         
         j = 0
         for (x, y, label, linestyle, color) in h5lp[i].get_line_plots():
@@ -341,7 +361,7 @@ def main():
             #plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
         else:
             plt.legend(frameon=False)
-    plt.gcf().subplots_adjust(left=0.17, bottom=0.17)       
+    plt.gcf().subplots_adjust(left=args.adjleft, bottom=args.adjbottom)       
     if not (-3.0 < math.log(np.max(abs(y)),10) < 3.0):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))     
     plt.show()
