@@ -176,9 +176,9 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           default='png',
                           help= """Format of output file (default: %(default)s).""")
     parser.add_argument(  "--ptype",
-                          default="contourf",
+                          default="pcolormesh",
                           dest="ptype",
-                          choices=[ "pcolor", "pcolormesh", "imshow", "pcolorfast", "contourf"],
+                          choices=[ "pcolormesh", "pcolor", "contourf", "imshow", "pcolorfast"],
                           help= "Plot color type (default: %(default)s).")                        
     return parser
 
@@ -567,7 +567,11 @@ class G3d_plot_slice(G3d_plot):
             sys.stdout.write('ERROR: imshow not implemented yet!\n')
             sys.stdout.flush()
             sys.exit(1)  
-        elif self.args.ptype == 'pcolorfast':    
+        elif self.args.ptype == 'pcolorfast':
+            # cax = plt.pcolorfast(   self.x_array,
+            #                         self.y_array,
+            #                         self.slice,
+            #                         vmin=self.clim[0], vmax=self.clim[1])  
             sys.stdout.write('ERROR: pcolorfast not implemented yet!\n')
             sys.stdout.flush()
             sys.exit(1)     
