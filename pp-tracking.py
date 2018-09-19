@@ -129,7 +129,7 @@ def binSlab_parser():
                           dest = "manual",
                           action="store_true",
                           default=False,
-                          help = "Enables manual trackdata vs data plot (timestamps don't have to agree) (Default: %(default)s).")
+                          help = "Enables manual multiplots (timestamps don't have to agree) (Default: %(default)s).")
     parser.add_argument(  "--old_timestamp",
                           dest = "old_timestamp",
                           action="store_true",
