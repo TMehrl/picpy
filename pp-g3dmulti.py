@@ -199,6 +199,11 @@ def g3d_slice_subparser(subparsers, parent_parser):
                         nargs=2,
                         type=float,
                         default=None)
+    parser.add_argument(  "--cm2",
+                          dest = "cm2",
+                          action = "store",
+                          default = False,
+                          help = "Choose different than standard matplotlib colormap for the second data set. Example: YlGn (default: %(default)s).")
     parser.add_argument(  "--data3",
                         dest = "data3",
                         nargs = '*',
@@ -221,9 +226,14 @@ def g3d_slice_subparser(subparsers, parent_parser):
                         metavar=('CBMIN', 'CBMAX'),
                         nargs=2,
                         type=float,
-                        default=None)  
+                        default=None)
+    parser.add_argument(  "--cm3",
+                          dest = "cm3",
+                          action = "store",
+                          default = False,
+                          help = "Choose different than standard matplotlib colormap for the third data set. Example: YlGn (default: %(default)s).")
     parser.add_argument(  "--ptype",
-                          default="contourf",
+                          default="pcolormesh",
                           dest="ptype",
                           choices=[ "pcolor", "pcolormesh", "imshow", "pcolorfast", "contourf"],
                           help= "Plot color type (default: %(default)s).")                        
@@ -512,18 +522,26 @@ class G3d_plot_slice(G3d_plot):
         if self.is_number_density():
             self.slice = np.abs(self.slice)
 
-    def set_cmap( self, update=False, clim_input=None ):
+    def set_cmap( self, update=False, clim_input=None, cmap_input=False ):
 
         clim = [0.0, 0.0]
-
         if self.g3d.type == pp_defs.hipace.h5.g3dtypes.density:
             if self.is_number_density():
                 if 'beam' in self.g3d.name:
                     if not update:
                         self.colormap = cm.Reds;
-                    else:
+                    elif update and not cmap_input:
                         # set alpha value for transparency
                         cmap = plt.cm.Reds
+                        my_cmap = cmap(np.arange(cmap.N))
+                        # Set alpha
+                        my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
+                        # Create new colormap
+                        my_cmap = ListedColormap(my_cmap)
+                        self.colormap = my_cmap
+                    else:
+                        # set alpha value for transparency
+                        cmap = plt.get_cmap(cmap_input)
                         my_cmap = cmap(np.arange(cmap.N))
                         # Set alpha
                         my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
@@ -533,9 +551,18 @@ class G3d_plot_slice(G3d_plot):
                 else:
                     if not update:
                         self.colormap = cm.PuBu;
-                    else:
+                    elif update and not cmap_input:
                         # set alpha value for transparency
                         cmap = plt.cm.PuBu
+                        my_cmap = cmap(np.arange(cmap.N))
+                        # Set alpha
+                        my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
+                        # Create new colormap
+                        my_cmap = ListedColormap(my_cmap)
+                        self.colormap = my_cmap
+                    else:
+                        # set alpha value for transparency
+                        cmap = plt.get_cmap(cmap_input)
                         my_cmap = cmap(np.arange(cmap.N))
                         # Set alpha
                         my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
@@ -550,9 +577,18 @@ class G3d_plot_slice(G3d_plot):
             else:
                 if not update:
                     self.colormap = cm.RdGy;
-                else:
+                elif update and not cmap_input:
                     # set alpha value for transparency
                     cmap = plt.cm.RdGy
+                    my_cmap = cmap(np.arange(cmap.N))
+                    # Set alpha
+                    my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
+                    # Create new colormap
+                    my_cmap = ListedColormap(my_cmap)
+                    self.colormap = my_cmap
+                else:
+                    # set alpha value for transparency
+                    cmap = plt.get_cmap(cmap_input)
                     my_cmap = cmap(np.arange(cmap.N))
                     # Set alpha
                     my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
@@ -568,9 +604,20 @@ class G3d_plot_slice(G3d_plot):
         elif self.g3d.type == pp_defs.hipace.h5.g3dtypes.field:
             if not update:
                 self.colormap = cm.RdBu;
-            else:
+            elif update and not cmap_input:
                 # set alpha value for transparency
                 cmap = plt.cm.RdBu
+                my_cmap = cmap(np.arange(cmap.N))
+                # Set alpha
+                alpha_array = np.linspace(1, 0, cmap.N/2)
+                alpha_array = np.append(alpha_array, np.linspace(0, 1, cmap.N/2) )
+                my_cmap[:,-1] = alpha_array #np.linspace(0, 1, cmap.N)
+                # Create new colormap
+                my_cmap = ListedColormap(my_cmap)
+                self.colormap = my_cmap
+            else:
+                # set alpha value for transparency
+                cmap = plt.get_cmap(cmap_input)
                 my_cmap = cmap(np.arange(cmap.N))
                 # Set alpha
                 my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
@@ -585,9 +632,18 @@ class G3d_plot_slice(G3d_plot):
         elif self.g3d.type == pp_defs.hipace.h5.g3dtypes.current:
             if not update:
                 self.colormap = cm.PuOr;
-            else:
+            elif update and not cmap_input:
                 # set alpha value for transparency
                 cmap = plt.cm.PuOr
+                my_cmap = cmap(np.arange(cmap.N))
+                # Set alpha
+                my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
+                # Create new colormap
+                my_cmap = ListedColormap(my_cmap)
+                self.colormap = my_cmap
+            else:
+                # set alpha value for transparency
+                cmap = plt.get_cmap(cmap_input)
                 my_cmap = cmap(np.arange(cmap.N))
                 # Set alpha
                 my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
@@ -612,7 +668,7 @@ class G3d_plot_slice(G3d_plot):
             clim[0] = min_nonzero
             clim[1] = np.max(self.slice)
 
-        if self.args.clim != None:
+        if self.args.clim != None and not update:
             clim = list(self.args.clim)
         if clim_input != None:
             clim = list(clim_input)
@@ -739,11 +795,10 @@ class G3d_plot_slice(G3d_plot):
         if self.args.ifshow: plt.show()
         plt.close(fig)
         
-    def update_fig( self, ifsave=True, update=False,  fig=None, diff=False, diff_data=None ):
+    def update_fig( self, ifsave=True, update=False,  fig=None, diff=False, diff_data=None, counts=0 ):
         if self.args.verbose: 
             sys.stdout.write('Generating slice plot\n')
             sys.stdout.flush()
-
 
         if self.g3d.is_subgrid():
             self.app_str += '_subgrid'
@@ -751,28 +806,31 @@ class G3d_plot_slice(G3d_plot):
         if diff:
             self.slice = self.slice - diff_data
         
+        #selecting correct extend method
+        if np.amin(self.slice) < self.clim[0] and np.amax(self.slice) > self.clim[1]:
+            extend = 'both'
+        elif np.amin(self.slice) < self.clim[0] and np.amax(self.slice) <= self.clim[1]:
+            extend = 'min'
+        elif np.amin(self.slice) >= self.clim[0] and np.amax(self.slice) > self.clim[1]:
+            extend = 'max'
+        elif np.amin(self.slice) >= self.clim[0] and np.amax(self.slice) <= self.clim[1]:
+            extend = 'neither'
+        else:
+            print('Error: unexpected case, couldn\'t extend in the correct way!')
+            extend = 'neither'
+        
         if not update:
             fig = plt.figure()
         if self.args.ptype == 'pcolormesh':
             cax = plt.pcolormesh(self.x_array,
                                  self.y_array,
                                  self.slice,
-                                 vmin=self.clim[0], vmax=self.clim[1])
+                                 vmin=self.clim[0], vmax=self.clim[1],
+                                 cmap=self.colormap)
         elif self.args.ptype == 'contourf':
             levels = MaxNLocator(nbins='512', steps=[1, 2, 4, 5, 10]).tick_values(self.clim[0], self.clim[1])
             
-            #selecting correct extend method
-            if np.amin(self.slice) < self.clim[0] and np.amax(self.slice) > self.clim[1]:
-                extend = 'both'
-            elif np.amin(self.slice) < self.clim[0] and np.amax(self.slice) <= self.clim[1]:
-                extend = 'min'
-            elif np.amin(self.slice) >= self.clim[0] and np.amax(self.slice) > self.clim[1]:
-                extend = 'max'
-            elif np.amin(self.slice) >= self.clim[0] and np.amax(self.slice) <= self.clim[1]:
-                extend = 'neither'
-            else:
-                print('Error: unexpected case, couldn\'t extend in the correct way!')
-                extend = 'neither'
+
             cax = plt.contourf( self.x_array,
                                 self.y_array,
                                 self.slice,
@@ -784,6 +842,7 @@ class G3d_plot_slice(G3d_plot):
             cax = plt.pcolor( self.x_array,
                                 self.y_array,
                                 self.slice,
+                                cmap=self.colormap,
                                 vmin=self.clim[0], vmax=self.clim[1])            
         elif self.args.ptype == 'imshow':
             sys.stdout.write('ERROR: imshow not implemented yet!\n')
@@ -801,7 +860,10 @@ class G3d_plot_slice(G3d_plot):
         # Note on colorbar: boundaries have to be set manually, because otherwise there will be ugly stripes
         # afterwards the ticks have to set manually as well, set them at the correct place
         cbarmap.set_clim(self.clim[0], self.clim[1])
-        cbar = plt.colorbar(cbarmap, boundaries=np.arange(self.clim[0],self.clim[1]+0.0002,0.0001), extend=extend, pad=0.1) #, fraction=0.046, pad=0.1 ) 
+        if self.g3d.type == pp_defs.hipace.h5.g3dtypes.field:
+            cbar = plt.colorbar(cbarmap, boundaries=np.arange(self.clim[0]-0.0002,self.clim[1]+0.0002,0.0001), extend=extend, pad=0.02, fraction=0.08+4*counts**(1/2)/100.0) #, pad=0.1 )
+        else: 
+            cbar = plt.colorbar(cbarmap, boundaries=np.arange(self.clim[0],self.clim[1]+0.0002,0.0001), extend=extend, pad=0.02, fraction=0.08+4*counts**(1/2)/100.0) #, pad=0.1 )
         ticks = MaxNLocator().tick_values(self.clim[0], self.clim[1])
         cbar.set_ticks ( ticks )
         cbar.set_clim([self.clim[0], self.clim[1]])
@@ -824,20 +886,20 @@ class G3d_plot_slice(G3d_plot):
         if self.args.ylim != None:
             plt.ylim(self.args.ylim[0], self.args.ylim[1])
 
-        axpos1 = ax.get_position() # get the original position 
-        cbaxpos1 = cbar.ax.get_position() # get the original position 
-        xshift = 0.05;
-        wcompress = 1.05
-        axpos2 = [axpos1.x0 + xshift, axpos1.y0,  (axpos1.width - xshift) / wcompress, axpos1.height ]
-        ax.set_position(axpos2) # set a new position 
-        axpos2 = ax.get_position()
-        cbaxpos2 = [cbaxpos1.x0 + (axpos2.x0 - axpos1.x0) + (axpos2.width - axpos1.width), \
-                    cbaxpos1.y0, \
-                    cbaxpos1.width, \
-                    cbaxpos1.height ] 
-
-        cbar.ax.set_position(cbaxpos2)
-        
+        # axpos1 = ax.get_position() # get the original position 
+        # cbaxpos1 = cbar.ax.get_position() # get the original position 
+        # xshift = 0.05;
+        # wcompress = 1.05
+        # axpos2 = [axpos1.x0 + xshift, axpos1.y0,  (axpos1.width - xshift) / wcompress, axpos1.height ]
+        # ax.set_position(axpos2) # set a new position 
+        # axpos2 = ax.get_position()
+        # cbaxpos2 = [cbaxpos1.x0 + (axpos2.x0 - axpos1.x0) + (axpos2.width - axpos1.width), \
+        #             cbaxpos1.y0, \
+        #             cbaxpos1.width, \
+        #             cbaxpos1.height ] 
+        # 
+        # cbar.ax.set_position(cbaxpos2)
+        # 
         return fig
         
     def save_fig(self, fig):
@@ -1151,19 +1213,19 @@ def slice(args):
             if not args.diff:
                 fig = g3d_p.update_fig()
                 if args.data2:
-                    fig.set_size_inches(8.5, 6)
+                    fig.set_size_inches(8.3, 6)
                     for data2_files in args.data2:
                         if timestamp in data2_files or args.manual:
                             g3d_p2 = G3d_plot_slice(data2_files, args)
-                            g3d_p2.set_cmap( update=True, clim_input=args.clim2 )
-                            fig = g3d_p2.update_fig( fig=fig, update=True)
+                            g3d_p2.set_cmap( update=True, clim_input=args.clim2, cmap_input=args.cm2 )
+                            fig = g3d_p2.update_fig( fig=fig, update=True, counts=1)
                             if args.data3:
-                                fig.set_size_inches(9, 6)
+                                fig.set_size_inches(8.6, 6)
                                 for data3_files in args.data3:
                                     if timestamp in data3_files or args.manual:
                                         g3d_p3 = G3d_plot_slice(data3_files, args)
-                                        g3d_p3.set_cmap( update=True, clim_input=args.clim3 )
-                                        fig = g3d_p3.update_fig( fig=fig, update=True)
+                                        g3d_p3.set_cmap( update=True, clim_input=args.clim3, cmap_input=args.cm2 )
+                                        fig = g3d_p3.update_fig( fig=fig, update=True, counts=2)
             
                 g3d_p.save_fig(fig)
                 plt.close(fig)
