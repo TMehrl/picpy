@@ -515,10 +515,16 @@ class SliceMoms(H5File):
     def __init__(self):
         self.time_array_name = 'time_array'
         self.zeta_array_name = 'zeta_array'
-        self.__order = -1
+        self.__order = 2
 
-    def get_order(self):
-        return self.__order 
+    def get_h5order(self, file):
+        with h5py.File(file,'r') as hf:
+            if 'mom_order' in hf.attrs.keys():
+                h5order  = hf.attrs['mom_order']
+            else:
+                h5order  = 2
+        return h5order
+
 
     def alloc(self, Nzeta, Nt, order = 2):
 
@@ -586,6 +592,7 @@ class SliceMoms(H5File):
             self.avgx2sqp2sq = np.zeros((Nt, Nzeta), dtype=np.float32)
             self.avgx3sqp3sq = np.zeros((Nt, Nzeta), dtype=np.float32)
 
+
     def read(self, file, order = None, verbose = True):
         H5File.__init__(self, file)
         if not self.is_h5_file():
@@ -595,18 +602,13 @@ class SliceMoms(H5File):
         if verbose:
             print('Reading %s ...' % file)
 
+        h5order = self.get_h5order(file)
+
         with h5py.File(self.file,'r') as hf:
-            # TODO: read order of moments and if crossterms from attributes!!!
-
-            if 'mom_order' in hf.keys():
-                h5_mom_order = hf.attrs['mom_order']
-            else:
-                h5_mom_order = 2
-
             if order == None:
-                order = h5_mom_order
+                order = h5order
             else:
-                if order > h5_mom_order:
+                if order > h5order:
                     print('Error:\tSpecified order is greater than moment order in hdf5 file!')
                     sys.exit(1)     
             self.__order = order

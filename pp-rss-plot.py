@@ -69,6 +69,13 @@ def ps_parseopts():
                         metavar="NAME",
                         default=parsedefs.save.prefix,
                         help = """Define customized prefix of output filename.""")
+    parser.add_argument("-a", "--axis",
+                        dest = "axis",
+                        metavar="AXIS",
+                        choices=['x', 'y',],
+                        default='x',
+                        help= """Primary axis for plotting
+                              (default: %(default)s).""")
     parser.add_argument("-c", "--code",
                         action='store',
                         dest="piccode",
@@ -134,7 +141,6 @@ def ps_parseopts():
                           action="store_false",
                           default=True,
                           help = "Use LaTeX font (Default: %(default)s).")
-
     return parser
 
 
@@ -714,8 +720,8 @@ def plot_curr_profile(slm, savepath, time = None, h5plot=True, t_is_z=True):
         plt.plot(slm.zeta_array, Ib_per_IA[i,:])
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
-        ax.set_ylabel(r'$I_{b,0}/I_A$', fontsize=14)
-        saveas_eps_pdf(fig, savepath, ('Ib0_time_%0.1f' % (slm.time_array[i])), h5plot=h5plot)
+        ax.set_ylabel(r'$I_{b}/I_A$', fontsize=14)
+        saveas_eps_pdf(fig, savepath, ('Ib_time_%0.1f' % (slm.time_array[i])), h5plot=h5plot)
         plt.close(fig)    
 
 
@@ -745,11 +751,11 @@ def main():
     slm = SliceMoms()
     slm.read(file)
 
-    if slm.get_order() > 0:
+    if slm.get_h5order(file) > 0:
         if args.mom_order != None:
             mom_order = args.mom_order
         else:
-            mom_order = slm.get_order()
+            mom_order = slm.get_h5order(file)
     else:
         print('Error:\tMoment order in file <= 0!')
         sys.exit(1)                 
@@ -763,6 +769,11 @@ def main():
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif') 
 
+    if args.axis == 'x':
+        axdir = 2
+    else:
+        axdir = 3
+
     plot_curr_profile(slm, args.savepath, time = args.time, h5plot=args.h5plot)
 
     plot_save_slice_ene(slm, args.savepath, h5plot=args.h5plot)
@@ -771,13 +782,13 @@ def main():
     
     if mom_order > 1:
         plot_save_slice_rms(slm, args.savepath)
-        plot_save_proj_rms(slm, args.savepath, axdir=2, h5plot=args.h5plot)        
-        plot_save_slice_rms_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
+        plot_save_proj_rms(slm, args.savepath, axdir, h5plot=args.h5plot)        
+        plot_save_slice_rms_lines(slm, args.savepath, time = args.time, axdir=axdir, h5plot=args.h5plot)
         plot_save_ene_ene_spread(slm, args.savepath, t_is_z=args.t_is_z)
 
     if mom_order > 3:
-        plot_save_slice_exkurtosis_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
-        plot_save_slice_quad_corr_lines(slm, args.savepath, time = args.time, axdir=2, h5plot=args.h5plot)
+        plot_save_slice_exkurtosis_lines(slm, args.savepath, time = args.time, axdir=axdir, h5plot=args.h5plot)
+        plot_save_slice_quad_corr_lines(slm, args.savepath, time = args.time, axdir=axdir, h5plot=args.h5plot)
 
 if __name__ == "__main__":
     main()
