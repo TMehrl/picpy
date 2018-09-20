@@ -1188,13 +1188,6 @@ def slice(args):
     h5flist = H5FList(args.path, h5ftype='g3d')
     flist = h5flist.get()
 
-    if args.data2:
-            h5flist2 = H5FList(args.data2, h5ftype='g3d')
-            flist2 = h5flist2.get()
-    if args.data3:
-            h5flist3 = H5FList(args.data3, h5ftype='g3d')
-            flist3 = h5flist3.get()
-
     for file in flist:
         timestamp = file.split("_")[-1].split(".h5")[0]
         
