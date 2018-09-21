@@ -88,13 +88,13 @@ def r2h_1d_subparser(subparsers, parent_parser):
                           default='eps',
                           help= """Format of output file (Default: eps).""")
     parser.add_argument(  '-r','--range',
-                          help='Range of lineout.',
                           action='store',
                           dest="range",
                           metavar=('XMIN', 'XMAX'),
                           nargs=2,
                           type=float,
-                          default=None)
+                          default=None,
+                          help='Range of histogram.')
     parser.add_argument(  '-n','--nbins',
                           help='Number of bins.',
                           action='store',
@@ -135,7 +135,7 @@ def r2h_2d_subparser(subparsers, parent_parser):
                           help='Number of bins in each dimension.',
                           action='store',
                           dest="nbins",
-                          metavar=('NBINS1', 'NBINS1'),
+                          metavar=('NBINS1', 'NBINS2'),
                           nargs=2,
                           type=int,
                           default=None)
@@ -209,9 +209,9 @@ def oneD(raw, args):
     if args.nbins == None:
         nbins = np.int( np.sqrt(raw.get_npart()) / 2.0 )
     else:
-        nbins = args.nbins  
+        nbins = args.nbins
 
-    hist, bin_edges = np.histogram(psv,bins=nbins,weights=raw.q,density=True)
+    hist, bin_edges = np.histogram(psv,bins=nbins,weights=raw.q,density=True,range=args.range)
     x_array = bin_edges[0:-1] + (bin_edges[1] - bin_edges[0])/2
 
     fig = plt.figure(figsize=(6,5))
