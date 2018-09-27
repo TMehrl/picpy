@@ -19,8 +19,6 @@ from pp_h5dat import Grid3d
 from pp_h5dat import H5FList
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
-from pp_plt_tools import saveas_png
-from pp_plt_tools import saveas_eps_pdf
 
 # Parse defaults/definitions
 class parsedefs:
@@ -238,7 +236,47 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           default="pcolormesh",
                           dest="ptype",
                           choices=[ "pcolor", "pcolormesh", "imshow", "pcolorfast", "contourf"],
-                          help= "Plot color type (default: %(default)s).")                        
+                          help= "Plot color type (default: %(default)s).")
+    parser.add_argument(  "--line_data",
+                        dest = "line_data",
+                        nargs = '*',
+                        default = False,
+                        help = "Path to the line data set, which shall be overlaid over the 2D plot. \n")
+    parser.add_argument(  "-a", "--axis",
+                          action='store',
+                          dest="lineax",
+                          choices=[ 'x', 'y', 'z'],
+                          default='z',
+                          help= """Axis along which lineout is generated for the line data overlay plot (default: %(default)s).""")
+    parser.add_argument(  '-i', '--idx',
+                          help='Indices for which lineout is taken in the line plot.',
+                          action='store',
+                          dest="lout_idx",
+                          metavar=('IDX0', 'IDX1'),
+                          nargs=2,
+                          type=int,
+                          default=None)
+    parser.add_argument(  "--ylog",
+                          dest = "absylog",
+                          action="store_true",
+                          default=False,
+                          help = "Plot abs log of y-data in line out overlay (default: %(default)s).")
+    parser.add_argument(  '-r','--range',
+                          help='Range of lineout.',
+                          action='store',
+                          dest="range",
+                          metavar=('XMIN', 'XMAX'),
+                          nargs=2,
+                          type=float,
+                          default=None)
+    parser.add_argument(  "--ylim2",
+                        help='Customize y-axis limits for the line plot',
+                        action='store',
+                        dest="ylim2",
+                        metavar=('ymin', 'ymax'),
+                        type=float,
+                        nargs=2,
+                        default=False)       
     return parser
 
 
@@ -287,7 +325,7 @@ def g3d_line_subparser(subparsers, parent_parser):
                                     'pdf',
                                     'eps',],
                           default='pdf',
-                          help= """Format of output file (default: %(default)s).""")                     
+                          help= """Format of output file (default: %(default)s).""")
     return parser
 
 
@@ -797,7 +835,7 @@ class G3d_plot_slice(G3d_plot):
         if self.args.ifshow: plt.show()
         plt.close(fig)
         
-    def update_fig( self, ifsave=True, update=False,  fig=None, diff=False, diff_data=None, counts=0 ):
+    def update_fig( self, ifsave=True, update=False,  fig=None, diff=False, diff_data=None, counts=0, line_data=False ):
         if self.args.verbose: 
             sys.stdout.write('Generating slice plot\n')
             sys.stdout.flush()
@@ -862,10 +900,17 @@ class G3d_plot_slice(G3d_plot):
         # Note on colorbar: boundaries have to be set manually, because otherwise there will be ugly stripes
         # afterwards the ticks have to set manually as well, set them at the correct place
         cbarmap.set_clim(self.clim[0], self.clim[1])
+        
+        print(line_data)
+        if line_data:
+            offset = 0.15
+        else:
+            offset = 0
+        print('offset %f' %offset)
         if self.g3d.type == pp_defs.hipace.h5.g3dtypes.field:
-            cbar = plt.colorbar(cbarmap, boundaries=np.arange(self.clim[0]-0.0002,self.clim[1]+0.0002,0.0001), extend=extend, pad=0.02, fraction=0.08+4*counts**(1/2)/100.0) #, pad=0.1 )
+            cbar = plt.colorbar(cbarmap, boundaries=np.arange(self.clim[0]-0.0002,self.clim[1]+0.0002,0.0001), extend=extend, pad=0.02+offset, fraction=0.08+4*counts**(1/2)/100.0) #, pad=0.1 )
         else: 
-            cbar = plt.colorbar(cbarmap, boundaries=np.arange(self.clim[0],self.clim[1]+0.0002,0.0001), extend=extend, pad=0.02, fraction=0.08+4*counts**(1/2)/100.0) #, pad=0.1 )
+            cbar = plt.colorbar(cbarmap, boundaries=np.arange(self.clim[0],self.clim[1]+0.0002,0.0001), extend=extend, pad=0.02+offset, fraction=0.08+4*counts**(1/2)/100.0) #, pad=0.1 )
         ticks = MaxNLocator().tick_values(self.clim[0], self.clim[1])
         cbar.set_ticks ( ticks )
         cbar.set_clim([self.clim[0], self.clim[1]])
@@ -1097,7 +1142,7 @@ class G3d_plot_line(G3d_plot):
         if self.is_number_density():
             self.line = np.abs(self.line)
 
-    def plot( self, ifsave=True ):
+    def plot( self, ifsave=True, fig=False ):
         if self.args.verbose: 
             sys.stdout.write('Generating line plot...\n')
             sys.stdout.flush()
@@ -1112,15 +1157,27 @@ class G3d_plot_line(G3d_plot):
         if self.g3d.is_subgrid():
             self.app_str += '_subgrid_' 
 
+        if fig:
+            self.app_str += '_overlay'
+
         if self.args.if_integrate:
             self.app_str += '_int'
         elif self.args.avgax != None:
             self.app_str += '_avg' + self.args.avgax
 
-        if self.args.lout_zeta_pos:
-            self.app_str += ('_zeta_%0.2f' % self.args.lout_zeta_pos)
-
-        fig = plt.figure()
+        if not fig:
+            fig = plt.figure()
+            
+        ax = plt.gca()
+        if fig:
+            ax = ax.twinx()
+            ax.set_xlim(min(self.x_array), max(self.x_array))
+        else:
+            ax.set_xlabel(self.xlabel, fontsize=14)
+            
+        ax.set_ylabel(self.ylabel, fontsize=14)
+        
+        
         if self.args.absylog:
             self.app_str += '_absylog'
             nonzero_idx = np.where( abs(self.line) > 0.0 )
@@ -1129,10 +1186,9 @@ class G3d_plot_line(G3d_plot):
         else:    
             plt.plot( self.x_array,
                       self.line)
+            
 
-        ax = plt.gca()
-        ax.set_ylabel(self.ylabel, fontsize=14)
-        ax.set_xlabel(self.xlabel, fontsize=14)
+        
 
         max_abs_val = np.max(np.abs(self.line))
 
@@ -1154,6 +1210,10 @@ class G3d_plot_line(G3d_plot):
         if self.args.ylim != None:
             plt.ylim(self.args.ylim[0], self.args.ylim[1])
 
+        if self.args.ylim2:
+            plt.ylim(self.args.ylim2[0], self.args.ylim2[1])
+            ax.set_ylim( self.args.ylim2[0], self.args.ylim2[1] )
+
         savename = "%s_%s%s%s" % (  fileprefix, \
                                    self.args.lineax, \
                                    self.app_str, \
@@ -1169,9 +1229,20 @@ class G3d_plot_line(G3d_plot):
         mkdirs_if_nexist(savepath)
 
         if saveformat==parsedefs.file_format.png:
-            saveas_png(fig, savepath, savename, dpi=self.args.dpi)
+            fig.savefig( savepath + '/' + savename + '.' + saveformat,
+                      format=saveformat,
+                      dpi=self.args.dpi)
         else:
-            saveas_eps_pdf(fig, savepath, savename, h5plot=(not self.args.h5plot_off))
+            fig.savefig( savepath + '/' + savename + '.' + saveformat,
+                          format=saveformat)
+        if self.args.verbose:
+            sys.stdout.write('Saved "%s.%s" at: %s\n' % (savename, saveformat, savepath ))
+            sys.stdout.flush()
+
+        if not self.args.h5plot_off: 
+            h5lp = H5Plot()
+            h5lp.inherit_matplotlib_line_plots(ax)
+            h5lp.write(savepath + '/' + savename + '.h5')
 
         if self.args.ifshow: plt.show()
         plt.close(fig)
@@ -1182,40 +1253,50 @@ def slice(args):
     h5flist = H5FList(args.path, h5ftype='g3d')
     flist = h5flist.get()
 
+    if args.line_data:
+        line_data = True
+    else:
+        line_data = False
     for file in flist:
         timestamp = file.split("_")[-1].split(".h5")[0]
         
         g3d_p = G3d_plot_slice(file, args)
-        if not args.data2 and not args.data3:
+        if not args.data2 and not args.data3 and not args.line_data:
             g3d_p.plot()
         elif args.diff:
             for data2_files in args.data2:
                 if timestamp in data2_files or args.manual:
                     g3d_p2 = G3d_plot_slice(data2_files, args)
                     print(np.shape(g3d_p2.slice))
-                    fig = g3d_p.update_fig(diff=True, diff_data=g3d_p2.slice)
+                    fig = g3d_p.update_fig(diff=True, diff_data=g3d_p2.slice, line_data=args.line_data)
                     g3d_p.save_fig(fig)
                     plt.close(fig)
         else:
             if not args.diff:
-                fig = g3d_p.update_fig()
+                fig = g3d_p.update_fig(line_data=args.line_data)
                 if args.data2:
                     fig.set_size_inches(8.3, 6)
                     for data2_files in args.data2:
                         if timestamp in data2_files or args.manual:
                             g3d_p2 = G3d_plot_slice(data2_files, args)
                             g3d_p2.set_cmap( update=True, clim_input=args.clim2, cmap_input=args.cm2 )
-                            fig = g3d_p2.update_fig( fig=fig, update=True, counts=1)
+                            fig = g3d_p2.update_fig( fig=fig, update=True, counts=1, line_data=args.line_data)
                             if args.data3:
                                 fig.set_size_inches(8.6, 6)
                                 for data3_files in args.data3:
                                     if timestamp in data3_files or args.manual:
                                         g3d_p3 = G3d_plot_slice(data3_files, args)
                                         g3d_p3.set_cmap( update=True, clim_input=args.clim3, cmap_input=args.cm3 )
-                                        fig = g3d_p3.update_fig( fig=fig, update=True, counts=2)
-            
-                g3d_p.save_fig(fig)
-                plt.close(fig)
+                                        fig = g3d_p3.update_fig( fig=fig, update=True, counts=2, line_data=args.line_data)
+                if args.line_data:
+                    for line_data_files in args.line_data:
+                        if timestamp in line_data_files or args.manual:
+                            g3d_pline = G3d_plot_line(line_data_files, args)
+                            g3d_pline.set_yaxis()
+                            g3d_pline.plot(fig=fig)
+                else:
+                    g3d_p.save_fig(fig)
+                    plt.close(fig)
 
 
 def line(args):
