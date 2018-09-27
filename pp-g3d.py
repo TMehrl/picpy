@@ -1110,7 +1110,7 @@ class G3d_plot_line(G3d_plot):
             fileprefix = self.g3d.name
 
         if self.g3d.is_subgrid():
-            self.app_str += '_subgrid_' 
+            self.app_str += '_subgrid' 
 
         if self.args.if_integrate:
             self.app_str += '_int'
