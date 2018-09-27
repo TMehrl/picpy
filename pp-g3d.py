@@ -19,6 +19,8 @@ from pp_h5dat import Grid3d
 from pp_h5dat import H5FList
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
+from pp_plt_tools import saveas_png
+from pp_plt_tools import saveas_eps_pdf
 
 # Parse defaults/definitions
 class parsedefs:
@@ -1115,6 +1117,9 @@ class G3d_plot_line(G3d_plot):
         elif self.args.avgax != None:
             self.app_str += '_avg' + self.args.avgax
 
+        if self.args.lout_zeta_pos:
+            self.app_str += ('_zeta_%0.2f' % self.args.lout_zeta_pos)
+
         fig = plt.figure()
         if self.args.absylog:
             self.app_str += '_absylog'
@@ -1164,20 +1169,9 @@ class G3d_plot_line(G3d_plot):
         mkdirs_if_nexist(savepath)
 
         if saveformat==parsedefs.file_format.png:
-            fig.savefig( savepath + '/' + savename + '.' + saveformat,
-                      format=saveformat,
-                      dpi=self.args.dpi)
+            saveas_png(fig, savepath, savename, dpi=self.args.dpi)
         else:
-            fig.savefig( savepath + '/' + savename + '.' + saveformat,
-                          format=saveformat)
-        if self.args.verbose:
-            sys.stdout.write('Saved "%s.%s" at: %s\n' % (savename, saveformat, savepath ))
-            sys.stdout.flush()
-
-        if not self.args.h5plot_off: 
-            h5lp = H5Plot()
-            h5lp.inherit_matplotlib_line_plots(ax)
-            h5lp.write(savepath + '/' + savename + '.h5')
+            saveas_eps_pdf(fig, savepath, savename, h5plot=(not self.args.h5plot_off))
 
         if self.args.ifshow: plt.show()
         plt.close(fig)
