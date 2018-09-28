@@ -17,6 +17,7 @@ from pp_h5dat import Grid3d
 from pp_h5dat import H5FList
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
+from pp_plt_tools import saveas_eps_pdf
 
 # Parse defaults/definitions
 class parsedefs:
@@ -390,11 +391,11 @@ def cmp_plot_Wr(args,
 
     if args.rmax != None:
         xmax = args.rmax
-        ymax = 1.2 * np.amax(Wr_sim[np.logical_and(x_array<xmax, x_array>0.0)])
+        ymax = 1.2 * np.amax(Wr_sim_vals[np.logical_and(x_array<xmax, x_array>0.0)])
     else:
-        max_idx = np.where(Wr_sim==np.amax(Wr_sim))[0][0]
+        max_idx = np.where(Wr_sim_vals==np.amax(Wr_sim_vals))[0][0]
         xmax = x_array[max_idx]
-        ymax = 1.2 * np.amax(Wr_sim)
+        ymax = 1.2 * np.amax(Wr_sim_vals)
     ax.set_xlim([0,xmax])
     ax.set_ylim([0,ymax])            
     ax.set_ylabel(ylab, fontsize=14)
@@ -408,20 +409,14 @@ def cmp_plot_Wr(args,
 
     filesuffix = '_t_%06.f' % (np.floor(g3d.time))
     fileprefix = 'Wr_' + 'zeta_%0.1f' % zeta_pos
-    saveformat = 'eps'
+    saveformat = 'pdf'
     savepath = args.savepath
 
     mkdirs_if_nexist(savepath)
 
     savename = fileprefix + filesuffix + '.' + saveformat
 
-    fig.savefig(  savepath + '/' + savename,
-                      format=saveformat)
-    
-    if args.h5plot: 
-        h5lp = H5Plot()
-        h5lp.inherit_matplotlib_line_plots(ax)
-        h5lp.write(savepath + '/' + fileprefix + filesuffix + '.h5')
+    saveas_eps_pdf(fig, savepath, savename, h5plot=args.h5plot, fformat=saveformat):
 
     if args.verbose: print('Saved "' + savename + '" at: ' + args.savepath)
     
