@@ -412,13 +412,9 @@ def cmp_plot_Wr(args,
     saveformat = 'pdf'
     savepath = args.savepath
 
-    mkdirs_if_nexist(savepath)
-
     savename = fileprefix + filesuffix + '.' + saveformat
 
-    saveas_eps_pdf(fig, savepath, savename, h5plot=args.h5plot, fformat=saveformat):
-
-    if args.verbose: print('Saved "' + savename + '" at: ' + args.savepath)
+    saveas_eps_pdf(fig, savepath, savename, h5plot=args.h5plot, fformat=saveformat)
     
     plt.close(fig)
 
