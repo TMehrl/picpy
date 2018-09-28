@@ -279,7 +279,7 @@ def main():
                 label = path
 
             if args.latexon:
-                if label[0] != '$' or label[-1] != '$':
+                if not '$' in label:
                     label = r'$\textrm{' + label + '}$'
 
             if args.diff: 

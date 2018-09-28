@@ -38,7 +38,7 @@ def flip(items, ncol):
 
 def g3d_lvst_parser():
 
-    desc = """This is the picpy postprocessing tool."""
+    desc = """This is the picpy line vs. theory plotting tool."""
     # Line vs-theo plot arguments
     parser = argparse.ArgumentParser( add_help=False,
                                       description=desc)
@@ -198,17 +198,24 @@ def g3d_lvst_Wr_subparser(subparsers, g3d_lvst_parent):
                       metavar="RMAX",
                       type=float,                      
                       default=None,
-                      help= """Maximum radius for plotting.""")    
+                      help= """Maximum radius for plotting.""")
+    parser.add_argument(  "--rel-to-hom",
+                          dest = "rel_to_hom",
+                          action="store_true",
+                          default=False,
+                          help = "Plot Wr-r/2 (Default: %(default)s).")                        
     return parser
 
 class Beam:
-    def __init__(self, n=0.0, sigma_z = 0.0, sigma_xy = 0.0, zeta_0 = 0.0, Z=-1):    
+    def __init__(self, n=0.0, sigma_z = 0.0, sigma_xy = 0.0, zeta_0 = 0.0, Z=-1, L=None, n_head=None, n_tail=None):    
         if not (n == 0.0):
             self.n = n
             self.sigma_z = sigma_z
             self.sigma_xy = sigma_xy
             self.zeta_0 = zeta_0
             self.Z = Z
+            self.L = L
+
         else:
             print('ERROR: Beam density must be specified!')
             sys.exit()
@@ -350,23 +357,32 @@ def cmp_plot_Wr(args,
                      edgecolor='k') 
     for i in range(0, Nsimlines):
         zeta_pos = zeta_pos_list[i]
+        if args.rel_to_hom:
+            Wr_sim_vals = Wr_sim[:,i] - x_array*0.5
+            Wr_theo_vals = Wr_theo[:,i] - x_array*0.5
+            ylab = r'$W_r/E_0 - r/2$'
+        else:
+            Wr_sim_vals = Wr_sim[:,i]
+            Wr_theo_vals = Wr_theo[:,i]
+            ylab = r'$W_r/E_0$'            
+
         label_sim = r'PIC: $k_p \zeta = %0.1f$' %  zeta_pos
-        ax_sim = plt.plot( x_array, Wr_sim[:,i],
+        ax_sim = plt.plot( x_array, Wr_sim_vals,
                            linestyle='-',
                            color=cmap(i),
                            label=label_sim)    
         
         label_theo = r'Theo: $k_p \zeta = %0.1f$' %  zeta_pos
-        ax_theo = plt.plot( x_array, Wr_theo[:,i], 
+        ax_theo = plt.plot( x_array, Wr_theo_vals, 
                             linestyle ='--',
                             color=cmap(i),
                             label=label_theo)
-
-    label_half = r'$k_p r/2$'
-    ax_half = plt.plot( x_array, x_array*0.5, 
-                        linestyle ='-',
-                        label=label_half,
-                        color=[0.5, 0.5, 0.5])
+    if not args.rel_to_hom:
+        label_half = r'$k_p r/2$'
+        ax_half = plt.plot( x_array, x_array*0.5, 
+                            linestyle ='-',
+                            label=label_half,
+                            color=[0.5, 0.5, 0.5])
 
     ax = plt.gca()
     handles, labels = ax.get_legend_handles_labels()
@@ -381,7 +397,7 @@ def cmp_plot_Wr(args,
         ymax = 1.2 * np.amax(Wr_sim)
     ax.set_xlim([0,xmax])
     ax.set_ylim([0,ymax])            
-    ax.set_ylabel(r'$W_r/E_0$', fontsize=14)
+    ax.set_ylabel(ylab, fontsize=14)
     ax.set_xlabel(r'$k_p r$', fontsize=14)
 
     if not (-3.0 < math.log(np.max(abs(Wr_sim)),10) < 3.0):
@@ -427,23 +443,22 @@ def set_beam( args ):
         sigma_z = 0
 
     if args.beam_sigma_r != 0.0 and args.beam_sigma_xy == 0.0:
-        beam = Beam(n = args.beam_n, 
-                    sigma_z = sigma_z, 
-                    sigma_xy = args.beam_sigma_r/np.sqrt(2.0),
-                    zeta_0 = args.beam_zeta_0,
-                    Z = args.beam_Z )
+        sigma_xy = args.beam_sigma_r/np.sqrt(2.0)
+
     elif args.beam_sigma_r == 0.0 and args.beam_sigma_xy != 0.0:
-        beam = Beam(n = args.beam_n, 
-                    sigma_z = sigma_z, 
-                    sigma_xy = args.beam_sigma_xy,
-                    zeta_0 = args.beam_zeta_0,
-                    Z = args.beam_Z )
+        sigma_xy = args.beam_sigma_xy
+        
     elif args.beam_sigma_r == 0.0 and args.beam_sigma_xy == 0.0:
         print('ERROR: Either "beam_sigma_r" or "beam_sigma_xy" must be set!')
         sys.exit(1)  
     else:
         print('ERROR: "beam_sigma_r" can''t be used in conjunction with "beam_sigma_xy"!')
-        sys.exit(1)     
+        sys.exit(1)
+    beam = Beam(n = args.beam_n, 
+                sigma_z = sigma_z, 
+                sigma_xy = sigma_xy,
+                zeta_0 = args.beam_zeta_0,
+                Z = args.beam_Z )          
     return beam
 
 
