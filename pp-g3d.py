@@ -663,12 +663,15 @@ class G3d_plot_slice(G3d_plot):
 
         if self.args.clog:
             self.app_str += '_log'
-            min_nonzero = np.min(abs(self.slice[np.where(self.slice != 0.0)]))
+            self.slice = abs(self.slice)            
+            min_nonzero = np.min(self.slice[np.where(self.slice != 0.0)])
             self.slice[np.where(self.slice == 0)] = min_nonzero
-            self.slice = abs(self.slice)
             self.colormap = cm.Greys
+            max_clim = np.max(self.slice)
+            # if (max_clim/10**10 > min_nonzero):
+            #     min_nonzero = max_clim/10**20
             clim[0] = min_nonzero
-            clim[1] = np.max(self.slice)
+            clim[1] = max_clim
 
         if self.args.clim != None and not update:
             clim = list(self.args.clim)
@@ -737,18 +740,20 @@ class G3d_plot_slice(G3d_plot):
 
         cax.cmap = self.colormap
 
-        if self.args.clog:
-            cax.norm = matplotlib.colors.LogNorm(vmin=self.clim[0], vmax=self.clim[1])
-
         ax = plt.gca()
         ax.set_ylabel(self.ylabel, fontsize=14)
         ax.set_xlabel(self.xlabel, fontsize=14)
+
+        if self.args.clog:
+            cax.norm = matplotlib.colors.LogNorm(vmin=self.clim[0], vmax=self.clim[1])
+
         cbar = fig.colorbar(cax)
-        cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )
-        
-        #manually setting cbar ticks to avoid cutoff of the last tick
-        ticks = MaxNLocator().tick_values(self.clim[0], self.clim[1])
-        cbar.set_ticks ( ticks )
+        cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )            
+
+        if not self.args.clog:
+            #manually setting cbar ticks to avoid cutoff of the last tick
+            ticks = MaxNLocator().tick_values(self.clim[0], self.clim[1])
+            cbar.set_ticks ( ticks )
         
         if self.args.xlim != None:
             plt.xlim(self.args.xlim[0], self.args.xlim[1])
