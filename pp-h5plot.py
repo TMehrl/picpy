@@ -350,7 +350,6 @@ def main():
             plt.legend(handles[::-1], labels[::-1],frameon=False)
             #plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
         elif args.legorder != None:
-            print(args.legorder)
             handles_reordered = [handles[i] for i in args.legorder]
             labels_reordered = [labels[i] for i in args.legorder]
             plt.legend(handles_reordered, labels_reordered,frameon=False)
