@@ -183,6 +183,12 @@ def h5plot_parser():
                           action="store_true",
                           default=False,
                           help = "Flip legend entries (Default: %(default)s).")
+    parser.add_argument(  "--legorder",
+                          dest = "legorder",
+                          type=int,                      
+                          default=None,
+                          nargs='+',
+                          help= """Order of how the the legend entries should appear. E.g. '1 0 2' for three curves.""")  
     parser.add_argument(  "--adj-left",
                           dest = "adjleft",
                           action="store",
@@ -343,6 +349,11 @@ def main():
         if args.flipleg == True:
             plt.legend(handles[::-1], labels[::-1],frameon=False)
             #plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
+        elif args.legorder != None:
+            print(args.legorder)
+            handles_reordered = [handles[i] for i in args.legorder]
+            labels_reordered = [labels[i] for i in args.legorder]
+            plt.legend(handles_reordered, labels_reordered,frameon=False)
         else:
             plt.legend(frameon=False)
     plt.gcf().subplots_adjust(left=args.adjleft, bottom=args.adjbottom)       
