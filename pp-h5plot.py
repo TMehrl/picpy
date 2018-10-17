@@ -55,8 +55,7 @@ def h5plot_parser():
                           action='store',
                           dest="file_format",
                           metavar="FORMAT",
-                          choices=[ 'png',
-                                    'pdf',
+                          choices=[ 'pdf',
                                     'eps',],
                           default='pdf',
                           help= """Format of output file (Default: %(default)s).""")
@@ -369,7 +368,7 @@ def main():
     else:
         save_name = fname + save_append_str + '_' + type_str
         
-    saveas_eps_pdf(fig, savepath=spath, savename=save_name)
+    saveas_eps_pdf(fig, savepath=spath, savename=save_name,fformat=args.file_format)
     plt.close(fig)
 
 if __name__ == "__main__":
