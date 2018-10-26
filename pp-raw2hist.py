@@ -210,7 +210,7 @@ def oneD(raw, args):
     psv, xlabel, savename = get_props(raw,args.psv)
 
     if args.nbins == None:
-        nbins = np.int( np.sqrt(raw.get_npart()) / 2.0 )
+        nbins = np.int( 10 + np.power(np.log(raw.get_npart()), 3) )     
     else:
         nbins = args.nbins
 
@@ -237,7 +237,7 @@ def twoD(raw, args):
     vary, ylabel, savenamey = get_props(raw,args.psv[1])
 
     if args.nbins == None:
-        nbins = np.int( np.sqrt(raw.get_npart()) / 2.0 )
+        nbins = np.int( 10 + np.power(np.log(raw.get_npart()), 2.2) )
     else:
         nbins = args.nbins
 
