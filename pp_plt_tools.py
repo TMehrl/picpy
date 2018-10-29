@@ -86,7 +86,10 @@ def saveas_eps_pdf(fig, savepath, savename, h5plot=True, verbose=True, fformat='
     if fformat not in fformat_list:
         print("Error: fformat must be one of: " + fformat_list)
 
-    mkdirs_if_nexist(savepath)
+    if savepath == '':
+        savepath = '.'
+    else:
+        mkdirs_if_nexist(savepath)
     fig.savefig( savepath + '/' + savename + '.' + fformat,
                   format=fformat, transparent=transparent)
       

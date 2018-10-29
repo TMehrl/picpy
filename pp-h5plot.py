@@ -360,6 +360,7 @@ def main():
     plt.show()
 
     spath, fname  = os.path.split(args.paths[0])
+
     if args.savepath != None:
         spath = args.savepath
 
@@ -368,7 +369,7 @@ def main():
     else:
         save_name = fname + save_append_str + '_' + type_str
         
-    saveas_eps_pdf(fig, savepath=spath, savename=save_name,fformat=args.file_format)
+    saveas_eps_pdf(fig, savepath=spath, savename=save_name, fformat=args.file_format)
     plt.close(fig)
 
 if __name__ == "__main__":
