@@ -13,7 +13,7 @@ from matplotlib.ticker import FormatStrFormatter
 from pp_h5dat import H5FList
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
-from pp_plt_tools import saveas_eps_pdf
+from pp_plt_tools import saveas_eps_pdf,saveas_png
 from pp_plt_tools import colors
 from pp_plt_tools import color_names_sorted
 from pp_plt_tools import show_color_palette
@@ -76,6 +76,12 @@ def h5plot_parser():
                                     'eps',],
                           default='pdf',
                           help= """Format of output file (Default: %(default)s).""")
+    parser.add_argument(  "--dpi",
+                          action='store',
+                          dest="dpi",
+                          default=600,
+                          type=int,
+                          help= """Dots per inch for png output (default: %(default)s).""")  
     parser.add_argument(  "-l", "--line-no",
                           action='store',
                           dest="line_no",
@@ -374,8 +380,10 @@ def main():
         save_name = args.savename
     else:
         save_name = fname + save_append_str + '_' + type_str
-        
-    saveas_eps_pdf(fig, savepath=spath, savename=save_name)
+    if args.file_format == 'png':
+        saveas_png(fig, savepath=spath, savename=save_name, dpi=args.dpi)
+    else:
+        saveas_eps_pdf(fig, savepath=spath, savename=save_name)
     plt.close(fig)
 
 if __name__ == "__main__":
