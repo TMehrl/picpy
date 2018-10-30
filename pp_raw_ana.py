@@ -2,6 +2,7 @@
 # pp_raw_ana.py
 
 import os
+from numba import jit
 import numpy as np
 import gc
 import h5py
@@ -45,10 +46,71 @@ def moments(array1, array2, weights, order=2, central=True, roots=False):
     else:
         return mom
 
+
+@jit(nopython=True) # Set "nopython" mode for best performance
+def sl_mom1(psv1,weights,i1,i2):
+    Nbins = i1.size
+    mom1 = np.zeros((Nbins), dtype=np.float32)
+    for ibin in range(0,Nbins):
+        i1b = i1[ibin]
+        i2b = i2[ibin]
+        weight_sum = np.sum(weights[i1b:i2b])
+        if weight_sum > 0:
+            mom1[ibin] = np.dot(psv1[i1b:i2b], weights[i1b:i2b])/weight_sum
+    return mom1
+
+@jit(nopython=True) # Set "nopython" mode for best performance
+def sl_mom2(psv1,psv2,weights,i1,i2):
+    Nbins = i1.size
+    mom2 = np.zeros((Nbins), dtype=np.float32)
+    for ibin in range(0,Nbins):
+        i1b = i1[ibin]
+        i2b = i2[ibin]
+        weight_sum = np.sum(weights[i1b:i2b])
+        if weight_sum > 0:
+            mom2[ibin] = np.dot( np.multiply(psv1[i1b:i2b],psv2[i1b:i2b]), weights[i1b:i2b])/weight_sum
+    return mom2
+
+
+@jit(nopython=True) # Set "nopython" mode for best performance
+def sl_mom3(psv1,psv2,psv3,weights,i1,i2):
+    Nbins = i1.size
+    mom3 = np.zeros((Nbins), dtype=np.float32)
+    for ibin in range(0,Nbins):
+        i1b = i1[ibin]
+        i2b = i2[ibin]
+        weight_sum = np.sum(weights[i1b:i2b])
+        if weight_sum > 0:
+            mom3[ibin] = np.dot( np.multiply(np.multiply(psv1[i1b:i2b],psv2[i1b:i2b]),psv3[i1b:i2b]), weights[i1b:i2b])/weight_sum
+    return mom3
+
+
+@jit(nopython=True) # Set "nopython" mode for best performance
+def sl_mom4(psv1,psv2,psv3,psv4,weights,i1,i2):
+    Nbins = i1.size
+    mom4 = np.zeros((Nbins), dtype=np.float32)
+    for ibin in range(0,Nbins):
+        i1b = i1[ibin]
+        i2b = i2[ibin]
+        weight_sum = np.sum(weights[i1b:i2b])
+        if weight_sum > 0:
+            mom4[ibin] = np.dot( np.multiply(np.multiply(psv1[i1b:i2b],psv2[i1b:i2b]),np.multiply(psv3[i1b:i2b],psv4[i1b:i2b])), weights[i1b:i2b])/weight_sum
+    return mom4
+
+
+@jit(nopython=True) # Set "nopython" mode for best performance
+def sort_part_bin(x1,x2,x3,p1,p2,p3,q,ibinpart):
+        # Sorting partile arrays according to the bins they are located in
+        idx = np.argsort(ibinpart)
+        return (x1[idx], x2[idx], x3[idx], p1[idx], p2[idx], p3[idx], q[idx])
+
+
+
 # Class for slice analysis
 class Slices:
     def __init__(self, raw, edges=[], nbins=0, zrange=None, cellvol=1.0):
 
+        self.max_order = 4
         self.edges = edges
         self.if_edges_eq_spaced = True
         self.if_moms_calc = False
@@ -86,12 +148,16 @@ class Slices:
         self.alloc_arrays(nbins=self.nbins)
 
     class timings:
-        def __init__(self, order):        
+        def __init__(self, max_order):        
             self.startcm = 0.0
             self.cm_afsearchsorted = 0.0            
             self.cm_afsortingpart = 0.0    
             self.endcm = 0.0
-            self.avg = np.zeros(order+1, dtype=np.float32)
+            self.avg0 = 0.0
+            self.avg1 = 0.0
+            self.avg2 = 0.0
+            self.avg3 = 0.0
+            self.avg4 = 0.0
 
     def alloc_arrays(self, nbins):
 
@@ -166,7 +232,7 @@ class Slices:
     def calc_moments(self, order=2, central=True, crossterms=False, showtimings=False, reshape_method=False):
 
         if showtimings: 
-            timings = self.timings(order)
+            timings = self.timings(self.max_order)
             timings.startcm = time.time()
 
         # Select subset of particles which are in range
@@ -196,7 +262,8 @@ class Slices:
         if np.size(self.npart)>self.nbins | np.size(self.charge)>self.nbins:
             print('Warning: particles out of range!')
 
-        if showtimings: timings.cm_afsearchsorted = time.time()
+        if showtimings: 
+            timings.cm_afsearchsorted = time.time()
 
         # Sorting partile arrays according to the bins they are located in
         idx = np.argsort(ibinpart)
@@ -208,27 +275,30 @@ class Slices:
         p2 = p2[idx]
         p3 = p3[idx]
 
-        if showtimings: timings.cm_afsortingpart = time.time()
+        # This seems to be slower:
+        # Bottleneck is moving of data, not computing!
+        # x1, x2, x3, p1, p2, p3, q = sort_part_bin(x1,x2,x3,p1,p2,p3,q,ibinpart)
+
+        if showtimings: 
+            timings.cm_afsortingpart = time.time()
 
         # Setting idx range for each bin
         i1 = np.cumsum(self.npart) - self.npart
         i2 = np.cumsum(self.npart) - 1
 
-        if showtimings: timings.avg[0] = time.time()
+        if showtimings: 
+            timings.avg0 = time.time()
 
         if order > 0:
-            for ibin in range(0,self.nbins):
-                # Making sure sum of weights is not zero:
-                if  self.charge[ibin] != 0.0:
-                    self.avgx1[ibin] = np.ma.average(x1[i1[ibin]:i2[ibin]], weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx2[ibin] = np.ma.average(x2[i1[ibin]:i2[ibin]], weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx3[ibin] = np.ma.average(x3[i1[ibin]:i2[ibin]], weights=q[i1[ibin]:i2[ibin]])
-                    self.avgp1[ibin] = np.ma.average(p1[i1[ibin]:i2[ibin]], weights=q[i1[ibin]:i2[ibin]])
-                    self.avgp2[ibin] = np.ma.average(p2[i1[ibin]:i2[ibin]], weights=q[i1[ibin]:i2[ibin]])
-                    self.avgp3[ibin] = np.ma.average(p3[i1[ibin]:i2[ibin]], weights=q[i1[ibin]:i2[ibin]])
+            self.avgx1 = sl_mom1(x1,q,i1,i2)
+            self.avgx2 = sl_mom1(x2,q,i1,i2)
+            self.avgx3 = sl_mom1(x3,q,i1,i2)
+            self.avgp1 = sl_mom1(p1,q,i1,i2)
+            self.avgp2 = sl_mom1(p2,q,i1,i2)
+            self.avgp3 = sl_mom1(p3,q,i1,i2)
 
-            if showtimings: timings.avg[1] = time.time()
-
+        if showtimings: 
+            timings.avg1 = time.time()
 
         if order > 1:
             if central:
@@ -240,82 +310,77 @@ class Slices:
                     p2[i1[ibin]:i2[ibin]] = p2[i1[ibin]:i2[ibin]] - self.avgp2[ibin]
                     p3[i1[ibin]:i2[ibin]] = p3[i1[ibin]:i2[ibin]] - self.avgp3[ibin]
 
-            for ibin in range(0,self.nbins):
-                # Making sure sum of weights is not zero:
-                if  self.charge[ibin] != 0.0:
-                    self.avgx1sq[ibin] = np.ma.average(np.power(x1[i1[ibin]:i2[ibin]],2), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx2sq[ibin] = np.ma.average(np.power(x2[i1[ibin]:i2[ibin]],2), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx3sq[ibin] = np.ma.average(np.power(x3[i1[ibin]:i2[ibin]],2), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgp1sq[ibin] = np.ma.average(np.power(p1[i1[ibin]:i2[ibin]],2), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgp2sq[ibin] = np.ma.average(np.power(p2[i1[ibin]:i2[ibin]],2), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgp3sq[ibin] = np.ma.average(np.power(p3[i1[ibin]:i2[ibin]],2), weights=q[i1[ibin]:i2[ibin]])
-       
-                    self.avgx1p1[ibin] = np.ma.average(np.multiply(x1[i1[ibin]:i2[ibin]],p1[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx2p2[ibin] = np.ma.average(np.multiply(x2[i1[ibin]:i2[ibin]],p2[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx3p3[ibin] = np.ma.average(np.multiply(x3[i1[ibin]:i2[ibin]],p3[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
+            self.avgx1sq = sl_mom2(x1,x1,q,i1,i2)
+            self.avgx2sq = sl_mom2(x2,x2,q,i1,i2)
+            self.avgx2sq = sl_mom2(x2,x2,q,i1,i2)
+            self.avgx3sq = sl_mom2(x3,x3,q,i1,i2)
+            self.avgp1sq = sl_mom2(p1,p1,q,i1,i2)
+            self.avgp2sq = sl_mom2(p2,p2,q,i1,i2)
+            self.avgp3sq = sl_mom2(p3,p3,q,i1,i2)
+
+            self.avgx1p1 = sl_mom2(x1,p1,q,i1,i2)
+            self.avgx2p2 = sl_mom2(x2,p2,q,i1,i2)
+            self.avgx3p3 = sl_mom2(x3,p3,q,i1,i2)
 
             if crossterms:
-                for ibin in range(0,self.nbins):
-                    # Making sure sum of weights is not zero:
-                    if  self.charge[ibin] != 0.0:
-                        self.avgx1x2[ibin] = np.ma.average(np.multiply(x1[i1[ibin]:i2[ibin]],p2[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
-                        self.avgx3x1[ibin] = np.ma.average(np.multiply(x3[i1[ibin]:i2[ibin]],x1[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
-                        self.avgx2x3[ibin] = np.ma.average(np.multiply(x2[i1[ibin]:i2[ibin]],x3[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
+                self.avgx1x2 = sl_mom2(x1,x2,q,i1,i2)
+                self.avgx3x1 = sl_mom2(x3,x1,q,i1,i2)
+                self.avgx2x3 = sl_mom2(x2,x3,q,i1,i2)
 
-                        self.avgp1p2[ibin] = np.ma.average(np.multiply(p1[i1[ibin]:i2[ibin]],p2[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
-                        self.avgp3p1[ibin] = np.ma.average(np.multiply(p3[i1[ibin]:i2[ibin]],p1[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
-                        self.avgp2p3[ibin] = np.ma.average(np.multiply(p2[i1[ibin]:i2[ibin]],p3[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
+                self.avgp1p2 = sl_mom2(p1,p2,q,i1,i2)
+                self.avgp3p1 = sl_mom2(p3,p1,q,i1,i2)
+                self.avgp2p3 = sl_mom2(p2,p3,q,i1,i2)
 
-                        self.avgx1p2[ibin] = np.ma.average(np.multiply(x1[i1[ibin]:i2[ibin]],p2[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
-                        self.avgx1p3[ibin] = np.ma.average(np.multiply(x1[i1[ibin]:i2[ibin]],p3[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
+                self.avgx1p2 = sl_mom2(x1,p2,q,i1,i2)
+                self.avgx1p3 = sl_mom2(x1,p3,q,i1,i2)
 
-                        self.avgx2p1[ibin] = np.ma.average(np.multiply(x2[i1[ibin]:i2[ibin]],p1[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
-                        self.avgx2p3[ibin] = np.ma.average(np.multiply(x2[i1[ibin]:i2[ibin]],p3[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
+                self.avgx2p1 = sl_mom2(x2,p1,q,i1,i2)
+                self.avgx2p3 = sl_mom2(x2,p3,q,i1,i2)
 
-                        self.avgx3p1[ibin] = np.ma.average(np.multiply(x3[i1[ibin]:i2[ibin]],p1[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
-                        self.avgx3p2[ibin] = np.ma.average(np.multiply(x3[i1[ibin]:i2[ibin]],p2[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
+                self.avgx3p1 = sl_mom2(x3,p1,q,i1,i2)
+                self.avgx3p2 = sl_mom2(x3,p2,q,i1,i2)
 
-            if showtimings: timings.avg[2] = time.time()
+
+        if showtimings: 
+            timings.avg2 = time.time()
 
         if order > 2:
-            for ibin in range(0,self.nbins):
-                # Making sure sum of weights is not zero:
-                if  self.charge[ibin] != 0.0:
-                    self.avgx1cube[ibin] = np.ma.average(np.power( x1[i1[ibin]:i2[ibin]],3), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx2cube[ibin] = np.ma.average(np.power( x2[i1[ibin]:i2[ibin]],3), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx3cube[ibin] = np.ma.average(np.power( x3[i1[ibin]:i2[ibin]],3), weights=q[i1[ibin]:i2[ibin]])
+            self.avgx1cube = sl_mom3(x1,x1,x1,q,i1,i2)
+            self.avgx2cube = sl_mom3(x2,x2,x2,q,i1,i2)
+            self.avgx3cube = sl_mom3(x3,x3,x3,q,i1,i2)
 
-                    self.avgp1cube[ibin] = np.ma.average(np.power( p1[i1[ibin]:i2[ibin]],3), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgp2cube[ibin] = np.ma.average(np.power( p2[i1[ibin]:i2[ibin]],3), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgp3cube[ibin] = np.ma.average(np.power( p3[i1[ibin]:i2[ibin]],3), weights=q[i1[ibin]:i2[ibin]])
+            self.avgp1cube = sl_mom3(p1,p1,p1,q,i1,i2)
+            self.avgp2cube = sl_mom3(p2,p2,p2,q,i1,i2)
+            self.avgp3cube = sl_mom3(p3,p3,p3,q,i1,i2)
 
-                    self.avgx1sqp1[ibin] = np.ma.average(np.multiply(np.power(x1[i1[ibin]:i2[ibin]],2),p1[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx2sqp2[ibin] = np.ma.average(np.multiply(np.power(x2[i1[ibin]:i2[ibin]],2),p2[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx3sqp3[ibin] = np.ma.average(np.multiply(np.power(x3[i1[ibin]:i2[ibin]],2),p3[i1[ibin]:i2[ibin]]), weights=q[i1[ibin]:i2[ibin]])
+            self.avgx1sqp1 = sl_mom3(x1,x1,p1,q,i1,i2)
+            self.avgx2sqp2 = sl_mom3(x2,x2,p2,q,i1,i2)
+            self.avgx3sqp3 = sl_mom3(x3,x3,p3,q,i1,i2)
 
-                    self.avgx1p1sq[ibin] = np.ma.average(np.multiply(x1[i1[ibin]:i2[ibin]],np.power(p1[i1[ibin]:i2[ibin]],2)), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx2p2sq[ibin] = np.ma.average(np.multiply(x2[i1[ibin]:i2[ibin]],np.power(p2[i1[ibin]:i2[ibin]],2)), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx3p3sq[ibin] = np.ma.average(np.multiply(x3[i1[ibin]:i2[ibin]],np.power(p3[i1[ibin]:i2[ibin]],2)), weights=q[i1[ibin]:i2[ibin]])
+            self.avgx1p1sq = sl_mom3(x1,p1,p1,q,i1,i2)
+            self.avgx2p2sq = sl_mom3(x2,p2,p2,q,i1,i2)
+            self.avgx3p3sq = sl_mom3(x3,p3,p3,q,i1,i2)           
 
-            if showtimings: timings.avg[3] = time.time()            
+
+        if showtimings: 
+            timings.avg3 = time.time()         
 
         if order > 3:
-            for ibin in range(0,self.nbins):
-                # Making sure sum of weights is not zero:
-                if  self.charge[ibin] != 0.0:
-                    self.avgx1quar[ibin] = np.ma.average(np.power( x1[i1[ibin]:i2[ibin]],4), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx2quar[ibin] = np.ma.average(np.power( x2[i1[ibin]:i2[ibin]],4), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx3quar[ibin] = np.ma.average(np.power( x3[i1[ibin]:i2[ibin]],4), weights=q[i1[ibin]:i2[ibin]])
+            self.avgx1quar = sl_mom4(x1,x1,x1,x1,q,i1,i2) 
+            self.avgx2quar = sl_mom4(x2,x2,x2,x2,q,i1,i2)
+            self.avgx3quar = sl_mom4(x3,x3,x3,x3,q,i1,i2)
 
-                    self.avgp1quar[ibin] = np.ma.average(np.power( p1[i1[ibin]:i2[ibin]],4), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgp2quar[ibin] = np.ma.average(np.power( p2[i1[ibin]:i2[ibin]],4), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgp3quar[ibin] = np.ma.average(np.power( p3[i1[ibin]:i2[ibin]],4), weights=q[i1[ibin]:i2[ibin]])
+            self.avgp1quar = sl_mom4(p1,p1,p1,p1,q,i1,i2)
+            self.avgp2quar = sl_mom4(p2,p2,p2,p2,q,i1,i2)
+            self.avgp3quar = sl_mom4(p3,p3,p3,p3,q,i1,i2)
 
-                    self.avgx1sqp1sq[ibin] = np.ma.average(np.multiply(np.power(x1[i1[ibin]:i2[ibin]],2),np.power(p1[i1[ibin]:i2[ibin]],2)), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx2sqp2sq[ibin] = np.ma.average(np.multiply(np.power(x2[i1[ibin]:i2[ibin]],2),np.power(p2[i1[ibin]:i2[ibin]],2)), weights=q[i1[ibin]:i2[ibin]])
-                    self.avgx3sqp3sq[ibin] = np.ma.average(np.multiply(np.power(x3[i1[ibin]:i2[ibin]],2),np.power(p3[i1[ibin]:i2[ibin]],2)), weights=q[i1[ibin]:i2[ibin]])
+            self.avgx1sqp1sq = sl_mom4(x1,x1,p1,p1,q,i1,i2)
+            self.avgx2sqp2sq = sl_mom4(x2,x2,p2,p2,q,i1,i2)
+            self.avgx3sqp3sq = sl_mom4(x3,x3,p3,p3,q,i1,i2)
             
-            if showtimings: timings.avg[4] = time.time()
+        if showtimings: 
+            timings.avg4 = time.time()
+     
 
         if showtimings:
             timings.endcm = time.time() 
@@ -325,13 +390,13 @@ class Slices:
             print('Searchsorted:\t\t%0.2e %s' % ((timings.cm_afsearchsorted-timings.startcm), 's'))
             print('Sort part arr:\t\t%0.2e %s' % ((timings.cm_afsortingpart-timings.cm_afsearchsorted), 's'))
             if order > 0:
-                print('Calc. 1st order moms:\t%0.2e %s' % ((timings.avg[1]-timings.avg[0]), 's'))
+                print('Calc. 1st order moms:\t%0.2e %s' % ((timings.avg1-timings.avg0), 's'))
             if order > 1:
-                print('Calc. 2nd order moms:\t%0.2e %s' % ((timings.avg[2]-timings.avg[1]), 's'))
+                print('Calc. 2nd order moms:\t%0.2e %s' % ((timings.avg2-timings.avg1), 's'))
             if order > 2:
-                print('Calc. 3rd order moms:\t%0.2e %s' % ((timings.avg[3]-timings.avg[2]), 's'))
+                print('Calc. 3rd order moms:\t%0.2e %s' % ((timings.avg3-timings.avg2), 's'))
             if order > 3:
-                print('Calc. 4th order moms:\t%0.2e %s' % ((timings.avg[4]-timings.avg[3]), 's'))
+                print('Calc. 4th order moms:\t%0.2e %s' % ((timings.avg4-timings.avg3), 's'))
         self.if_moms_calc = True
 
 # # Class to generate histograms

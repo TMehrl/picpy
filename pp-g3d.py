@@ -19,6 +19,8 @@ from pp_h5dat import Grid3d
 from pp_h5dat import H5FList
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
+from pp_plt_tools import saveas_png
+from pp_plt_tools import saveas_eps_pdf
 
 # Parse defaults/definitions
 class parsedefs:
@@ -661,12 +663,15 @@ class G3d_plot_slice(G3d_plot):
 
         if self.args.clog:
             self.app_str += '_log'
-            min_nonzero = np.min(abs(self.slice[np.where(self.slice != 0.0)]))
+            self.slice = abs(self.slice)            
+            min_nonzero = np.min(self.slice[np.where(self.slice != 0.0)])
             self.slice[np.where(self.slice == 0)] = min_nonzero
-            self.slice = abs(self.slice)
             self.colormap = cm.Greys
+            max_clim = np.max(self.slice)
+            # if (max_clim/10**10 > min_nonzero):
+            #     min_nonzero = max_clim/10**20
             clim[0] = min_nonzero
-            clim[1] = np.max(self.slice)
+            clim[1] = max_clim
 
         if self.args.clim != None and not update:
             clim = list(self.args.clim)
@@ -735,18 +740,20 @@ class G3d_plot_slice(G3d_plot):
 
         cax.cmap = self.colormap
 
-        if self.args.clog:
-            cax.norm = matplotlib.colors.LogNorm(vmin=self.clim[0], vmax=self.clim[1])
-
         ax = plt.gca()
         ax.set_ylabel(self.ylabel, fontsize=14)
         ax.set_xlabel(self.xlabel, fontsize=14)
+
+        if self.args.clog:
+            cax.norm = matplotlib.colors.LogNorm(vmin=self.clim[0], vmax=self.clim[1])
+
         cbar = fig.colorbar(cax)
-        cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )
-        
-        #manually setting cbar ticks to avoid cutoff of the last tick
-        ticks = MaxNLocator().tick_values(self.clim[0], self.clim[1])
-        cbar.set_ticks ( ticks )
+        cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )            
+
+        if not self.args.clog:
+            #manually setting cbar ticks to avoid cutoff of the last tick
+            ticks = MaxNLocator().tick_values(self.clim[0], self.clim[1])
+            cbar.set_ticks ( ticks )
         
         if self.args.xlim != None:
             plt.xlim(self.args.xlim[0], self.args.xlim[1])
@@ -1108,12 +1115,15 @@ class G3d_plot_line(G3d_plot):
             fileprefix = self.g3d.name
 
         if self.g3d.is_subgrid():
-            self.app_str += '_subgrid_' 
+            self.app_str += '_subgrid' 
 
         if self.args.if_integrate:
             self.app_str += '_int'
         elif self.args.avgax != None:
             self.app_str += '_avg' + self.args.avgax
+
+        if self.args.lout_zeta_pos:
+            self.app_str += ('_zeta_%0.2f' % self.args.lout_zeta_pos)
 
         fig = plt.figure()
         if self.args.absylog:
@@ -1164,20 +1174,9 @@ class G3d_plot_line(G3d_plot):
         mkdirs_if_nexist(savepath)
 
         if saveformat==parsedefs.file_format.png:
-            fig.savefig( savepath + '/' + savename + '.' + saveformat,
-                      format=saveformat,
-                      dpi=self.args.dpi)
+            saveas_png(fig, savepath, savename, dpi=self.args.dpi)
         else:
-            fig.savefig( savepath + '/' + savename + '.' + saveformat,
-                          format=saveformat)
-        if self.args.verbose:
-            sys.stdout.write('Saved "%s.%s" at: %s\n' % (savename, saveformat, savepath ))
-            sys.stdout.flush()
-
-        if not self.args.h5plot_off: 
-            h5lp = H5Plot()
-            h5lp.inherit_matplotlib_line_plots(ax)
-            h5lp.write(savepath + '/' + savename + '.h5')
+            saveas_eps_pdf(fig, savepath, savename, h5plot=(not self.args.h5plot_off))
 
         if self.args.ifshow: plt.show()
         plt.close(fig)

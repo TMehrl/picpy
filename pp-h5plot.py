@@ -14,25 +14,9 @@ from pp_h5dat import H5FList
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
 from pp_plt_tools import saveas_eps_pdf,saveas_png
-from pp_plt_tools import colors
-from pp_plt_tools import color_names_sorted
-from pp_plt_tools import show_color_palette
+from pp_plt_tools import Colors
 
-# class PositionalAction(argparse.Action):
-#     def __call__(self,parser,namespace,values,option_string=None):
-#         lst = getattr(namespace,self.dest)
-#         lst.append(values)
-#         parser.last_positional_values = lst
-#         all_positional = getattr(namespace,'all_positional',[])
-#         all_positional.append(lst)
-#         namespace.all_positional = all_positional
-
-# class AssociateAction(argparse.Action):
-#     def __call__(self,parser,namespace,values,option_string=None):
-#         try:
-#             parser.last_positional_values.append(values)
-#         except AttributeError:
-#             pass
+colors = Colors()
 
 def h5plot_parser():
 
@@ -71,8 +55,7 @@ def h5plot_parser():
                           action='store',
                           dest="file_format",
                           metavar="FORMAT",
-                          choices=[ 'png',
-                                    'pdf',
+                          choices=[ 'pdf',
                                     'eps',],
                           default='pdf',
                           help= """Format of output file (Default: %(default)s).""")
@@ -113,7 +96,7 @@ def h5plot_parser():
                           type=str,                      
                           default=None,
                           nargs='+',
-                          help= """Color names for each line (choose amongst: %s)""" % color_names_sorted)
+                          help= """Color names for each line (choose amongst: %s)""" % colors.get_names_alpha_sorted())
     parser.add_argument(  "--show-palette", '--show-colors',
                           dest = "showpalette",
                           action="store_true",
@@ -205,6 +188,12 @@ def h5plot_parser():
                           action="store_true",
                           default=False,
                           help = "Flip legend entries (Default: %(default)s).")
+    parser.add_argument(  "--legorder",
+                          dest = "legorder",
+                          type=int,                      
+                          default=None,
+                          nargs='+',
+                          help= """Order of how the the legend entries should appear. E.g. '1 0 2' for three curves.""")  
     parser.add_argument(  "--adj-left",
                           dest = "adjleft",
                           action="store",
@@ -231,7 +220,7 @@ def main():
         sys.exit(1)
 
     if args.showpalette:
-        show_color_palette()
+        colors.show_palette()
         sys.exit(1)
 
     if args.figsize == None:
@@ -280,11 +269,11 @@ def main():
         h5lp[i].read(path)
 
         if (args.cno == None) and (args.cna == None):
-            argcolor = colors[list(colors)[i]]
+            argcolor = colors.get(i)
         elif (args.cno != None):
-            argcolor = colors[list(colors)[args.cno[i]]]
+            argcolor = colors.get(args.cno[i])
         elif (args.cna != None):
-            argcolor = colors[args.cna[i]]
+            argcolor = colors.get(args.cna[i])
         
         j = 0
         for (x, y, label, linestyle, color) in h5lp[i].get_line_plots():
@@ -301,7 +290,7 @@ def main():
                 label = path
 
             if args.latexon:
-                if label[0] != '$' or label[-1] != '$':
+                if not '$' in label:
                     label = r'$\textrm{' + label + '}$'
 
             if args.diff: 
@@ -365,6 +354,10 @@ def main():
         if args.flipleg == True:
             plt.legend(handles[::-1], labels[::-1],frameon=False)
             #plt.legend(flip(handles, 2), flip(labels, 2), ncol=2)
+        elif args.legorder != None:
+            handles_reordered = [handles[i] for i in args.legorder]
+            labels_reordered = [labels[i] for i in args.legorder]
+            plt.legend(handles_reordered, labels_reordered,frameon=False)
         else:
             plt.legend(frameon=False)
     plt.gcf().subplots_adjust(left=args.adjleft, bottom=args.adjbottom)       
@@ -373,6 +366,7 @@ def main():
     plt.show()
 
     spath, fname  = os.path.split(args.paths[0])
+
     if args.savepath != None:
         spath = args.savepath
 
@@ -383,7 +377,7 @@ def main():
     if args.file_format == 'png':
         saveas_png(fig, savepath=spath, savename=save_name, dpi=args.dpi)
     else:
-        saveas_eps_pdf(fig, savepath=spath, savename=save_name)
+        saveas_eps_pdf(fig, savepath=spath, savename=save_name, fformat=args.file_format)
     plt.close(fig)
 
 if __name__ == "__main__":

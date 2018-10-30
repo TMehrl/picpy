@@ -832,6 +832,10 @@ class SliceMoms(H5File):
 
 class H5Plot:
     def __init__(self):
+
+        # Allowed hdf5 extensions:
+        self.__h5exts = ['.h5','.hdf5']
+
         self.__xlab_key = u'xlab'
         self.__ylab_key = u'ylab'
         self.__xlab = u'$x$'
@@ -850,6 +854,11 @@ class H5Plot:
         self.__lp_linestyles = []
         self.__lp_colors = []
         self.__lp_labels = []
+
+    # Returning boolean: if file extension is hdf5 extension
+    def is_h5_file(self, file):
+        fname, fext = os.path.splitext(file)
+        return any(fext == h5ext for h5ext in self.__h5exts)   
 
     def set_ax_labels(xlab, ylab):
         self.__xlab = np.string_(xlab)
@@ -901,6 +910,10 @@ class H5Plot:
 
     def read(self, path):
         self.__init__()
+        if not self.is_h5_file(path):
+            print('ERROR: Provided file %s is no hdf5 file!' % path)
+            sys.exit(1)
+
         h5f = h5py.File(path, "r")
         self.__xlab = h5f[self.__lp_key].attrs[self.__xlab_key]
         self.__ylab = h5f[self.__lp_key].attrs[self.__ylab_key]

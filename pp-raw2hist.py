@@ -175,7 +175,7 @@ def get_props(raw,psv_str):
        label = r'$k_p y$' 
        psv = raw.x3
        savename = 'y'       
-    elif psv_str == 'z':
+    elif psv_str == 'z' or psv_str == 'zeta':
        label = r'$k_p \zeta$' 
        psv = raw.x1
        savename = 'zeta'
@@ -191,6 +191,9 @@ def get_props(raw,psv_str):
        label = r'$p_z/m c$' 
        psv = raw.p1
        savename = 'pz'
+    else:
+        print("ERROR: Phase space variable '%s' not recognized!" % psv_str)
+        sys.exit(1)
     return psv, label, savename
 
 
@@ -207,7 +210,7 @@ def oneD(raw, args):
     psv, xlabel, savename = get_props(raw,args.psv)
 
     if args.nbins == None:
-        nbins = np.int( np.sqrt(raw.get_npart()) / 2.0 )
+        nbins = np.int( 10 + np.power(np.log(raw.get_npart()), 3) )     
     else:
         nbins = args.nbins
 
@@ -234,7 +237,7 @@ def twoD(raw, args):
     vary, ylabel, savenamey = get_props(raw,args.psv[1])
 
     if args.nbins == None:
-        nbins = np.int( np.sqrt(raw.get_npart()) / 2.0 )
+        nbins = np.int( 10 + np.power(np.log(raw.get_npart()), 2.2) )
     else:
         nbins = args.nbins
 
