@@ -283,7 +283,7 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
         sigma_xyr_lab = r'$k_p\sigma_r$'
         sigma_xyr_savename = 'sigma_r_proj'                
         
-        sigma_pxyr_lab = r'$(\sigma_{p_x}^2 \sigma_{p_y}^2)^(1/2)/m_e c$'
+        sigma_pxyr_lab = r'$(\sigma_{p_x}^2 + \sigma_{p_y}^2)^{1/2}/m_e c$'
         sigma_pxyr_savename = 'sigma_pr_proj'
         
         corr_xy_lab = r'$ k_p (\left \langle x\,p_x \right\rangle + \left \langle y\,p_y \right\rangle)/m_e c$'
@@ -417,7 +417,7 @@ def plot_save_slice_rms_lines(slm, savepath, time = None, axdir='x', h5plot=True
             sigma_xy_lab = r'$k_p \sigma_{r}$'
             sigma_xy_savename = 'sigma_r'
             sigma_pxy = np.sqrt(slm.avgp2sq[i,:] + slm.avgp3sq[i,:])
-            sigma_pxy_lab = r'$(\sigma_{p_x}^2+\sigma_{p_y}^2)^(1/2)/mc$'
+            sigma_pxy_lab = r'$(\sigma_{p_x}^2+\sigma_{p_y}^2)^{1/2}/mc$'
             sigma_pxy_savename = 'sigma_pr'            
 
         fig_sigma_xy = plt.figure()
