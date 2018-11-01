@@ -906,7 +906,7 @@ class G3d_plot_slice(G3d_plot):
             offset = 0.15
         else:
             offset = 0
-        print('offset %f' %offset)
+
         if self.g3d.type == pp_defs.hipace.h5.g3dtypes.field:
             cbar = plt.colorbar(cbarmap, boundaries=np.arange(self.clim[0]-0.0002,self.clim[1]+0.0002,0.0001), extend=extend, pad=0.02+offset, fraction=0.08+4*counts**(1/2)/100.0) #, pad=0.1 )
         else: 
