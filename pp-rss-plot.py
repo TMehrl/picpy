@@ -72,7 +72,7 @@ def ps_parseopts():
     parser.add_argument("-a", "--axis",
                         dest = "axis",
                         metavar="AXIS",
-                        choices=['x', 'y',],
+                        choices=['x', 'y', 'r'],
                         default='x',
                         help= """Primary axis for plotting
                               (default: %(default)s).""")
@@ -204,7 +204,7 @@ def plot_save_slice_rms(slm, savepath, verbose=True, t_is_z=True):
     saveas_png(fig_e, savepath, 'slice_emittance_x')
 
 
-def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True, t_is_z=True):
+def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is_z=True):
     
     t = slm.time_array
     tot_charge = np.sum(slm.charge, axis=1)
@@ -214,7 +214,7 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True, t_is_z
     else:
         xlabel_str = r'$\omega_p t$'
 
-    if axdir == 2:
+    if axdir == 'x':
         xavg = np.divide(np.sum(np.multiply(slm.avgx2, slm.charge), axis=1),tot_charge)
         pavg = np.divide(np.sum(np.multiply(slm.avgp2, slm.charge), axis=1),tot_charge)
 
@@ -223,8 +223,24 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True, t_is_z
         xp_noncentral = np.divide(np.sum(np.multiply(slm.avgx2p2 + np.multiply(slm.avgx2,slm.avgp2), slm.charge), axis=1),tot_charge)
         emittance_all_slices = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) - np.power(slm.avgx2p2,2) )
         emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.charge), axis=1),tot_charge)
-        # TODO: Also define labels and savenames here!    
-    elif axdir == 3:
+        
+        sigma_xyr_lab = r'$k_p\sigma_x$'
+        sigma_xyr_savename = 'sigma_x_proj'
+        
+        sigma_pxyr_lab = r'$\sigma_{p_x}/m_e c$'
+        sigma_pxyr_savename = 'sigma_px_proj'
+        
+        corr_xy_lab = r'$ k_p \left \langle x\,p_x \right\rangle/m_e c$'
+        corr_xy_savename = 'xpx_proj'
+        
+        epsilon_xy_proj_lab = r'$k_p \epsilon_x$'
+        epsilon_xy_proj_savename = 'emittance_x_proj'   
+
+        epsilon_xy_sl_lab = r'$k_p \epsilon_{x,\mathrm{sliced}}$'
+        epsilon_xy_sl_savename = 'emittance_x_sliced' 
+
+
+    elif axdir == 'y':
         xavg = np.divide(np.sum(np.multiply(slm.avgx3, slm.charge), axis=1),tot_charge)
         pavg = np.divide(np.sum(np.multiply(slm.avgp3, slm.charge), axis=1),tot_charge)
 
@@ -233,7 +249,51 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True, t_is_z
         xp_noncentral = np.divide(np.sum(np.multiply(slm.avgx3p3 + np.multiply(slm.avgx3,slm.avgp3), slm.charge), axis=1),tot_charge)
         emittance_all_slices = np.sqrt( np.multiply(slm.avgx3sq, slm.avgp3sq) - np.power(slm.avgx3p3,2) )
         emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.charge), axis=1),tot_charge)
-        # TODO: Also define labels and savenames here!           
+        
+        sigma_xyr_lab = r'$k_p\sigma_y$'
+        sigma_xyr_savename = 'sigma_y_proj'                
+        
+        sigma_pxyr_lab = r'$\sigma_{p_y}/m_e c$'
+        sigma_pxyr_savename = 'sigma_py_proj'
+        
+        corr_xy_lab = r'$ k_p \left \langle y\,p_y \right\rangle/m_e c$'
+        corr_xy_savename = 'ypy_proj'
+
+        epsilon_xy_proj_lab = r'$k_p \epsilon_y$'
+        epsilon_xy_proj_savename = 'emittance_y_proj'
+
+        epsilon_xy_sl_lab = r'$k_p \epsilon_{y,\mathrm{sliced}}$'
+        epsilon_xy_sl_savename = 'emittance_y_sliced'         
+
+    elif axdir == 'r':
+        xavg = np.divide(np.sum(np.multiply(slm.avgx2 + slm.avgx3, slm.charge), axis=1),tot_charge)
+        pavg = np.divide(np.sum(np.multiply(slm.avgp2 + slm.avgp3, slm.charge), axis=1),tot_charge)
+
+        xsq_noncentral = np.divide(np.sum(np.multiply(slm.avgx2sq + slm.avgx3sq \
+            + np.power(slm.avgx2,2) + np.power(slm.avgx3,2), slm.charge), axis=1),tot_charge)
+        psq_noncentral = np.divide(np.sum(np.multiply(slm.avgp2sq \
+            + slm.avgp3sq + np.power(slm.avgp2,2) + np.power(slm.avgp3,2), slm.charge), axis=1),tot_charge)
+        xp_noncentral = np.divide(np.sum(np.multiply(slm.avgx2p2 + slm.avgx3p3 \
+            + np.multiply(slm.avgx2,slm.avgp2) + np.multiply(slm.avgx3,slm.avgp3), slm.charge), axis=1),tot_charge)
+
+        emittance_all_slices = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) - np.power(slm.avgx2p2,2) + \
+                np.multiply(slm.avgx3sq, slm.avgp3sq) - np.power(slm.avgx3p3,2) )
+        emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.charge), axis=1),tot_charge)
+        
+        sigma_xyr_lab = r'$k_p\sigma_r$'
+        sigma_xyr_savename = 'sigma_r_proj'                
+        
+        sigma_pxyr_lab = r'$(\sigma_{p_x}^2 \sigma_{p_y}^2)^(1/2)/m_e c$'
+        sigma_pxyr_savename = 'sigma_pr_proj'
+        
+        corr_xy_lab = r'$ k_p (\left \langle x\,p_x \right\rangle + \left \langle y\,p_y \right\rangle)/m_e c$'
+        corr_xy_savename = 'xpx_ypy_proj'
+
+        epsilon_xy_proj_lab = r'$k_p \epsilon_r$'
+        epsilon_xy_proj_savename = 'emittance_r_proj'
+
+        epsilon_xy_sl_lab = r'$k_p \epsilon_{r,\mathrm{sliced}}$'
+        epsilon_xy_sl_savename = 'emittance_r_sliced' 
 
     xsq = xsq_noncentral - np.power(xavg,2)
     psq = psq_noncentral - np.power(pavg,2)
@@ -243,28 +303,28 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True, t_is_z
     plt.plot(t, np.sqrt(xsq))
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14) 
-    ax.set_ylabel(r'$k_p\sigma_x$', fontsize=14)
+    ax.set_ylabel(sigma_xyr_lab, fontsize=14)
     if magn_check(np.sqrt(xsq)):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
         plt.gcf().subplots_adjust(left=0.15) 
     
-    saveas_eps_pdf(fig_sx, savepath, 'sigma_x_proj', h5plot=h5plot)                  
+    saveas_eps_pdf(fig_sx, savepath, sigma_xyr_savename, h5plot=h5plot)                  
     plt.close(fig_sx)
 
     fig_sp = plt.figure()    
     plt.plot(t, np.sqrt(psq))
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14) 
-    ax.set_ylabel(r'$\sigma_{p_x}/m_e c$', fontsize=14)
+    ax.set_ylabel(sigma_pxyr_lab, fontsize=14)
     if magn_check(np.sqrt(psq)):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
         plt.gcf().subplots_adjust(left=0.15)  
     
-    saveas_eps_pdf(fig_sp, savepath, 'sigma_px_proj', h5plot=h5plot)                  
+    saveas_eps_pdf(fig_sp, savepath, sigma_pxyr_savename, h5plot=h5plot)                  
     plt.close(fig_sp)
 
 
@@ -272,14 +332,14 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True, t_is_z
     plt.plot(t, xp)
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14) 
-    ax.set_ylabel(r'$ k_p \left \langle x\,p_x \right\rangle/m_e c$', fontsize=14)
+    ax.set_ylabel(corr_xy_lab, fontsize=14)
     if magn_check(xp):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
         plt.gcf().subplots_adjust(left=0.15)
     
-    saveas_eps_pdf(fig_xp, savepath, 'xpx_proj', h5plot=h5plot)   
+    saveas_eps_pdf(fig_xp, savepath, corr_xy_savename, h5plot=h5plot)   
     plt.close(fig_xp)
 
 
@@ -288,28 +348,28 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True, t_is_z
     plt.plot(t, emittance_proj, label='projected emittance') 
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14) 
-    ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
+    ax.set_ylabel(epsilon_xy_proj_lab, fontsize=14)
     if magn_check(emittance_proj):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
         plt.gcf().subplots_adjust(left=0.15)  
     
-    saveas_eps_pdf(fig_e, savepath, 'emittance_proj', h5plot=h5plot)   
+    saveas_eps_pdf(fig_e, savepath, epsilon_xy_proj_savename, h5plot=h5plot)   
     plt.close(fig_e)
 
     fig_esl = plt.figure()    
     plt.plot(t, emittance_sliced, label='sliced emittance') 
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14) 
-    ax.set_ylabel(r'$k_p \epsilon_{x,\mathrm{sliced}}$', fontsize=14)
+    ax.set_ylabel(epsilon_xy_sl_lab, fontsize=14)
     if magn_check(emittance_sliced):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
         plt.gcf().subplots_adjust(left=0.15)  
     
-    saveas_eps_pdf(fig_esl, savepath, 'emittance_sliced', h5plot=h5plot)   
+    saveas_eps_pdf(fig_esl, savepath, epsilon_xy_sl_savename, h5plot=h5plot)   
     plt.close(fig_esl)
 
     fig_e_slpr = plt.figure()    
@@ -317,7 +377,7 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True, t_is_z
     esp = plt.plot(t, emittance_sliced, color = epp[0].get_color(), linestyle='--', label='sliced')    
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14) 
-    ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
+    ax.set_ylabel(epsilon_xy_proj_lab, fontsize=14)
     ax.legend()
     if magn_check(emittance_proj):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
@@ -325,11 +385,11 @@ def plot_save_proj_rms(slm, savepath, axdir=2, h5plot=True, verbose=True, t_is_z
     else:
         plt.gcf().subplots_adjust(left=0.15)  
     
-    saveas_eps_pdf(fig_e_slpr, savepath, 'emittance_sl_proj', h5plot=h5plot)   
+    saveas_eps_pdf(fig_e_slpr, savepath, epsilon_xy_proj_savename + '_sl', h5plot=h5plot)   
     plt.close(fig_e_slpr)
 
 
-def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
+def plot_save_slice_rms_lines(slm, savepath, time = None, axdir='x', h5plot=True):
 
     if time == None:
         tidx = [0,-1];
@@ -337,7 +397,7 @@ def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
         tidx = [(np.abs(slm.time_array - time)).argmin()]
 
     for i in tidx:
-        if axdir == 2:
+        if axdir == 'x':
             sigma_xy = np.sqrt(slm.avgx2sq[i,:])
             sigma_xy_lab = r'$k_p \sigma_{x}$'
             sigma_xy_savename = 'sigma_x'
@@ -345,13 +405,20 @@ def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
             sigma_pxy_lab = r'$\sigma_{p_x}/mc$'
             sigma_pxy_savename = 'sigma_px'
             # Also define labels and savenames here!    
-        elif axdir == 3:
+        elif axdir == 'y':
             sigma_xy = np.sqrt(slm.avgx3sq[i,:])
             sigma_xy_lab = r'$k_p \sigma_{y}$'
             sigma_xy_savename = 'sigma_y'
             sigma_pxy = np.sqrt(slm.avgp3sq[i,:])
             sigma_pxy_lab = r'$\sigma_{p_y}/mc$'
             sigma_pxy_savename = 'sigma_py'
+        elif axdir == 'r':
+            sigma_xy = np.sqrt(slm.avgx2sq[i,:] + slm.avgx3sq[i,:])
+            sigma_xy_lab = r'$k_p \sigma_{r}$'
+            sigma_xy_savename = 'sigma_r'
+            sigma_pxy = np.sqrt(slm.avgp2sq[i,:] + slm.avgp3sq[i,:])
+            sigma_pxy_lab = r'$(\sigma_{p_x}^2+\sigma_{p_y}^2)^(1/2)/mc$'
+            sigma_pxy_savename = 'sigma_pr'            
 
         fig_sigma_xy = plt.figure()
         plt.plot( slm.zeta_array,
@@ -372,7 +439,7 @@ def plot_save_slice_rms_lines(slm, savepath, time = None, axdir=2, h5plot=True):
         saveas_eps_pdf(fig_sigma_pxy, savepath, ('%s_time_%0.1f' % (sigma_pxy_savename, slm.time_array[i])), h5plot=h5plot)
         plt.close(fig_sigma_pxy)
 
-def plot_save_slice_exkurtosis_lines(slm, savepath, time = None, axdir=2, h5plot=True):
+def plot_save_slice_exkurtosis_lines(slm, savepath, time = None, axdir='x', h5plot=True):
 
     if time == None:
         tidx = [0,-1];
@@ -380,22 +447,7 @@ def plot_save_slice_exkurtosis_lines(slm, savepath, time = None, axdir=2, h5plot
         tidx = [(np.abs(slm.time_array - time)).argmin()]
 
     for i in tidx:
-        if axdir == 2:
-            var_xy = slm.avgx2sq[i,:]
-            var_xy_nonzero_idx = np.nonzero(var_xy)[0]
-            exkurtosis_xy = np.divide(  slm.avgx2quar[i,var_xy_nonzero_idx],\
-                                        np.power(var_xy[var_xy_nonzero_idx],2)) - 3
-            exkurtosis_xy_lab = r'$\left \langle x^4/\sigma_x^4 \right\rangle - 3$'
-            exkurtosis_xy_savename = 'exkurtosis_x'
-            
-            var_pxy = slm.avgp2sq[i,:]
-            var_pxy_nonzero_idx = np.nonzero(var_pxy)[0]
-            exkurtosis_pxy = np.divide( slm.avgp2quar[i,var_pxy_nonzero_idx],\
-                                        np.power(var_pxy[var_pxy_nonzero_idx],2)) - 3
-            exkurtosis_pxy_lab = r'$\left \langle p_x^4/\sigma_{px}^4 \right\rangle -3$'
-            exkurtosis_pxy_savename = 'exkurtosis_px'
-            # Also define labels and savenames here!    
-        elif axdir == 3:
+        if axdir == 'y':
             var_xy = slm.avgx3sq[i,:]
             var_xy_nonzero_idx = np.nonzero(var_xy)[0]           
             exkurtosis_xy = np.divide(  slm.avgx3quar[i,var_xy_nonzero_idx],\
@@ -409,6 +461,23 @@ def plot_save_slice_exkurtosis_lines(slm, savepath, time = None, axdir=2, h5plot
                                         np.power(var_pxy[var_pxy_nonzero_idx],2)) - 3
             exkurtosis_pxy_lab = r'$\left \langle p_y^4/\sigma_{py}^4 \right\rangle -3$'
             exkurtosis_pxy_savename = 'exkurtosis_py'
+
+        else: 
+            # xdir == 'x' or xdir == 'r'
+            var_xy = slm.avgx2sq[i,:]
+            var_xy_nonzero_idx = np.nonzero(var_xy)[0]
+            exkurtosis_xy = np.divide(  slm.avgx2quar[i,var_xy_nonzero_idx],\
+                                        np.power(var_xy[var_xy_nonzero_idx],2)) - 3
+            exkurtosis_xy_lab = r'$\left \langle x^4/\sigma_x^4 \right\rangle - 3$'
+            exkurtosis_xy_savename = 'exkurtosis_x'
+            
+            var_pxy = slm.avgp2sq[i,:]
+            var_pxy_nonzero_idx = np.nonzero(var_pxy)[0]
+            exkurtosis_pxy = np.divide( slm.avgp2quar[i,var_pxy_nonzero_idx],\
+                                        np.power(var_pxy[var_pxy_nonzero_idx],2)) - 3
+            exkurtosis_pxy_lab = r'$\left \langle p_x^4/\sigma_{px}^4 \right\rangle -3$'
+            exkurtosis_pxy_savename = 'exkurtosis_px'
+            # Also define labels and savenames here!   
 
         fig_exkurtosis_xy = plt.figure()
         plt.plot( slm.zeta_array[var_xy_nonzero_idx],
@@ -430,7 +499,7 @@ def plot_save_slice_exkurtosis_lines(slm, savepath, time = None, axdir=2, h5plot
         plt.close(fig_exkurtosis_pxy)
 
 
-def plot_save_slice_quad_corr_lines(slm, savepath, time = None, axdir=2, h5plot=True):
+def plot_save_slice_quad_corr_lines(slm, savepath, time = None, axdir='x', h5plot=True):
 
     if time == None:
         tidx = [0,-1];
@@ -438,17 +507,7 @@ def plot_save_slice_quad_corr_lines(slm, savepath, time = None, axdir=2, h5plot=
         tidx = [(np.abs(slm.time_array - time)).argmin()]
 
     for i in tidx:
-        if axdir == 2:
-            var_xy = slm.avgx2sq[i,:]
-            var_pxy = slm.avgp2sq[i,:]
-            nonzero_idx = np.nonzero(np.multiply(var_xy, var_pxy))[0]
-            quad_corr_xy = np.divide(  slm.avgx2sqp2sq[i,nonzero_idx],\
-                                        np.multiply(var_xy[nonzero_idx],var_pxy[nonzero_idx]) ) - 1.0
-            quad_corr_xy_lab = r'$\left \langle x^2  p_x^2\right\rangle/(\sigma_x^2\sigma_{p_x}^2) - 1$'
-            quad_corr_xy_savename = 'quad_corr_x'
-            
-  
-        elif axdir == 3:
+        if axdir == 'y':
             var_xy = slm.avgx3sq[i,:]
             var_pxy = slm.avgp3sq[i,:]
             nonzero_idx = np.nonzero(np.multiply(var_xy, var_pxy))[0]
@@ -456,6 +515,17 @@ def plot_save_slice_quad_corr_lines(slm, savepath, time = None, axdir=2, h5plot=
                                         np.multiply(var_xy[nonzero_idx],var_pxy[nonzero_idx]) ) - 1.0
             quad_corr_xy_lab = r'$\left \langle y^2  p_y^2\right\rangle/(\sigma_y^2\sigma_{p_y}^2) - 1$'
             quad_corr_xy_savename = 'quad_corr_y'
+  
+        else: 
+            # axdir == 'x' or axdir == 'r'
+            var_xy = slm.avgx2sq[i,:]
+            var_pxy = slm.avgp2sq[i,:]
+            nonzero_idx = np.nonzero(np.multiply(var_xy, var_pxy))[0]
+            quad_corr_xy = np.divide(  slm.avgx2sqp2sq[i,nonzero_idx],\
+                                        np.multiply(var_xy[nonzero_idx],var_pxy[nonzero_idx]) ) - 1.0
+            quad_corr_xy_lab = r'$\left \langle x^2  p_x^2\right\rangle/(\sigma_x^2\sigma_{p_x}^2) - 1$'
+            quad_corr_xy_savename = 'quad_corr_x'
+
 
         fig_quad_corr_xy = plt.figure()
         plt.plot( slm.zeta_array[nonzero_idx],
@@ -769,11 +839,6 @@ def main():
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif') 
 
-    if args.axis == 'x':
-        axdir = 2
-    else:
-        axdir = 3
-
     plot_curr_profile(slm, args.savepath, time = args.time, h5plot=args.h5plot)
 
     plot_save_slice_ene(slm, args.savepath, h5plot=args.h5plot)
@@ -782,13 +847,13 @@ def main():
     
     if mom_order > 1:
         plot_save_slice_rms(slm, args.savepath)
-        plot_save_proj_rms(slm, args.savepath, axdir, h5plot=args.h5plot)        
-        plot_save_slice_rms_lines(slm, args.savepath, time = args.time, axdir=axdir, h5plot=args.h5plot)
+        plot_save_proj_rms(slm, args.savepath, axdir=args.axis, h5plot=args.h5plot)        
+        plot_save_slice_rms_lines(slm, args.savepath, time = args.time, axdir=args.axis, h5plot=args.h5plot)
         plot_save_ene_ene_spread(slm, args.savepath, t_is_z=args.t_is_z)
 
     if mom_order > 3:
-        plot_save_slice_exkurtosis_lines(slm, args.savepath, time = args.time, axdir=axdir, h5plot=args.h5plot)
-        plot_save_slice_quad_corr_lines(slm, args.savepath, time = args.time, axdir=axdir, h5plot=args.h5plot)
+        plot_save_slice_exkurtosis_lines(slm, args.savepath, time = args.time, axdir=args.axis, h5plot=args.h5plot)
+        plot_save_slice_quad_corr_lines(slm, args.savepath, time = args.time, axdir=args.axis, h5plot=args.h5plot)
 
 if __name__ == "__main__":
     main()
