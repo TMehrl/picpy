@@ -213,8 +213,14 @@ class HiFile(H5Keys, H5File):
             self.dt = hf.attrs[   self.get_attrkey('dt') ]
             type_bytes = hf.attrs[ self.get_attrkey('type') ]
             name_bytes = hf.attrs[ self.get_attrkey('name') ]
-            self.type = type_bytes[0].decode('UTF-8')
-            self.name = name_bytes[0].decode('UTF-8')
+            if isinstance(type_bytes, str):
+                self.type = type_bytes
+            else:
+                self.type = type_bytes[0].decode('UTF-8')
+            if isinstance(name_bytes, str):
+                self.name = name_bytes
+            else:
+                self.name = name_bytes[0].decode('UTF-8')
             # Make these private and write getter functions!
 
     def get_x_arr(self,dim):
@@ -510,6 +516,181 @@ class Grid3d(HiFile):
 
         return np.divide(np.sum(sumx,axis=axtup),np.sum(norm,axis=axtup))
 
+#### 3D-grid
+class Grid2d(HiFile):
+    def __init__(self, file):
+        HiFile.__init__(self, file)
+        self.read_attrs()
+        with h5py.File(self.file,'r') as hf:
+            self.h5keys = list(hf.keys())
+            if len(self.h5keys) == 1:
+                self.dsetkey = self.h5keys[0]
+            elif len(self.h5keys) == 0:
+                print('Error:\tHDF5 file "%s" does not '
+                  'contain any dataset!' %(self.file) )
+                sys.exit()
+            elif len(self.h5keys) > 1:
+                print('Error:\tHDF5 file "%s" contains more '
+                  'than one dataset!' %(self.file) )
+                sys.exit()
+
+        # self.fid = h5py.h5f.open(self.file.encode())
+        # self.dset = h5py.h5d.open(self.fid, self.dsetkey.encode())
+
+    def read_3D(self):
+        print('Error:\tGrid2D can not read in 3D dataset!' )
+        sys.exit()
+        return 
+
+
+    def read_2D(self, i0=None, i1=None, i2=None):
+        with h5py.File(self.file,'r') as hf:
+        # Reading dataset (here not caring how dataset is called)
+            
+            slice = hf[self.dsetkey][()]
+            # elif i0==None and i1!=None and i2==None:
+            #     slice = hf[self.dsetkey][:,i1]
+            # elif i0==None and i1==None and i2!=None:
+            #     slice = hf[self.dsetkey][:,i2]
+        return(slice)
+
+    def read_1D(self, i0=None, i1=None, i2=None):
+        with h5py.File(self.file,'r') as hf:
+            # Reading dataset (here not caring how dataset is called)
+            if i0!=None and i1!=None and i2==None:
+                line = hf[self.dsetkey][i0,i1,:]
+            elif i0!=None and i1==None and i2!=None:
+                line = hf[self.dsetkey][i0,:,i2]
+            elif i0==None and i1!=None and i2!=None:
+                line = hf[self.dsetkey][:,i1,i2]
+            else:
+                print('Error:\tExactly two indices must '
+                  'be provided for HDF line read in!')
+                sys.exit()
+        return(line)
+
+    def read_0D(self, i0=None, i1=None, i2=None):
+        with h5py.File(self.file,'r') as hf:
+            # Reading dataset (here not caring how dataset is called)
+            if i0!=None and i1!=None and i2!=None:
+                point = hf[self.dsetkey][i0,i1,i2]
+            else:
+                print('Error:\tExactly three indices must '
+                  'be provided for HDF point read in!')
+                sys.exit(1)
+        return(point)
+
+    def __n_none(self, arg0, arg1, arg2):
+        return sum([arg0 == None, arg1 == None, arg2 == None])
+
+    def read(self, 
+             i0=None, 
+             i1=None, 
+             i2=None,
+             x0=None,
+             x1=None,
+             x2=None):
+        if self.__n_none(x0, x1, x2) == 3:
+            if self.__n_none(i0, i1, i2) == 3:
+                return self.read_3D()
+            elif self.__n_none(i0, i1, i2) == 2:
+                return self.read_2D(i0=i0, i1=i1, i2=i2) 
+            elif self.__n_none(i0, i1, i2) == 1:
+                return self.read_1D(i0=i0, i1=i1, i2=i2)             
+            elif self.__n_none(i0, i1, i2) == 0:
+                return self.read_0D(i0=i0, i1=i1, i2=i2)
+        elif self.__n_none(i0, i1, i2) == 3:
+            if x0 != None:
+                i0 = np.argmin(np.abs(self.get_x_arr(0)-x0))
+            if x1 != None:
+                i1 = np.argmin(np.abs(self.get_x_arr(1)-x1))
+            if x2 != None:
+                i2 = np.argmin(np.abs(self.get_x_arr(2)-x2))
+            return self.read(i0=i0, i1=i1, i2=i2)                    
+        else:
+            print('Error:\tMixed indices and positions '
+              'not allowed for grid 3d read in!')
+            sys.exit(1)                                  
+
+    def read_integrate(self, 
+                       ax0=False, 
+                       ax1=False, 
+                       ax2=False):
+        # read and integrate along specified axes 
+        data = self.read_3D()
+        axtup = ()
+        dx = 1
+        if ax0:
+            axtup += (0,)
+            dx *= self.get_dx(0)
+        if ax1:
+            axtup += (1,)
+            dx *= self.get_dx(1)
+        if ax2:
+            axtup += (2,)
+            dx *= self.get_dx(2)           
+
+        return np.sum(data,axis=axtup) * dx
+
+
+    def read_avgx(self, dim, ax0=False, 
+                             ax1=False, 
+                             ax2=False):
+        # read and find avg position in dim and integrate along 
+        # specified axes 
+        data = self.read_3D()            
+
+        axtup = ()
+        dx = 1
+        if dim == 0:
+            sumx = np.dot( np.transpose(data,(1,2,0)),\
+                           self.get_x_arr(0) )
+            if ax0:
+                print('Error:\tIntegration dimension must be '
+                        'different from averaging dimension!')
+                sys.exit(1)  
+            if ax1:
+                axtup += (0,)
+                dx *= self.get_dx(1)
+            if ax2:
+                axtup += (1,)
+                dx *= self.get_dx(2)  
+                                            
+        elif dim == 1:
+            sumx = np.dot( np.transpose(data,(0,2,1)),\
+                           self.get_x_arr(1) ) 
+            if ax0:
+                axtup += (0,)
+                dx *= self.get_dx(0)
+            if ax1:
+                print('Error:\tIntegration dimension must be '
+                        'different from averaging dimension!')
+                sys.exit(1)                  
+            if ax2:
+                axtup += (1,)
+                dx *= self.get_dx(2) 
+
+        elif dim == 2:
+            sumx = np.dot( np.transpose(data,(0,1,2)),\
+                           self.get_x_arr(2) )
+            if ax0:
+                axtup += (0,)
+                dx *= self.get_dx(0)
+            if ax1:
+                axtup += (1,)
+                dx *= self.get_dx(1)                 
+            if ax2:
+                print('Error:\tIntegration dimension must be '
+                        'different from averaging dimension!')
+                sys.exit(1)                              
+        else:
+            print('Error:\tdim must be 0, 1 or 2!')
+            sys.exit(1)                  
+        
+        norm = np.sum(data,axis=dim)
+        norm[np.where(norm == 0)] = 1.0
+
+        return np.divide(np.sum(sumx,axis=axtup),np.sum(norm,axis=axtup))
 
 class SliceMoms(H5File):
     def __init__(self):

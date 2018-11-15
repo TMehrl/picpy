@@ -12,6 +12,7 @@
 class code:
     hipace = 'hipace'
     osiris = 'osiris'
+    inferno = 'inferno'
 
 # HiPACE definitions
 class hipace:
