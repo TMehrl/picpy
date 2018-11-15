@@ -45,6 +45,7 @@ def main():
         box_dimensions = np.empty(0)
         data_type = 'none'
         output_name = ''
+        name = ''
         output_path = args.output_path
         timestamp = files.split("_")[-1]
         
@@ -53,15 +54,18 @@ def main():
             data_type = 'field'
             if 'Ez' in files:
                 output_name += '_Ez'
+                name = 'Ez'
                 print('its the ez field!')
             elif 'ExmBy' in files:
                 output_name += '_ExmBy'
+                name = 'ExmBy'
                 print('its the ExmBy field!')
                 
             
         else:
             data_type = 'density'
             output_name += 'density_plasma_electrons'
+            name = 'density_plasma_electrons'
             print('its a density!')
     
         array = np.fromfile(files, dtype=np.float64)
@@ -85,16 +89,17 @@ def main():
             data = np.append(-np.flip(data, axis=1), data, axis=1)
         else:
             data = np.append(np.flip(data, axis=1), data, axis=1)
-        plt.pcolormesh(data, cmap=cm.plasma)
-        
-        plt.show()
+
+        # control plot if needed
+        # plt.pcolormesh(data, cmap=cm.plasma)
+        # plt.show()
         
         
         f = h5py.File(output_path + output_name + '_' + timestamp + '.h5', 'w')
         dset = f.create_dataset( output_name + '_' + timestamp, shape=np.shape(data), data=data)
         f.attrs['DT'] = [np.float32(0.0)]
         #f.create_dataset('NAME',(32,), dtype="S10")
-        f.attrs['NAME'] = output_name#repr(output_name) #.encode('UTF-8')
+        f.attrs['NAME'] = name#repr(output_name) #.encode('UTF-8')
         #dt = h5py.special_dtype(vlen=str)     # PY3
         #dset = f.create_dataset('NAME', dtype=dt, data=output_name)
         f.attrs['NX'] = [np.int32(np.shape(data)[0]), np.int32(np.shape(data)[1]) ]
