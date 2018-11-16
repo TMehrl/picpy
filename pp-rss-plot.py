@@ -568,7 +568,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
         Yb_lout_ylab = r'$k_p Y_{b}(t=%0.1f)$' % time[i]
 
         figXb_lout = plt.figure()
-        plt.plot(slm.zeta_array, slm.avgx2[i,:])
+        plt.plot(slm.zeta_array, slm.avgx2[tidx[i],:])
         ax = plt.gca()
         ymin, ymax = ax.get_ylim()
         if ymin > 0 and ymax > 0:
@@ -581,7 +581,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
         plt.close(figXb_lout)
 
         figYb_lout = plt.figure()
-        plt.plot(slm.zeta_array, slm.avgx3[i,:])
+        plt.plot(slm.zeta_array, slm.avgx3[tidx[i],:])
         ax = plt.gca()
         ymin, ymax = ax.get_ylim()
         if ymin > 0 and ymax > 0:
