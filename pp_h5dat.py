@@ -557,15 +557,16 @@ class Grid2d(HiFile):
     def read_1D(self, i0=None, i1=None, i2=None):
         with h5py.File(self.file,'r') as hf:
             # Reading dataset (here not caring how dataset is called)
-            if i0!=None and i1!=None and i2==None:
-                line = hf[self.dsetkey][i0,i1,:]
-            elif i0!=None and i1==None and i2!=None:
-                line = hf[self.dsetkey][i0,:,i2]
-            elif i0==None and i1!=None and i2!=None:
-                line = hf[self.dsetkey][:,i1,i2]
+            if i0!=None and i1==None:
+                line = hf[self.dsetkey][i0,:]
+            elif i0==None and i1!=None:
+                line = hf[self.dsetkey][:,i1]
+            elif i0==None and i2!=None:
+                line = hf[self.dsetkey][:,i2]
+                print('Warning: Wrong index (only 2d array available). \n'
+                        'Switched to x instead of y!')
             else:
-                print('Error:\tExactly two indices must '
-                  'be provided for HDF line read in!')
+                print('Error:\t Something went wrong with the reading of the line out')
                 sys.exit()
         return(line)
 
@@ -592,12 +593,14 @@ class Grid2d(HiFile):
              x2=None):
         if self.__n_none(x0, x1, x2) == 3:
             if self.__n_none(i0, i1, i2) == 3:
-                return self.read_3D()
+                return self.read_2D()
             elif self.__n_none(i0, i1, i2) == 2:
-                return self.read_2D(i0=i0, i1=i1, i2=i2) 
+                return self.read_1D(i0=i0, i1=i1, i2=i2) 
             elif self.__n_none(i0, i1, i2) == 1:
-                return self.read_1D(i0=i0, i1=i1, i2=i2)             
+                return self.read_0D(i0=i0, i1=i1, i2=i2)             
             elif self.__n_none(i0, i1, i2) == 0:
+                print('Error:\tToo many indices for 2D array! ')
+                sys.exit(1)    
                 return self.read_0D(i0=i0, i1=i1, i2=i2)
         elif self.__n_none(i0, i1, i2) == 3:
             if x0 != None:
