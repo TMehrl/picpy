@@ -16,6 +16,7 @@ from matplotlib.ticker import MaxNLocator
 from matplotlib import cm
 import pp_defs
 from pp_h5dat import Grid3d
+from pp_h5dat import Grid2d
 from pp_h5dat import H5FList
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
@@ -67,7 +68,7 @@ def g3d_parser():
     parser.add_argument(  "-c", "--code",
                           action="store",
                           dest="piccode",
-                          choices = [pp_defs.code.hipace, pp_defs.code.osiris,],
+                          choices = [pp_defs.code.hipace, pp_defs.code.osiris, pp_defs.code.inferno],
                           default = pp_defs.code.hipace,
                           help="PIC code (default: %(default)s).")
     parser.add_argument(  "-z", "--z-axis",
@@ -326,6 +327,15 @@ def g3d_line_subparser(subparsers, parent_parser):
                                     'eps',],
                           default='pdf',
                           help= """Format of output file (default: %(default)s).""")
+    parser.add_argument(  "--ylim2",
+                        help='Customize y-axis limits for the line plot'
+                                'Use only for overlay plots!',
+                        action='store',
+                        dest="ylim2",
+                        metavar=('ymin', 'ymax'),
+                        type=float,
+                        nargs=2,
+                        default=False)   
     return parser
 
 
@@ -408,7 +418,11 @@ class G3d_plot:
             sys.stdout.write('Getting attributes of %s\n' % file)
             sys.stdout.flush()
 
-        self.g3d = Grid3d(file)
+        if self.args.piccode == pp_defs.code.inferno:
+            self.g3d = Grid2d(file)
+        else:
+            self.g3d = Grid3d(file)
+            
         if self.args.verbose:
             self.g3d.print_datasets()
             self.g3d.print_attributes()
@@ -506,19 +520,22 @@ class G3d_plot_slice(G3d_plot):
                 if self.args.if_integrate:
                     self.slice = self.g3d.read_integrate(ax2=True)
                 else:
-                    if (self.args.plane_index == None) and (self.args.plane_pos == None):
-                        index = math.floor(self.g3d.nx[2]/2) - 1
-                        self.slice = self.g3d.read(i2=index)
-                        if self.g3d.nx[2]%2 == 0:
-                            self.slice = (self.slice + self.g3d.read(i2=index+1))/2
-                    elif (self.args.plane_index != None) and (self.args.plane_pos == None):
-                        self.slice = self.g3d.read(i2=self.args.plane_index)
-                    elif (self.args.plane_index == None) and (self.args.plane_pos != None): 
-                        self.slice = self.g3d.read(x2=self.args.plane_pos)
+                    if self.args.piccode == pp_defs.code.inferno:
+                        self.slice = self.g3d.read()
                     else:
-                        sys.stdout.write('ERROR: plane-index can''t be used in conjunction with plane-position!\n')
-                        sys.stdout.flush()
-                        sys.exit(1)                    
+                        if (self.args.plane_index == None) and (self.args.plane_pos == None):
+                            index = math.floor(self.g3d.nx[2]/2) - 1
+                            self.slice = self.g3d.read(i2=index)
+                            if self.g3d.nx[2]%2 == 0:
+                                self.slice = (self.slice + self.g3d.read(i2=index+1))/2
+                        elif (self.args.plane_index != None) and (self.args.plane_pos == None):
+                            self.slice = self.g3d.read(i2=self.args.plane_index)
+                        elif (self.args.plane_index == None) and (self.args.plane_pos != None): 
+                            self.slice = self.g3d.read(x2=self.args.plane_pos)
+                        else:
+                            sys.stdout.write('ERROR: plane-index can''t be used in conjunction with plane-position!\n')
+                            sys.stdout.flush()
+                            sys.exit(1)                    
 
             elif 'y' in self.args.plane:
                 if self.args.if_integrate:
@@ -694,7 +711,9 @@ class G3d_plot_slice(G3d_plot):
             clim[1] = np.amax(abs(self.slice))
             if (clim[0] == 0.0) and (clim[1] == 0.0):
                 clim[0] = -1.0
-                clim[1] = 1.0 
+                clim[1] = 1.0
+        else:
+            print('no hipace type data detected!')
                 
         if self.args.diff:
             self.colormap = cm.RdBu
@@ -1048,24 +1067,31 @@ class G3d_plot_line(G3d_plot):
                 else:
                     sys.stdout.write('ERROR: Cannot average along plotted axis!\n')
                     sys.stdout.flush()
-                    sys.exit(1)                                              
+                    sys.exit(1)
             else:
                 if self.args.lout_idx == None:
                     # Default: central lineout
-                    idx1 = math.floor(self.g3d.nx[1]/2) - 1
-                    idx2 = math.floor(self.g3d.nx[2]/2) - 1
-                    self.line = self.g3d.read(i1=idx1, i2=idx2)
-                    if self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 0:
-                        line01 = self.g3d.read(i1=idx1, i2=idx2+1)
-                        line10 = self.g3d.read(i1=idx1+1, i2=idx2)
-                        line11 = self.g3d.read(i1=idx1+1, i2=idx2+1)
-                        self.line = ( self.line + line01 + line10 + line11 )/4
-                    elif self.g3d.nx[1]%2 == 1 and self.g3d.nx[2]%2 == 0:
-                        self.line = ( self.line + self.g3d.read(i1=idx1, i2=idx2+1) )/2
-                    elif self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 1:
-                        self.line = ( self.line + self.g3d.read(i1=idx1+1, i2=idx2) )/2
+                    if self.args.piccode == pp_defs.code.inferno:
+                        self.line= self.g3d.read(i1 = self.g3d.nx[1]/2)
+                        print(np.shape(self.line))
+                    else:
+                        idx1 = math.floor(self.g3d.nx[1]/2) - 1
+                        idx2 = math.floor(self.g3d.nx[2]/2) - 1
+                        self.line = self.g3d.read(i1=idx1, i2=idx2)
+                        if self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 0:
+                            line01 = self.g3d.read(i1=idx1, i2=idx2+1)
+                            line10 = self.g3d.read(i1=idx1+1, i2=idx2)
+                            line11 = self.g3d.read(i1=idx1+1, i2=idx2+1)
+                            self.line = ( self.line + line01 + line10 + line11 )/4
+                        elif self.g3d.nx[1]%2 == 1 and self.g3d.nx[2]%2 == 0:
+                            self.line = ( self.line + self.g3d.read(i1=idx1, i2=idx2+1) )/2
+                        elif self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 1:
+                            self.line = ( self.line + self.g3d.read(i1=idx1+1, i2=idx2) )/2
                 else:
-                    self.line = self.g3d.read(i1=lout_idx[0], i2=lout_idx[1])
+                    if self.args.piccode == pp_defs.code.inferno:
+                        self.line= self.g3d.read(i1 = lout_idx[0])
+                    else:
+                        self.line = self.g3d.read(i1=lout_idx[0], i2=lout_idx[1])
 
         elif 'x' == self.args.lineax:
             if self.args.if_integrate:
@@ -1081,23 +1107,29 @@ class G3d_plot_line(G3d_plot):
                     sys.exit(1)                 
             else:
                 if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
-                    # Default: central lineout
-                    idx1 = math.floor(self.g3d.nx[0]/2) - 1
-                    idx2 = math.floor(self.g3d.nx[2]/2) - 1
-                    self.line = self.g3d.read(i0=idx1, i2=idx2)
-                    if self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 0:
-                        line01 = self.g3d.read(i0=idx1, i2=idx2+1)
-                        line10 = self.g3d.read(i0=idx1+1, i2=idx2)
-                        line11 = self.g3d.read(i0=idx1+1, i2=idx2+1)
-                        self.line = ( self.line + line01 + line10 + line11 )/4
-                    elif self.g3d.nx[0]%2 == 1 and self.g3d.nx[2]%2 == 0:
-                        self.line = ( self.line + self.g3d.read(i0=idx1, i2=idx2+1) )/2
-                    elif self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 1:
-                        self.line = ( self.line + self.g3d.read(i0=idx1+1, i2=idx2) )/2
+                    if self.args.piccode == pp_defs.code.inferno:
+                        self.line= self.g3d.read(i0 = self.g3d.nx[1]/2)
+                    else:
+                        # Default: central lineout
+                        idx1 = math.floor(self.g3d.nx[0]/2) - 1
+                        idx2 = math.floor(self.g3d.nx[2]/2) - 1
+                        self.line = self.g3d.read(i0=idx1, i2=idx2)
+                        if self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 0:
+                            line01 = self.g3d.read(i0=idx1, i2=idx2+1)
+                            line10 = self.g3d.read(i0=idx1+1, i2=idx2)
+                            line11 = self.g3d.read(i0=idx1+1, i2=idx2+1)
+                            self.line = ( self.line + line01 + line10 + line11 )/4
+                        elif self.g3d.nx[0]%2 == 1 and self.g3d.nx[2]%2 == 0:
+                            self.line = ( self.line + self.g3d.read(i0=idx1, i2=idx2+1) )/2
+                        elif self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 1:
+                            self.line = ( self.line + self.g3d.read(i0=idx1+1, i2=idx2) )/2
                 elif (self.args.lout_idx != None) and (self.args.lout_zeta_pos == None):
                     self.line = self.g3d.read(i0=lout_idx[0], i2=lout_idx[1])
                 elif (self.args.lout_idx == None) and (self.args.lout_zeta_pos != None):
-                    self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x2=0.0)
+                    if self.args.piccode == pp_defs.code.inferno:
+                        self.line= self.g3d.read(x0=self.args.lout_zeta_pos)
+                    else:
+                        self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x2=0.0)
                 else:
                     sys.stdout.write('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!\n')
                     sys.stdout.flush()

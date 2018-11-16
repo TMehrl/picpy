@@ -56,7 +56,8 @@ def h5plot_parser():
                           dest="file_format",
                           metavar="FORMAT",
                           choices=[ 'pdf',
-                                    'eps',],
+                                    'eps',
+                                    'png'],
                           default='pdf',
                           help= """Format of output file (Default: %(default)s).""")
     parser.add_argument(  "--dpi",
