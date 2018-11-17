@@ -456,6 +456,68 @@ class Grid3d(HiFile):
 
         return np.sum(data,axis=axtup) * dx
 
+    def __ax_in_plane(self, ax, i0, i1, i2):
+        return ((ax+1) in (np.multiply([i0 != None, i1 != None, i2 != None],[1, 2, 3])))
+
+    def read_derivative(self, 
+                        dim,
+                        i0=None, 
+                        i1=None, 
+                        i2=None,
+                        x0=None,
+                        x1=None,
+                        x2=None):
+
+    """Read 3D data, form derivative along given axis return 0D, 1D, 2D or 3D gradient array.
+
+    Args:
+        dim (int): Dimension along which gradient is formed.
+        i0 (int, optional): Index along axis0
+        i1 (int, optional): Index along axis1
+        i2 (int, optional): Index along axis2
+        x0 (float, optional): Position along axis0
+        x1 (float, optional): Position along axis1
+        x2 (float, optional): Position along axis2
+
+    Returns:
+        ndarray: ...
+    """
+        grad = np.gradient(self.read_3D(),axis=dim)/self.get_dx(dim)
+
+        # read and differentiate along specified axes 
+        if self.__n_none(x0, x1, x2) == 3:
+            if self.__n_none(i0, i1, i2) == 3:
+                out = grad
+            elif self.__n_none(i0, i1, i2) == 2:
+                if i0 != None:
+                    out = grad[i0,:,:]
+                elif i1 != None:
+                    out = grad[:,i1,:]
+                else:
+                    out = grad[:,:,i2]
+            elif self.__n_none(i0, i1, i2) == 1:
+                if i0 == None:
+                    out = grad[:,i1,i2]
+                elif i1 == None:
+                    out = grad[i0,:,i2]
+                else:
+                    out = grad[i0,i1,:]            
+            elif self.__n_none(i0, i1, i2) == 0:
+                out = grad[i0,i1,i2]
+        elif self.__n_none(i0, i1, i2) == 3:
+            if x0 != None:
+                i0 = np.argmin(np.abs(self.get_x_arr(0)-x0))
+            if x1 != None:
+                i1 = np.argmin(np.abs(self.get_x_arr(1)-x1))
+            if x2 != None:
+                i2 = np.argmin(np.abs(self.get_x_arr(2)-x2))
+            out = self.read_derivative(dim,i0=i0, i1=i1, i2=i2)                    
+        else:
+            print('Error:\tMixed indices and positions '
+              'not allowed for grid 3d read in!')
+            sys.exit(1)
+
+        return out
 
     def read_avgx(self, dim, ax0=False, 
                              ax1=False, 

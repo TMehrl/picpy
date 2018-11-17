@@ -537,7 +537,7 @@ def plot_save_slice_quad_corr_lines(slm, savepath, time = None, axdir='x', h5plo
         plt.close(fig_quad_corr_xy)
 
 
-def plot_save_slice_centroids(slm, savepath, h5plot=True, zeta_pos=None, t_is_z=True):
+def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=None, t_is_z=True):
 
     if t_is_z:
         xlabel_str = r'$k_p z$'
@@ -552,6 +552,46 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, zeta_pos=None, t_is_z=
             Xb0[i] = slm.avgx2[0,i]
             Yb0[i] = slm.avgx3[0,i]
 
+    if time == None:
+        time = slm.time_array[-1]
+        tidx = [-1];
+    else:
+        tidx = [(np.abs(slm.time_array - time)).argmin()]
+
+    if len(tidx) == 1:
+        time = [time]
+
+    for i in range(0,len(tidx)):
+        Xb_lout_savename = 'Xb_time_%0.2f' % time[i]
+        Yb_lout_savename = 'Yb_time_%0.2f' % time[i] 
+        Xb_lout_ylab = r'$k_p X_{b}(t=%0.1f)$' % time[i]
+        Yb_lout_ylab = r'$k_p Y_{b}(t=%0.1f)$' % time[i]
+
+        figXb_lout = plt.figure()
+        plt.plot(slm.zeta_array, slm.avgx2[tidx[i],:])
+        ax = plt.gca()
+        ymin, ymax = ax.get_ylim()
+        if ymin > 0 and ymax > 0:
+            plt.ylim(0, ymax*1.2)
+        elif ymin < 0 and ymax < 0:
+            plt.ylim(ymin*1.2, 0)        
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(Xb_lout_ylab, fontsize=14)
+        saveas_eps_pdf(figXb_lout, savepath, Xb_lout_savename, h5plot=h5plot)
+        plt.close(figXb_lout)
+
+        figYb_lout = plt.figure()
+        plt.plot(slm.zeta_array, slm.avgx3[tidx[i],:])
+        ax = plt.gca()
+        ymin, ymax = ax.get_ylim()
+        if ymin > 0 and ymax > 0:
+            plt.ylim(0, ymax*1.2)
+        elif ymin < 0 and ymax < 0:
+            plt.ylim(ymin*1.2, 0)    
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(Yb_lout_ylab, fontsize=14)  
+        saveas_eps_pdf(figYb_lout, savepath, Yb_lout_savename, h5plot=h5plot)
+        plt.close(figYb_lout)
 
     Xb_norm = np.zeros( slm.avgx2.shape )
     Yb_norm = np.zeros( slm.avgx3.shape )
