@@ -339,6 +339,7 @@ class HiRAW(HiFile):
 class Grid3d(HiFile):
     def __init__(self, file):
         HiFile.__init__(self, file)
+        self.is_read_3D = False
         self.read_attrs()
         with h5py.File(self.file,'r') as hf:
             self.h5keys = list(hf.keys())
@@ -356,53 +357,55 @@ class Grid3d(HiFile):
         # self.fid = h5py.h5f.open(self.file.encode())
         # self.dset = h5py.h5d.open(self.fid, self.dsetkey.encode())
 
-    def read_3D(self):
-        with h5py.File(self.file,'r') as hf:
-            # Reading dataset (here not caring how dataset is called)
-            data3d = hf[self.dsetkey][()]
-        return data3d
+    def _read_3D(self):
+        # read 3D, making sure data is read only once
+        if self.is_read_3D == False:
+            with h5py.File(self.file,'r') as hf:
+                # Reading dataset (here not caring how dataset is called)
+                self.data3d = hf[self.dsetkey][()]
+                self.is_read_3D == True
+        return self.data3d
 
-
-    def read_2D(self, i0=None, i1=None, i2=None):
+    def _read_2D(self, i0=None, i1=None, i2=None):
         with h5py.File(self.file,'r') as hf:
         # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1==None and i2==None:
-                slice = hf[self.dsetkey][i0,:,:]
+                data2d = hf[self.dsetkey][i0,:,:]
             elif i0==None and i1!=None and i2==None:
-                slice = hf[self.dsetkey][:,i1,:]
+                data2d = hf[self.dsetkey][:,i1,:]
             elif i0==None and i1==None and i2!=None:
-                slice = hf[self.dsetkey][:,:,i2]
+                data2d = hf[self.dsetkey][:,:,i2]
             else:
                 print('Error:\tExactly one index must '
                   'be provided for HDF slice read in!')
                 sys.exit()
-        return(slice)
+        return(data2d)
 
-    def read_1D(self, i0=None, i1=None, i2=None):
+    def _read_1D(self, i0=None, i1=None, i2=None):
         with h5py.File(self.file,'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1!=None and i2==None:
-                line = hf[self.dsetkey][i0,i1,:]
+                data1d = hf[self.dsetkey][i0,i1,:]
             elif i0!=None and i1==None and i2!=None:
-                line = hf[self.dsetkey][i0,:,i2]
+                data1d = hf[self.dsetkey][i0,:,i2]
             elif i0==None and i1!=None and i2!=None:
-                line = hf[self.dsetkey][:,i1,i2]
+                data1d = hf[self.dsetkey][:,i1,i2]
             else:
                 print('Error:\tExactly two indices must '
                   'be provided for HDF line read in!')
                 sys.exit()
-        return(line)
+        return(data1d)
 
-    def read_0D(self, i0=None, i1=None, i2=None):
+    def _read_0D(self, i0=None, i1=None, i2=None):
         with h5py.File(self.file,'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1!=None and i2!=None:
-                point = hf[self.dsetkey][i0,i1,i2]
+                data0d = hf[self.dsetkey][i0,i1,i2]
             else:
                 print('Error:\tExactly three indices must '
                   'be provided for HDF point read in!')
                 sys.exit(1)
-        return(point)
+        return(data0d)
 
     def __n_none(self, arg0, arg1, arg2):
         return sum([arg0 == None, arg1 == None, arg2 == None])
@@ -413,35 +416,40 @@ class Grid3d(HiFile):
              i2=None,
              x0=None,
              x1=None,
-             x2=None):
-        if self.__n_none(x0, x1, x2) == 3:
-            if self.__n_none(i0, i1, i2) == 3:
-                return self.read_3D()
-            elif self.__n_none(i0, i1, i2) == 2:
-                return self.read_2D(i0=i0, i1=i1, i2=i2) 
-            elif self.__n_none(i0, i1, i2) == 1:
-                return self.read_1D(i0=i0, i1=i1, i2=i2)             
-            elif self.__n_none(i0, i1, i2) == 0:
-                return self.read_0D(i0=i0, i1=i1, i2=i2)
-        elif self.__n_none(i0, i1, i2) == 3:
-            if x0 != None:
-                i0 = np.argmin(np.abs(self.get_x_arr(0)-x0))
-            if x1 != None:
-                i1 = np.argmin(np.abs(self.get_x_arr(1)-x1))
-            if x2 != None:
-                i2 = np.argmin(np.abs(self.get_x_arr(2)-x2))
-            return self.read(i0=i0, i1=i1, i2=i2)                    
+             x2=None,
+             gradax=None):
+        
+        if gradax != None:
+            return self.read_grad(gradax,i0=i0,i1=i1,i2=i2,x0=x0,x1=x1,x2=x2)
         else:
-            print('Error:\tMixed indices and positions '
-              'not allowed for grid 3d read in!')
-            sys.exit(1)                                  
+            if self.__n_none(x0, x1, x2) == 3:
+                if self.__n_none(i0, i1, i2) == 3:
+                    return self._read_3D()
+                elif self.__n_none(i0, i1, i2) == 2:
+                    return self._read_2D(i0=i0, i1=i1, i2=i2) 
+                elif self.__n_none(i0, i1, i2) == 1:
+                    return self._read_1D(i0=i0, i1=i1, i2=i2)             
+                elif self.__n_none(i0, i1, i2) == 0:
+                    return self._read_0D(i0=i0, i1=i1, i2=i2)
+            elif self.__n_none(i0, i1, i2) == 3:
+                if x0 != None:
+                    i0 = np.argmin(np.abs(self.get_x_arr(0)-x0))
+                if x1 != None:
+                    i1 = np.argmin(np.abs(self.get_x_arr(1)-x1))
+                if x2 != None:
+                    i2 = np.argmin(np.abs(self.get_x_arr(2)-x2))
+                return self.read(i0=i0, i1=i1, i2=i2)                    
+            else:
+                print('Error:\tMixed indices and positions '
+                  'not allowed for grid 3d read in!')
+                sys.exit(1)                                  
 
     def read_integrate(self, 
                        ax0=False, 
                        ax1=False, 
                        ax2=False):
         # read and integrate along specified axes 
-        data = self.read_3D()
+        data = self._read_3D()
         axtup = ()
         dx = 1
         if ax0:
@@ -459,30 +467,30 @@ class Grid3d(HiFile):
     def __ax_in_plane(self, ax, i0, i1, i2):
         return ((ax+1) in (np.multiply([i0 != None, i1 != None, i2 != None],[1, 2, 3])))
 
-    def read_derivative(self, 
-                        dim,
-                        i0=None, 
-                        i1=None, 
-                        i2=None,
-                        x0=None,
-                        x1=None,
-                        x2=None):
+    def read_grad(  self, 
+                    ax,
+                    i0=None, 
+                    i1=None, 
+                    i2=None,
+                    x0=None,
+                    x1=None,
+                    x2=None):
 
-    """Read 3D data, form derivative along given axis return 0D, 1D, 2D or 3D gradient array.
+        """Read 3D data, form derivative along given axis return 0D, 1D, 2D or 3D gradient array.
 
-    Args:
-        dim (int): Dimension along which gradient is formed.
-        i0 (int, optional): Index along axis0
-        i1 (int, optional): Index along axis1
-        i2 (int, optional): Index along axis2
-        x0 (float, optional): Position along axis0
-        x1 (float, optional): Position along axis1
-        x2 (float, optional): Position along axis2
+        Args:
+            ax (int): Axis along which gradient is formed.
+            i0 (int, optional): Index along axis0
+            i1 (int, optional): Index along axis1
+            i2 (int, optional): Index along axis2
+            x0 (float, optional): Position along axis0
+            x1 (float, optional): Position along axis1
+            x2 (float, optional): Position along axis2
 
-    Returns:
-        ndarray: ...
-    """
-        grad = np.gradient(self.read_3D(),axis=dim)/self.get_dx(dim)
+        Returns:
+            ndarray: ...
+        """
+        grad = np.gradient(self._read_3D(),axis=ax)/self.get_dx(ax)
 
         # read and differentiate along specified axes 
         if self.__n_none(x0, x1, x2) == 3:
@@ -511,7 +519,7 @@ class Grid3d(HiFile):
                 i1 = np.argmin(np.abs(self.get_x_arr(1)-x1))
             if x2 != None:
                 i2 = np.argmin(np.abs(self.get_x_arr(2)-x2))
-            out = self.read_derivative(dim,i0=i0, i1=i1, i2=i2)                    
+            out = self.read_grad(ax,i0=i0, i1=i1, i2=i2)                    
         else:
             print('Error:\tMixed indices and positions '
               'not allowed for grid 3d read in!')
@@ -524,7 +532,7 @@ class Grid3d(HiFile):
                              ax2=False):
         # read and find avg position in dim and integrate along 
         # specified axes 
-        data = self.read_3D()            
+        data = self._read_3D()            
 
         axtup = ()
         dx = 1
@@ -609,39 +617,39 @@ class Grid2d(HiFile):
         with h5py.File(self.file,'r') as hf:
         # Reading dataset (here not caring how dataset is called)
             
-            slice = hf[self.dsetkey][()]
+            data2d = hf[self.dsetkey][()]
             # elif i0==None and i1!=None and i2==None:
-            #     slice = hf[self.dsetkey][:,i1]
+            #     data2d = hf[self.dsetkey][:,i1]
             # elif i0==None and i1==None and i2!=None:
-            #     slice = hf[self.dsetkey][:,i2]
-        return(slice)
+            #     data2d = hf[self.dsetkey][:,i2]
+        return(data2d)
 
     def read_1D(self, i0=None, i1=None, i2=None):
         with h5py.File(self.file,'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1==None:
-                line = hf[self.dsetkey][i0,:]
+                data1d = hf[self.dsetkey][i0,:]
             elif i0==None and i1!=None:
-                line = hf[self.dsetkey][:,i1]
+                data1d = hf[self.dsetkey][:,i1]
             elif i0==None and i2!=None:
-                line = hf[self.dsetkey][:,i2]
+                data1d = hf[self.dsetkey][:,i2]
                 print('Warning: Wrong index (only 2d array available). \n'
-                        'Switched to x instead of y!')
+                        'Switched to x1 instead of x2!')
             else:
                 print('Error:\t Something went wrong with the reading of the line out')
                 sys.exit()
-        return(line)
+        return(data1d)
 
     def read_0D(self, i0=None, i1=None, i2=None):
         with h5py.File(self.file,'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1!=None and i2!=None:
-                point = hf[self.dsetkey][i0,i1,i2]
+                data0d = hf[self.dsetkey][i0,i1,i2]
             else:
                 print('Error:\tExactly three indices must '
                   'be provided for HDF point read in!')
                 sys.exit(1)
-        return(point)
+        return(data0d)
 
     def __n_none(self, arg0, arg1, arg2):
         return sum([arg0 == None, arg1 == None, arg2 == None])
@@ -655,15 +663,15 @@ class Grid2d(HiFile):
              x2=None):
         if self.__n_none(x0, x1, x2) == 3:
             if self.__n_none(i0, i1, i2) == 3:
-                return self.read_2D()
+                return self._read_2D()
             elif self.__n_none(i0, i1, i2) == 2:
-                return self.read_1D(i0=i0, i1=i1, i2=i2) 
+                return self._read_1D(i0=i0, i1=i1, i2=i2) 
             elif self.__n_none(i0, i1, i2) == 1:
-                return self.read_0D(i0=i0, i1=i1, i2=i2)             
+                return self._read_0D(i0=i0, i1=i1, i2=i2)             
             elif self.__n_none(i0, i1, i2) == 0:
                 print('Error:\tToo many indices for 2D array! ')
                 sys.exit(1)    
-                return self.read_0D(i0=i0, i1=i1, i2=i2)
+                return self._read_0D(i0=i0, i1=i1, i2=i2)
         elif self.__n_none(i0, i1, i2) == 3:
             if x0 != None:
                 i0 = np.argmin(np.abs(self.get_x_arr(0)-x0))
@@ -682,7 +690,7 @@ class Grid2d(HiFile):
                        ax1=False, 
                        ax2=False):
         # read and integrate along specified axes 
-        data = self.read_3D()
+        data = self._read_3D()
         axtup = ()
         dx = 1
         if ax0:
@@ -703,7 +711,7 @@ class Grid2d(HiFile):
                              ax2=False):
         # read and find avg position in dim and integrate along 
         # specified axes 
-        data = self.read_3D()            
+        data = self._read_3D()            
 
         axtup = ()
         dx = 1

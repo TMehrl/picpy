@@ -90,7 +90,13 @@ def g3d_parser():
                           dest="avgax",
                           choices=[ 'x', 'y', 'z'],
                           default=None,
-                          help= """Axis-position averaged for (default: %(default)s).""")    
+                          help= """Axis-position averaged for (default: %(default)s).""")
+    parser.add_argument(  "--gradax",
+                          action='store',
+                          dest="gradax",
+                          choices=[ 'x', 'y', 'z'],
+                          default=None,
+                          help= """Gradient along given axis (default: %(default)s).""")                              
     parser.add_argument(  "--xlim",
                           help='Customize x-axis limits',
                           action='store',
@@ -330,6 +336,24 @@ def gen_pretty_grid_name( gname ):
     else:
         return gname
 
+
+def xyz_to_axidx(xyz_str,code='hipace'):
+    # convert x,y,z to axis index
+    if code == 'hipace':
+        if xyz_str == 'x':
+            axidx = 1
+        elif xyz_str == 'y':
+            axidx = 2
+        elif xyz_str == 'z':
+            axidx = 0
+        else:
+            axidx = None
+    else:
+        sys.stdout.write('Error: Code not implemented!\n')
+        sys.stdout.flush()
+        sys.exit(1)
+    return axidx
+
 def round_figures(x, n): 
     """Returns x rounded to n significant figures."""
     return round(x, int(n - math.ceil(math.log10(abs(x)))))
@@ -463,6 +487,9 @@ class G3d_plot_slice(G3d_plot):
 
     def read( self ):
         # read slice
+
+        gradax = xyz_to_axidx(self.args.gradax)
+
         if 'z' in self.args.plane:
             if 'x' in self.args.plane:
                 if self.args.if_integrate:
@@ -470,13 +497,13 @@ class G3d_plot_slice(G3d_plot):
                 else:
                     if (self.args.plane_index == None) and (self.args.plane_pos == None):
                         index = math.floor(self.g3d.nx[2]/2) - 1
-                        self.slice = self.g3d.read(i2=index)
+                        self.slice = self.g3d.read(i2=index,gradax=gradax)
                         if self.g3d.nx[2]%2 == 0:
-                            self.slice = (self.slice + self.g3d.read(i2=index+1))/2
+                            self.slice = (self.slice + self.g3d.read(i2=index+1,gradax=gradax))/2
                     elif (self.args.plane_index != None) and (self.args.plane_pos == None):
-                        self.slice = self.g3d.read(i2=self.args.plane_index)
+                        self.slice = self.g3d.read(i2=self.args.plane_index,gradax=gradax)
                     elif (self.args.plane_index == None) and (self.args.plane_pos != None): 
-                        self.slice = self.g3d.read(x2=self.args.plane_pos)
+                        self.slice = self.g3d.read(x2=self.args.plane_pos,gradax=gradax)
                     else:
                         sys.stdout.write('ERROR: plane-index can''t be used in conjunction with plane-position!\n')
                         sys.stdout.flush()
@@ -488,13 +515,13 @@ class G3d_plot_slice(G3d_plot):
                 else:    
                     if (self.args.plane_index == None) and (self.args.plane_pos == None):
                         index = math.floor(self.g3d.nx[1]/2) - 1
-                        self.slice = self.g3d.read(i1=index)
+                        self.slice = self.g3d.read(i1=index,gradax=gradax)
                         if self.g3d.nx[1]%2 == 0:
-                            self.slice = ( self.slice + self.g3d.read(i1=index+1) )/2
+                            self.slice = ( self.slice + self.g3d.read(i1=index+1,gradax=gradax) )/2
                     elif (self.args.plane_index != None) and (self.args.plane_pos == None): 
-                        self.slice = self.g3d.read(i1=self.args.plane_index)
+                        self.slice = self.g3d.read(i1=self.args.plane_index,gradax=gradax)
                     elif (self.args.plane_index == None) and (self.args.plane_pos != None): 
-                        self.slice = self.g3d.read(x1=self.args.plane_pos)                    
+                        self.slice = self.g3d.read(x1=self.args.plane_pos,gradax=gradax)                    
                     else:
                         sys.stdout.write('ERROR: plane-index can''t be used in conjunction with plane-position!\n')
                         sys.stdout.flush()
@@ -506,13 +533,13 @@ class G3d_plot_slice(G3d_plot):
             else:
                 if (self.args.plane_index == None) and (self.args.plane_pos == None):
                     index = math.floor(self.g3d.nx[0]/2) - 1
-                    self.slice = self.g3d.read(i0=index)
+                    self.slice = self.g3d.read(i0=index,gradax=gradax)
                     if self.g3d.nx[0]%2 == 0:
-                        self.slice = ( self.slice + self.g3d.read(i0=index+1) )/2
+                        self.slice = ( self.slice + self.g3d.read(i0=index+1,gradax=gradax) )/2
                 elif (self.args.plane_index != None) and (self.args.plane_pos == None):
-                    self.slice = self.g3d.read(i0=self.args.plane_index)
+                    self.slice = self.g3d.read(i0=self.args.plane_index,gradax=gradax)
                 elif (self.args.plane_index == None) and (self.args.plane_pos != None):    
-                    self.slice = self.g3d.read(x0=self.args.plane_pos) 
+                    self.slice = self.g3d.read(x0=self.args.plane_pos,gradax=gradax) 
                 else:
                     sys.stdout.write('ERROR: plane-index can''t be used in conjunction with plane-position!\n')
                     sys.stdout.flush()
@@ -695,6 +722,20 @@ class G3d_plot_slice(G3d_plot):
         if self.g3d.is_subgrid():
             self.app_str += '_subgrid'
 
+        if self.args.gradax != None:
+            self.app_str += '_grad%s' % self.args.gradax
+            cblabel = r'$d($' + gen_pretty_grid_name( self.g3d.name ) + r'$)/k_p%s$' % self.args.gradax
+        elif self.args.if_integrate:
+            self.app_str += '_int'
+            cblabel = r'$k_p \int$' + gen_pretty_grid_name( self.g3d.name )
+            if 'x' in self.args.plane and 'y' in self.args.plane:
+                cblabel += r'$\,dz$'
+            elif 'x' in self.args.plane and 'z' in self.args.plane:
+                cblabel += r'$\,dy$'
+            elif 'y' in self.args.plane and 'z' in self.args.plane:
+                cblabel += r'$\,dx$'
+        else:
+            cblabel = gen_pretty_grid_name( self.g3d.name )
 
         fig = plt.figure()
         if self.args.ptype == 'pcolormesh':
@@ -748,7 +789,7 @@ class G3d_plot_slice(G3d_plot):
             cax.norm = matplotlib.colors.LogNorm(vmin=self.clim[0], vmax=self.clim[1])
 
         cbar = fig.colorbar(cax)
-        cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )            
+        cbar.ax.set_ylabel( cblabel, fontsize=14 )            
 
         if not self.args.clog:
             #manually setting cbar ticks to avoid cutoff of the last tick
@@ -975,8 +1016,11 @@ class G3d_plot_line(G3d_plot):
                 self.ylabel = self.ylabel + r'$\,dy dz$'
             if self.args.lineax == 'y':
                 self.ylabel = self.ylabel + r'$\,dx dz$'
+        elif self.args.gradax != None:
+            self.ylabel = r'$d($' + gen_pretty_grid_name( self.g3d.name ) + r'$)/k_p d%s$' % self.args.gradax
         else:
             self.ylabel = gen_pretty_grid_name( self.g3d.name )
+
         ylim = [0.0, 0.0]
         # define axis labels and arrays
         if self.g3d.type == pp_defs.hipace.h5.g3dtypes.density:
@@ -994,6 +1038,9 @@ class G3d_plot_line(G3d_plot):
 
     def read( self ):
         # read line
+
+        gradax = xyz_to_axidx(self.args.gradax)
+
         if self.args.lout_idx != None:
             lout_idx = list(self.args.lout_idx)
 
@@ -1014,18 +1061,18 @@ class G3d_plot_line(G3d_plot):
                     # Default: central lineout
                     idx1 = math.floor(self.g3d.nx[1]/2) - 1
                     idx2 = math.floor(self.g3d.nx[2]/2) - 1
-                    self.line = self.g3d.read(i1=idx1, i2=idx2)
+                    self.line = self.g3d.read(i1=idx1, i2=idx2, gradax=gradax)
                     if self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 0:
-                        line01 = self.g3d.read(i1=idx1, i2=idx2+1)
-                        line10 = self.g3d.read(i1=idx1+1, i2=idx2)
-                        line11 = self.g3d.read(i1=idx1+1, i2=idx2+1)
+                        line01 = self.g3d.read(i1=idx1, i2=idx2+1, gradax=gradax)
+                        line10 = self.g3d.read(i1=idx1+1, i2=idx2, gradax=gradax)
+                        line11 = self.g3d.read(i1=idx1+1, i2=idx2+1, gradax=gradax)
                         self.line = ( self.line + line01 + line10 + line11 )/4
                     elif self.g3d.nx[1]%2 == 1 and self.g3d.nx[2]%2 == 0:
-                        self.line = ( self.line + self.g3d.read(i1=idx1, i2=idx2+1) )/2
+                        self.line = ( self.line + self.g3d.read(i1=idx1, i2=idx2+1, gradax=gradax) )/2
                     elif self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 1:
-                        self.line = ( self.line + self.g3d.read(i1=idx1+1, i2=idx2) )/2
+                        self.line = ( self.line + self.g3d.read(i1=idx1+1, i2=idx2, gradax=gradax) )/2
                 else:
-                    self.line = self.g3d.read(i1=lout_idx[0], i2=lout_idx[1])
+                    self.line = self.g3d.read(i1=lout_idx[0], i2=lout_idx[1], gradax=gradax)
 
         elif 'x' == self.args.lineax:
             if self.args.if_integrate:
@@ -1046,18 +1093,18 @@ class G3d_plot_line(G3d_plot):
                     idx2 = math.floor(self.g3d.nx[2]/2) - 1
                     self.line = self.g3d.read(i0=idx1, i2=idx2)
                     if self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 0:
-                        line01 = self.g3d.read(i0=idx1, i2=idx2+1)
-                        line10 = self.g3d.read(i0=idx1+1, i2=idx2)
-                        line11 = self.g3d.read(i0=idx1+1, i2=idx2+1)
+                        line01 = self.g3d.read(i0=idx1, i2=idx2+1, gradax=gradax)
+                        line10 = self.g3d.read(i0=idx1+1, i2=idx2, gradax=gradax)
+                        line11 = self.g3d.read(i0=idx1+1, i2=idx2+1, gradax=gradax)
                         self.line = ( self.line + line01 + line10 + line11 )/4
                     elif self.g3d.nx[0]%2 == 1 and self.g3d.nx[2]%2 == 0:
-                        self.line = ( self.line + self.g3d.read(i0=idx1, i2=idx2+1) )/2
+                        self.line = ( self.line + self.g3d.read(i0=idx1, i2=idx2+1, gradax=gradax) )/2
                     elif self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 1:
-                        self.line = ( self.line + self.g3d.read(i0=idx1+1, i2=idx2) )/2
+                        self.line = ( self.line + self.g3d.read(i0=idx1+1, i2=idx2, gradax=gradax) )/2
                 elif (self.args.lout_idx != None) and (self.args.lout_zeta_pos == None):
-                    self.line = self.g3d.read(i0=lout_idx[0], i2=lout_idx[1])
+                    self.line = self.g3d.read(i0=lout_idx[0], i2=lout_idx[1], gradax=gradax)
                 elif (self.args.lout_idx == None) and (self.args.lout_zeta_pos != None):
-                    self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x2=0.0)
+                    self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x2=0.0, gradax=gradax)
                 else:
                     sys.stdout.write('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!\n')
                     sys.stdout.flush()
@@ -1080,20 +1127,20 @@ class G3d_plot_line(G3d_plot):
                     # Default: central lineout
                     idx1 = math.floor(self.g3d.nx[0]/2) - 1
                     idx2 = math.floor(self.g3d.nx[1]/2) - 1
-                    self.line = self.g3d.read(i0=idx1, i1=idx2)
+                    self.line = self.g3d.read(i0=idx1, i1=idx2, gradax=gradax)
                     if self.g3d.nx[0]%2 == 0 and self.g3d.nx[1]%2 == 0:
-                        line01 = self.g3d.read(i0=idx1, i1=idx2+1)
-                        line10 = self.g3d.read(i0=idx1+1, i1=idx2)
-                        line11 = self.g3d.read(i0=idx1+1, i1=idx2+1)
+                        line01 = self.g3d.read(i0=idx1, i1=idx2+1, gradax=gradax)
+                        line10 = self.g3d.read(i0=idx1+1, i1=idx2, gradax=gradax)
+                        line11 = self.g3d.read(i0=idx1+1, i1=idx2+1, gradax=gradax)
                         self.line = ( self.line + line01 + line10 + line11 )/4
                     elif self.g3d.nx[0]%2 == 1 and self.g3d.nx[1]%2 == 0:
-                        self.line = ( self.line + self.g3d.read(i0=idx1, i1=idx2+1) )/2
+                        self.line = ( self.line + self.g3d.read(i0=idx1, i1=idx2+1, gradax=gradax) )/2
                     elif self.g3d.nx[0]%2 == 0 and self.g3d.nx[1]%2 == 1:
-                        self.line = ( self.line + self.g3d.read(i0=idx1+1, i1=idx2) )/2
+                        self.line = ( self.line + self.g3d.read(i0=idx1+1, i1=idx2, gradax=gradax) )/2
                 elif (self.args.lout_idx != None) and (self.args.lout_zeta_pos == None):
-                    self.line = self.g3d.read(i0=lout_idx[0], i1=lout_idx[1])
+                    self.line = self.g3d.read(i0=lout_idx[0], i1=lout_idx[1], gradax=gradax)
                 elif (self.args.lout_idx == None) and (self.args.lout_zeta_pos != None):
-                    self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x1=0.0)
+                    self.line = self.g3d.read(x0=self.args.lout_zeta_pos, x1=0.0, gradax=gradax)
                 else:
                     sys.stdout.write('ERROR: lineout-index can''t be used in conjunction with lineout-zeta-position!\n')
                     sys.stdout.flush()
@@ -1116,6 +1163,9 @@ class G3d_plot_line(G3d_plot):
 
         if self.g3d.is_subgrid():
             self.app_str += '_subgrid' 
+
+        if self.args.gradax != None:
+            self.app_str += '_grad%s' % self.args.gradax
 
         if self.args.if_integrate:
             self.app_str += '_int'
