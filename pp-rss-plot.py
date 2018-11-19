@@ -151,15 +151,15 @@ def magn_check(x):
 
 def plot_save_slice_rms(slm, savepath, verbose=True, t_is_z=True):
 
-    x = slm.zeta_array
-    y = slm.time_array
+    x = slm.get_zeta_array()
+    y = slm.get_time_array()
 
     if t_is_z:
         xlabel_str = r'$k_p z$'
     else:
         xlabel_str = r'$\omega_p t$'
 
-    sigma_x = np.sqrt( np.absolute( slm.avgx2sq ) )
+    sigma_x = np.sqrt( np.absolute( slm.get(x=2) ) )
     fig_sx = plt.figure()
     cax = plt.pcolormesh( x,
                           y,
@@ -174,7 +174,7 @@ def plot_save_slice_rms(slm, savepath, verbose=True, t_is_z=True):
     saveas_png(fig_sx, savepath, 'sigma_x')
 
 
-    sigma_px = np.sqrt( np.absolute( slm.avgp2sq ) )
+    sigma_px = np.sqrt( np.absolute( slm.get(px=2) ) )
     fig_spx = plt.figure()
     cax = plt.pcolormesh( x,
                           y,
@@ -188,8 +188,8 @@ def plot_save_slice_rms(slm, savepath, verbose=True, t_is_z=True):
     cbar.ax.set_ylabel(r'$k_p \sigma_{p_x}$', fontsize=14)  
     saveas_png(fig_spx, savepath, 'sigma_px')
 
-    emittance = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) 
-                         - np.power(slm.avgx2p2,2) )
+    emittance = np.sqrt( np.multiply(slm.get(x=2), slm.get(px=2)) 
+                         - np.power(slm.get(x=1,px=1),2) )
     fig_e = plt.figure()
     cax = plt.pcolormesh( x,
                           y,
@@ -206,8 +206,8 @@ def plot_save_slice_rms(slm, savepath, verbose=True, t_is_z=True):
 
 def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is_z=True):
     
-    t = slm.time_array
-    tot_charge = np.sum(slm.charge, axis=1)
+    t = slm.get_time_array()
+    tot_charge = np.sum(slm.get_charge(), axis=1)
 
     if t_is_z:
         xlabel_str = r'$k_p z$'
@@ -215,14 +215,14 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
         xlabel_str = r'$\omega_p t$'
 
     if axdir == 'x':
-        xavg = np.divide(np.sum(np.multiply(slm.avgx2, slm.charge), axis=1),tot_charge)
-        pavg = np.divide(np.sum(np.multiply(slm.avgp2, slm.charge), axis=1),tot_charge)
+        xavg = np.divide(np.sum(np.multiply(slm.get(x=1), slm.get_charge()), axis=1),tot_charge)
+        pavg = np.divide(np.sum(np.multiply(slm.get(px=1), slm.get_charge()), axis=1),tot_charge)
 
-        xsq_noncentral = np.divide(np.sum(np.multiply(slm.avgx2sq + np.power(slm.avgx2,2), slm.charge), axis=1),tot_charge)
-        psq_noncentral = np.divide(np.sum(np.multiply(slm.avgp2sq + np.power(slm.avgp2,2), slm.charge), axis=1),tot_charge)
-        xp_noncentral = np.divide(np.sum(np.multiply(slm.avgx2p2 + np.multiply(slm.avgx2,slm.avgp2), slm.charge), axis=1),tot_charge)
-        emittance_all_slices = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) - np.power(slm.avgx2p2,2) )
-        emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.charge), axis=1),tot_charge)
+        xsq_noncentral = np.divide(np.sum(np.multiply(slm.get(x=2) + np.power(slm.get(x=1),2), slm.get_charge()), axis=1),tot_charge)
+        psq_noncentral = np.divide(np.sum(np.multiply(slm.get(px=2) + np.power(slm.get(px=1),2), slm.get_charge()), axis=1),tot_charge)
+        xp_noncentral = np.divide(np.sum(np.multiply(slm.get(x=1,px=1) + np.multiply(slm.get(x=1),slm.get(px=1)), slm.get_charge()), axis=1),tot_charge)
+        emittance_all_slices = np.sqrt( np.multiply(slm.get(x=2), slm.get(px=2)) - np.power(slm.get(x=1,px=1),2) )
+        emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.get_charge()), axis=1),tot_charge)
         
         sigma_xyr_lab = r'$k_p\sigma_x$'
         sigma_xyr_savename = 'sigma_x_proj'
@@ -241,14 +241,14 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
 
 
     elif axdir == 'y':
-        xavg = np.divide(np.sum(np.multiply(slm.avgx3, slm.charge), axis=1),tot_charge)
-        pavg = np.divide(np.sum(np.multiply(slm.avgp3, slm.charge), axis=1),tot_charge)
+        xavg = np.divide(np.sum(np.multiply(slm.get(y=1), slm.get_charge()), axis=1),tot_charge)
+        pavg = np.divide(np.sum(np.multiply(slm.get(py=1), slm.get_charge()), axis=1),tot_charge)
 
-        xsq_noncentral = np.divide(np.sum(np.multiply(slm.avgx3sq + np.power(slm.avgx3,2), slm.charge), axis=1),tot_charge)
-        psq_noncentral = np.divide(np.sum(np.multiply(slm.avgp3sq + np.power(slm.avgp3,2), slm.charge), axis=1),tot_charge)
-        xp_noncentral = np.divide(np.sum(np.multiply(slm.avgx3p3 + np.multiply(slm.avgx3,slm.avgp3), slm.charge), axis=1),tot_charge)
-        emittance_all_slices = np.sqrt( np.multiply(slm.avgx3sq, slm.avgp3sq) - np.power(slm.avgx3p3,2) )
-        emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.charge), axis=1),tot_charge)
+        xsq_noncentral = np.divide(np.sum(np.multiply(slm.get(y=2) + np.power(slm.get(y=1),2), slm.get_charge()), axis=1),tot_charge)
+        psq_noncentral = np.divide(np.sum(np.multiply(slm.get(py=2) + np.power(slm.get(py=1),2), slm.get_charge()), axis=1),tot_charge)
+        xp_noncentral = np.divide(np.sum(np.multiply(slm.get(y=1,py=1) + np.multiply(slm.get(y=1),slm.get(py=1)), slm.get_charge()), axis=1),tot_charge)
+        emittance_all_slices = np.sqrt( np.multiply(slm.get(y=2), slm.get(py=2)) - np.power(slm.get(y=1,py=1),2) )
+        emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.get_charge()), axis=1),tot_charge)
         
         sigma_xyr_lab = r'$k_p\sigma_y$'
         sigma_xyr_savename = 'sigma_y_proj'                
@@ -266,19 +266,19 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
         epsilon_xy_sl_savename = 'emittance_y_sliced'         
 
     elif axdir == 'r':
-        xavg = np.divide(np.sum(np.multiply(slm.avgx2 + slm.avgx3, slm.charge), axis=1),tot_charge)
-        pavg = np.divide(np.sum(np.multiply(slm.avgp2 + slm.avgp3, slm.charge), axis=1),tot_charge)
+        xavg = np.divide(np.sum(np.multiply(slm.get(x=1) + slm.get(y=1), slm.get_charge()), axis=1),tot_charge)
+        pavg = np.divide(np.sum(np.multiply(slm.get(px=1) + slm.get(py=1), slm.get_charge()), axis=1),tot_charge)
 
-        xsq_noncentral = np.divide(np.sum(np.multiply(slm.avgx2sq + slm.avgx3sq \
-            + np.power(slm.avgx2,2) + np.power(slm.avgx3,2), slm.charge), axis=1),tot_charge)
-        psq_noncentral = np.divide(np.sum(np.multiply(slm.avgp2sq \
-            + slm.avgp3sq + np.power(slm.avgp2,2) + np.power(slm.avgp3,2), slm.charge), axis=1),tot_charge)
-        xp_noncentral = np.divide(np.sum(np.multiply(slm.avgx2p2 + slm.avgx3p3 \
-            + np.multiply(slm.avgx2,slm.avgp2) + np.multiply(slm.avgx3,slm.avgp3), slm.charge), axis=1),tot_charge)
+        xsq_noncentral = np.divide(np.sum(np.multiply(slm.get(x=2) + slm.get(y=2) \
+            + np.power(slm.get(x=1),2) + np.power(slm.get(y=1),2), slm.get_charge()), axis=1),tot_charge)
+        psq_noncentral = np.divide(np.sum(np.multiply(slm.get(px=2) \
+            + slm.get(py=2) + np.power(slm.get(px=1),2) + np.power(slm.get(py=1),2), slm.get_charge()), axis=1),tot_charge)
+        xp_noncentral = np.divide(np.sum(np.multiply(slm.get(x=1,px=1) + slm.get(y=1,py=1) \
+            + np.multiply(slm.get(x=1),slm.get(px=1)) + np.multiply(slm.get(y=1),slm.get(py=1)), slm.get_charge()), axis=1),tot_charge)
 
-        emittance_all_slices = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) - np.power(slm.avgx2p2,2) + \
-                np.multiply(slm.avgx3sq, slm.avgp3sq) - np.power(slm.avgx3p3,2) )
-        emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.charge), axis=1),tot_charge)
+        emittance_all_slices = np.sqrt( np.multiply(slm.get(x=2), slm.get(px=2)) - np.power(slm.get(x=1,px=1),2) + \
+                np.multiply(slm.get(y=2), slm.get(py=2)) - np.power(slm.get(y=1,py=1),2) )
+        emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.get_charge()), axis=1),tot_charge)
         
         sigma_xyr_lab = r'$k_p\sigma_r$'
         sigma_xyr_savename = 'sigma_r_proj'                
@@ -394,49 +394,49 @@ def plot_save_slice_rms_lines(slm, savepath, time = None, axdir='x', h5plot=True
     if time == None:
         tidx = [0,-1];
     else:
-        tidx = [(np.abs(slm.time_array - time)).argmin()]
+        tidx = [(np.abs(slm.get_time_array() - time)).argmin()]
 
     for i in tidx:
         if axdir == 'x':
-            sigma_xy = np.sqrt(slm.avgx2sq[i,:])
+            sigma_xy = np.sqrt(slm.get(x=2)[i,:])
             sigma_xy_lab = r'$k_p \sigma_{x}$'
             sigma_xy_savename = 'sigma_x'
-            sigma_pxy = np.sqrt(slm.avgp2sq[i,:])
+            sigma_pxy = np.sqrt(slm.get(px=2)[i,:])
             sigma_pxy_lab = r'$\sigma_{p_x}/mc$'
             sigma_pxy_savename = 'sigma_px'
             # Also define labels and savenames here!    
         elif axdir == 'y':
-            sigma_xy = np.sqrt(slm.avgx3sq[i,:])
+            sigma_xy = np.sqrt(slm.get(y=2)[i,:])
             sigma_xy_lab = r'$k_p \sigma_{y}$'
             sigma_xy_savename = 'sigma_y'
-            sigma_pxy = np.sqrt(slm.avgp3sq[i,:])
+            sigma_pxy = np.sqrt(slm.get(py=2)[i,:])
             sigma_pxy_lab = r'$\sigma_{p_y}/mc$'
             sigma_pxy_savename = 'sigma_py'
         elif axdir == 'r':
-            sigma_xy = np.sqrt(slm.avgx2sq[i,:] + slm.avgx3sq[i,:])
+            sigma_xy = np.sqrt(slm.get(x=2)[i,:] + slm.get(y=2)[i,:])
             sigma_xy_lab = r'$k_p \sigma_{r}$'
             sigma_xy_savename = 'sigma_r'
-            sigma_pxy = np.sqrt(slm.avgp2sq[i,:] + slm.avgp3sq[i,:])
+            sigma_pxy = np.sqrt(slm.get(px=2)[i,:] + slm.get(py=2)[i,:])
             sigma_pxy_lab = r'$(\sigma_{p_x}^2+\sigma_{p_y}^2)^{1/2}/mc$'
             sigma_pxy_savename = 'sigma_pr'            
 
         fig_sigma_xy = plt.figure()
-        plt.plot( slm.zeta_array,
+        plt.plot( slm.get_zeta_array(),
                   sigma_xy)
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(sigma_xy_lab, fontsize=14)     
-        saveas_eps_pdf(fig_sigma_xy, savepath, ('%s_time_%0.1f' % (sigma_xy_savename, slm.time_array[i])), h5plot=h5plot)
+        saveas_eps_pdf(fig_sigma_xy, savepath, ('%s_time_%0.1f' % (sigma_xy_savename, slm.get_time_array()[i])), h5plot=h5plot)
         plt.close(fig_sigma_xy)
 
 
         fig_sigma_pxy = plt.figure()
-        plt.plot( slm.zeta_array,
+        plt.plot( slm.get_zeta_array(),
                   sigma_pxy)
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(sigma_pxy_lab, fontsize=14)     
-        saveas_eps_pdf(fig_sigma_pxy, savepath, ('%s_time_%0.1f' % (sigma_pxy_savename, slm.time_array[i])), h5plot=h5plot)
+        saveas_eps_pdf(fig_sigma_pxy, savepath, ('%s_time_%0.1f' % (sigma_pxy_savename, slm.get_time_array()[i])), h5plot=h5plot)
         plt.close(fig_sigma_pxy)
 
 def plot_save_slice_exkurtosis_lines(slm, savepath, time = None, axdir='x', h5plot=True):
@@ -444,58 +444,58 @@ def plot_save_slice_exkurtosis_lines(slm, savepath, time = None, axdir='x', h5pl
     if time == None:
         tidx = [0,-1];
     else:
-        tidx = [(np.abs(slm.time_array - time)).argmin()]
+        tidx = [(np.abs(slm.get_time_array() - time)).argmin()]
 
     for i in tidx:
         if axdir == 'y':
-            var_xy = slm.avgx3sq[i,:]
+            var_xy = slm.get(y=2)[i,:]
             var_xy_nonzero_idx = np.nonzero(var_xy)[0]           
-            exkurtosis_xy = np.divide(  slm.avgx3quar[i,var_xy_nonzero_idx],\
+            exkurtosis_xy = np.divide(  slm.get(y=4)[i,var_xy_nonzero_idx],\
                                         np.power(var_xy[var_xy_nonzero_idx],2)) - 3
             exkurtosis_xy_lab = r'$\left \langle y^4 \right\rangle -3$'
             exkurtosis_xy_savename = 'exkurtosis_y'
             
-            var_pxy = slm.avgp3sq[i,:]
+            var_pxy = slm.get(py=2)[i,:]
             var_pxy_nonzero_idx = np.nonzero(var_pxy)[0]
-            exkurtosis_pxy = np.divide( slm.avgp3quar[i,var_pxy_nonzero_idx],\
+            exkurtosis_pxy = np.divide( slm.get(py=4)[i,var_pxy_nonzero_idx],\
                                         np.power(var_pxy[var_pxy_nonzero_idx],2)) - 3
             exkurtosis_pxy_lab = r'$\left \langle p_y^4/\sigma_{py}^4 \right\rangle -3$'
             exkurtosis_pxy_savename = 'exkurtosis_py'
 
         else: 
             # xdir == 'x' or xdir == 'r'
-            var_xy = slm.avgx2sq[i,:]
+            var_xy = slm.get(x=2)[i,:]
             var_xy_nonzero_idx = np.nonzero(var_xy)[0]
-            exkurtosis_xy = np.divide(  slm.avgx2quar[i,var_xy_nonzero_idx],\
+            exkurtosis_xy = np.divide(  slm.get(x=4)[i,var_xy_nonzero_idx],\
                                         np.power(var_xy[var_xy_nonzero_idx],2)) - 3
             exkurtosis_xy_lab = r'$\left \langle x^4/\sigma_x^4 \right\rangle - 3$'
             exkurtosis_xy_savename = 'exkurtosis_x'
             
-            var_pxy = slm.avgp2sq[i,:]
+            var_pxy = slm.get(px=2)[i,:]
             var_pxy_nonzero_idx = np.nonzero(var_pxy)[0]
-            exkurtosis_pxy = np.divide( slm.avgp2quar[i,var_pxy_nonzero_idx],\
+            exkurtosis_pxy = np.divide( slm.get(px=4)[i,var_pxy_nonzero_idx],\
                                         np.power(var_pxy[var_pxy_nonzero_idx],2)) - 3
             exkurtosis_pxy_lab = r'$\left \langle p_x^4/\sigma_{px}^4 \right\rangle -3$'
             exkurtosis_pxy_savename = 'exkurtosis_px'
             # Also define labels and savenames here!   
 
         fig_exkurtosis_xy = plt.figure()
-        plt.plot( slm.zeta_array[var_xy_nonzero_idx],
+        plt.plot( slm.get_zeta_array()[var_xy_nonzero_idx],
                   exkurtosis_xy)
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(exkurtosis_xy_lab, fontsize=14)     
-        saveas_eps_pdf(fig_exkurtosis_xy, savepath, ('%s_time_%0.1f' % (exkurtosis_xy_savename, slm.time_array[i])), h5plot=h5plot)
+        saveas_eps_pdf(fig_exkurtosis_xy, savepath, ('%s_time_%0.1f' % (exkurtosis_xy_savename, slm.get_time_array()[i])), h5plot=h5plot)
         plt.close(fig_exkurtosis_xy)
 
 
         fig_exkurtosis_pxy = plt.figure()
-        plt.plot( slm.zeta_array[var_pxy_nonzero_idx],
+        plt.plot( slm.get_zeta_array()[var_pxy_nonzero_idx],
                   exkurtosis_pxy)
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(exkurtosis_pxy_lab, fontsize=14)     
-        saveas_eps_pdf(fig_exkurtosis_pxy, savepath, ('%s_time_%0.1f' % (exkurtosis_pxy_savename, slm.time_array[i])), h5plot=h5plot)
+        saveas_eps_pdf(fig_exkurtosis_pxy, savepath, ('%s_time_%0.1f' % (exkurtosis_pxy_savename, slm.get_time_array()[i])), h5plot=h5plot)
         plt.close(fig_exkurtosis_pxy)
 
 
@@ -504,36 +504,36 @@ def plot_save_slice_quad_corr_lines(slm, savepath, time = None, axdir='x', h5plo
     if time == None:
         tidx = [0,-1];
     else:
-        tidx = [(np.abs(slm.time_array - time)).argmin()]
+        tidx = [(np.abs(slm.get_time_array() - time)).argmin()]
 
     for i in tidx:
         if axdir == 'y':
-            var_xy = slm.avgx3sq[i,:]
-            var_pxy = slm.avgp3sq[i,:]
+            var_xy = slm.get(y=2)[i,:]
+            var_pxy = slm.get(py=2)[i,:]
             nonzero_idx = np.nonzero(np.multiply(var_xy, var_pxy))[0]
-            quad_corr_xy = np.divide(  slm.avgx3sqp3sq[i,nonzero_idx],\
+            quad_corr_xy = np.divide(  slm.get(y=2,py=2)[i,nonzero_idx],\
                                         np.multiply(var_xy[nonzero_idx],var_pxy[nonzero_idx]) ) - 1.0
             quad_corr_xy_lab = r'$\left \langle y^2  p_y^2\right\rangle/(\sigma_y^2\sigma_{p_y}^2) - 1$'
             quad_corr_xy_savename = 'quad_corr_y'
   
         else: 
             # axdir == 'x' or axdir == 'r'
-            var_xy = slm.avgx2sq[i,:]
-            var_pxy = slm.avgp2sq[i,:]
+            var_xy = slm.get(x=2)[i,:]
+            var_pxy = slm.get(px=2)[i,:]
             nonzero_idx = np.nonzero(np.multiply(var_xy, var_pxy))[0]
-            quad_corr_xy = np.divide(  slm.avgx2sqp2sq[i,nonzero_idx],\
+            quad_corr_xy = np.divide(  slm.get(x=2,px=2)[i,nonzero_idx],\
                                         np.multiply(var_xy[nonzero_idx],var_pxy[nonzero_idx]) ) - 1.0
             quad_corr_xy_lab = r'$\left \langle x^2  p_x^2\right\rangle/(\sigma_x^2\sigma_{p_x}^2) - 1$'
             quad_corr_xy_savename = 'quad_corr_x'
 
 
         fig_quad_corr_xy = plt.figure()
-        plt.plot( slm.zeta_array[nonzero_idx],
+        plt.plot( slm.get_zeta_array()[nonzero_idx],
                   quad_corr_xy)
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(quad_corr_xy_lab, fontsize=14)     
-        saveas_eps_pdf(fig_quad_corr_xy, savepath, ('%s_time_%0.1f' % (quad_corr_xy_savename, slm.time_array[i])), h5plot=h5plot)
+        saveas_eps_pdf(fig_quad_corr_xy, savepath, ('%s_time_%0.1f' % (quad_corr_xy_savename, slm.get_time_array()[i])), h5plot=h5plot)
         plt.close(fig_quad_corr_xy)
 
 
@@ -545,18 +545,18 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
         xlabel_str = r'$\omega_p t$'
 
 
-    Xb0 = np.ones(slm.avgx2[0,:].shape)
-    Yb0 = np.ones(slm.avgx3[0,:].shape)
-    for i in range(0,len(slm.zeta_array)):
-        if (slm.avgx2[0,i] != 0.0):
-            Xb0[i] = slm.avgx2[0,i]
-            Yb0[i] = slm.avgx3[0,i]
+    Xb0 = np.ones(slm.get(x=1)[0,:].shape)
+    Yb0 = np.ones(slm.get(y=1)[0,:].shape)
+    for i in range(0,len(slm.get_zeta_array())):
+        if (slm.get(x=1)[0,i] != 0.0):
+            Xb0[i] = slm.get(x=1)[0,i]
+            Yb0[i] = slm.get(y=1)[0,i]
 
     if time == None:
-        time = slm.time_array[-1]
+        time = slm.get_time_array()[-1]
         tidx = [-1];
     else:
-        tidx = [(np.abs(slm.time_array - time)).argmin()]
+        tidx = [(np.abs(slm.get_time_array() - time)).argmin()]
 
     if len(tidx) == 1:
         time = [time]
@@ -568,7 +568,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
         Yb_lout_ylab = r'$k_p Y_{b}(t=%0.1f)$' % time[i]
 
         figXb_lout = plt.figure()
-        plt.plot(slm.zeta_array, slm.avgx2[tidx[i],:])
+        plt.plot(slm.get_zeta_array(), slm.get(x=1)[tidx[i],:])
         ax = plt.gca()
         ymin, ymax = ax.get_ylim()
         if ymin > 0 and ymax > 0:
@@ -581,7 +581,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
         plt.close(figXb_lout)
 
         figYb_lout = plt.figure()
-        plt.plot(slm.zeta_array, slm.avgx3[tidx[i],:])
+        plt.plot(slm.get_zeta_array(), slm.get(y=1)[tidx[i],:])
         ax = plt.gca()
         ymin, ymax = ax.get_ylim()
         if ymin > 0 and ymax > 0:
@@ -593,23 +593,23 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
         saveas_eps_pdf(figYb_lout, savepath, Yb_lout_savename, h5plot=h5plot)
         plt.close(figYb_lout)
 
-    Xb_norm = np.zeros( slm.avgx2.shape )
-    Yb_norm = np.zeros( slm.avgx3.shape )
-#    zeta_hseed = np.min(slm.zeta_array)
-#    idx_hseed = (np.abs(slm.zeta_array-zeta_hseed)).argmin()
+    Xb_norm = np.zeros( slm.get(x=1).shape )
+    Yb_norm = np.zeros( slm.get(y=1).shape )
+#    zeta_hseed = np.min(slm.get_zeta_array())
+#    idx_hseed = (np.abs(slm.get_zeta_array()-zeta_hseed)).argmin()
 
-    for i in range(0,len(slm.zeta_array)):
-#        if (slm.zeta_array[i] <= zeta_hseed):
-        Xb_norm[:,i] = np.absolute( slm.avgx2[:,i]/Xb0[i] )
-        Yb_norm[:,i] = np.absolute( slm.avgx3[:,i]/Yb0[i] )
+    for i in range(0,len(slm.get_zeta_array())):
+#        if (slm.get_zeta_array()[i] <= zeta_hseed):
+        Xb_norm[:,i] = np.absolute( slm.get(x=1)[:,i]/Xb0[i] )
+        Yb_norm[:,i] = np.absolute( slm.get(y=1)[:,i]/Yb0[i] )
 
     figXb = plt.figure()
-    cax = plt.pcolormesh(   slm.zeta_array,
-                            slm.time_array,
-                            slm.avgx2,
+    cax = plt.pcolormesh(   slm.get_zeta_array(),
+                            slm.get_time_array(),
+                            slm.get(x=1),
                             cmap=cm.PuOr,
-                            vmin=-np.amax(abs(slm.avgx2)), 
-                            vmax=np.amax(abs(slm.avgx2)))
+                            vmin=-np.amax(abs(slm.get(x=1))), 
+                            vmax=np.amax(abs(slm.get(x=1))))
     cbar = figXb.colorbar(cax)   
     cbar.ax.set_ylabel('$k_p X_b$', fontsize=14)
     ax = plt.gca()
@@ -619,12 +619,12 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
     plt.close(figXb)
 
     figYb = plt.figure()
-    cax = plt.pcolormesh(   slm.zeta_array,
-                            slm.time_array,
-                            slm.avgx3,
+    cax = plt.pcolormesh(   slm.get_zeta_array(),
+                            slm.get_time_array(),
+                            slm.get(y=1),
                             cmap=cm.PuOr,
-                            vmin=-np.amax(abs(slm.avgx3)), 
-                            vmax=np.amax(abs(slm.avgx3)))
+                            vmin=-np.amax(abs(slm.get(y=1))), 
+                            vmax=np.amax(abs(slm.get(y=1))))
     cbar = figYb.colorbar(cax)
     cbar.ax.set_ylabel('$k_p Y_b$', fontsize=14)
     ax = plt.gca()
@@ -634,8 +634,8 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
     plt.close(figYb)
 
     figXbnorm = plt.figure()
-    cax = plt.pcolormesh(   slm.zeta_array,
-                            slm.time_array,
+    cax = plt.pcolormesh(   slm.get_zeta_array(),
+                            slm.get_time_array(),
                             Xb_norm,
                             cmap=cm.Blues,
                             vmin=0, 
@@ -649,8 +649,8 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
     plt.close(figXbnorm)
 
     figYbnorm = plt.figure()
-    cax = plt.pcolormesh(   slm.zeta_array,
-                            slm.time_array,
+    cax = plt.pcolormesh(   slm.get_zeta_array(),
+                            slm.get_time_array(),
                             Yb_norm,
                             cmap=cm.Blues,
                             vmin=0, 
@@ -664,7 +664,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
     plt.close(figYbnorm)
 
     figXb0 = plt.figure()
-    plt.plot(slm.zeta_array, Xb0)
+    plt.plot(slm.get_zeta_array(), Xb0)
     ax = plt.gca()
     ymin, ymax = ax.get_ylim()
     if ymin > 0 and ymax > 0:
@@ -677,7 +677,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
     plt.close(figXb0)
 
     figYb0 = plt.figure()
-    plt.plot(slm.zeta_array, Yb0)
+    plt.plot(slm.get_zeta_array(), Yb0)
     ax = plt.gca()
     ymin, ymax = ax.get_ylim()
     if ymin > 0 and ymax > 0:
@@ -690,7 +690,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
     plt.close(figYb0)
 
     if zeta_pos != None:
-        zetaidx = [(np.abs(slm.zeta_array - zeta_pos)).argmin()]
+        zetaidx = [(np.abs(slm.get_zeta_array() - zeta_pos)).argmin()]
         Xb_savename = 'Xb_zeta_%0.2f' % zeta_pos
         Yb_savename = 'Yb_zeta_%0.2f' % zeta_pos 
     else:
@@ -699,11 +699,11 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
         Yb_savename = 'Yb_tail'
 
     figXbtail = plt.figure()
-    plt.plot(slm.time_array, slm.avgx2[:,zetaidx])
+    plt.plot(slm.get_time_array(), slm.get(x=1)[:,zetaidx])
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14)
     ax.set_ylabel(r'$k_p X_{b,\mathrm{tail}}$', fontsize=14)
-    if magn_check(slm.avgx2[:,zetaidx]):    
+    if magn_check(slm.get(x=1)[:,zetaidx]):    
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
@@ -712,11 +712,11 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
     plt.close(figXbtail)
 
     figYbtail = plt.figure()
-    plt.plot(slm.time_array, slm.avgx3[:,zetaidx])
+    plt.plot(slm.get_time_array(), slm.get(y=1)[:,zetaidx])
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14)
     ax.set_ylabel(r'$k_p Y_{b,\mathrm{tail}}$', fontsize=14)
-    if magn_check(slm.avgx3[:,zetaidx]):    
+    if magn_check(slm.get(y=1)[:,zetaidx]):    
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
@@ -733,29 +733,29 @@ def plot_save_slice_ene(slm, savepath, time = None, h5plot=True, t_is_z=True):
     else:
         xlabel_str = r'$\omega_p t$'
     
-    gamma = np.sqrt( 1 + np.power(slm.avgp1,2) 
-                       + np.power(slm.avgp2,2)
-                       + np.power(slm.avgp3,2) )
+    gamma = np.sqrt( 1 + np.power(slm.get(pz=1),2) 
+                       + np.power(slm.get(px=1),2)
+                       + np.power(slm.get(py=1),2) )
 
     if time == None:
         tidx = [0,-1];
     else:
-        tidx = [(np.abs(slm.time_array - time)).argmin()]
+        tidx = [(np.abs(slm.get_time_array() - time)).argmin()]
 
     for i in tidx:
         fig = plt.figure()
-        plt.plot(slm.zeta_array, gamma[i,:])
+        plt.plot(slm.get_zeta_array(), gamma[i,:])
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(r'$\gamma$', fontsize=14)
-        saveas_eps_pdf(fig, savepath, ('gamma_time_%0.1f' % (slm.time_array[i])), h5plot=h5plot)
+        saveas_eps_pdf(fig, savepath, ('gamma_time_%0.1f' % (slm.get_time_array()[i])), h5plot=h5plot)
         plt.close(fig)    
 
 
 
     figG = plt.figure()
-    cax = plt.pcolormesh( slm.zeta_array,
-                          slm.time_array,
+    cax = plt.pcolormesh( slm.get_zeta_array(),
+                          slm.get_time_array(),
                           gamma,
                           cmap=cm.GnBu,
                           vmin=np.amin(gamma), vmax=np.amax(gamma))
@@ -775,11 +775,12 @@ def plot_save_ene_ene_spread(slm, savepath, h5plot=True, t_is_z=True):
     else:
         xlabel_str = r'$\omega_p t$'
 
-    t = slm.time_array
-    tot_charge = np.sum(slm.charge, axis=1)
+    t = slm.get_time_array()
+    tot_charge = np.sum(slm.get_charge(), axis=1)
     
-    avg_gamma = np.divide(np.sum( np.multiply( slm.avgp1, slm.charge), axis=1),tot_charge)
-    sigma_gamma = np.divide(np.sqrt( np.abs( np.divide(np.sum( np.multiply( slm.avgp1sq + np.power(slm.avgp1,2), slm.charge), axis=1),tot_charge) - np.power(avg_gamma,2))),avg_gamma)
+    avg_gamma = np.divide(np.sum( np.multiply( slm.get(pz=1), slm.get_charge()), axis=1),tot_charge)
+    sigma_gamma = np.divide(np.sqrt( np.abs( np.divide(np.sum( np.multiply( slm.get(pz=2) \
+        + np.power(slm.get(pz=1),2), slm.get_charge()), axis=1),tot_charge) - np.power(avg_gamma,2))),avg_gamma)
 
     fig_sg = plt.figure()    
     plt.plot(t, sigma_gamma)
@@ -805,8 +806,8 @@ def plot_save_ene_ene_spread(slm, savepath, h5plot=True, t_is_z=True):
 
 
 def plot_curr_profile(slm, savepath, time = None, h5plot=True, t_is_z=True):
-    dzeta = abs(slm.zeta_array[1] - slm.zeta_array[0]);
-    curr = slm.charge / dzeta
+    dzeta = abs(slm.get_zeta_array()[1] - slm.get_zeta_array()[0]);
+    curr = slm.get_charge() / dzeta
 
     if t_is_z:
         xlabel_str = r'$k_p z$'
@@ -823,21 +824,21 @@ def plot_curr_profile(slm, savepath, time = None, h5plot=True, t_is_z=True):
     if time == None:
         tidx = [0,-1];
     else:
-        tidx = [(np.abs(slm.time_array - time)).argmin()]
+        tidx = [(np.abs(slm.get_time_array() - time)).argmin()]
 
     for i in tidx:
         fig = plt.figure()
-        plt.plot(slm.zeta_array, Ib_per_IA[i,:])
+        plt.plot(slm.get_zeta_array(), Ib_per_IA[i,:])
         ax = plt.gca()
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
         ax.set_ylabel(r'$I_{b}/I_A$', fontsize=14)
-        saveas_eps_pdf(fig, savepath, ('Ib_time_%0.1f' % (slm.time_array[i])), h5plot=h5plot)
+        saveas_eps_pdf(fig, savepath, ('Ib_time_%0.1f' % (slm.get_time_array()[i])), h5plot=h5plot)
         plt.close(fig)    
 
 
     figIb = plt.figure()
-    cax = plt.pcolormesh(   slm.zeta_array,
-                            slm.time_array,
+    cax = plt.pcolormesh(   slm.get_zeta_array(),
+                            slm.get_time_array(),
                             Ib_per_IA,
                             cmap=cm.Greys,
                             vmin=0, 

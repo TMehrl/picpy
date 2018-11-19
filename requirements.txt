@@ -1,0 +1,8 @@
+numpy==1.15.3
+h5py==2.8.0
+scipy==1.1.0
+ROOT==0.0.1
+matplotlib==3.0.1
+mpmath==1.0.0
+numba==0.40.1
+vtk==8.1.1

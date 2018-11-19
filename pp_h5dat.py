@@ -3,6 +3,7 @@
 
 import os
 import sys
+import math
 import numpy as np
 import re
 import h5py
@@ -13,15 +14,55 @@ piccodes = { 'hipace':'hipace',
               'osiris':'osiris'
             }
 
-
 # General HDF5 file class with routines
 # to check whether file is an HDF5 file
 # and to print keys of attributes and datasets
 class H5File:
-    def __init__(self, file, h5ftype=None):
+    def __init__(self, file):
 
         # Allowed hdf5 extensions:
         self.__h5exts = ['.h5','.hdf5']
+        self.__file = file
+
+    # Returning boolean: if file extension is hdf5 extension
+    def is_h5_file(self, fext=None):
+        if (fext!=None):
+            return any(fext == h5ext for h5ext in self.__h5exts)
+        else:
+            fname, fext = os.path.splitext(self.__file)
+            return any(fext == h5ext for h5ext in self.__h5exts)          
+
+    def print_datasets(self):
+        with h5py.File(self.__file,'r') as hf:
+            # Printing attributes
+            print('HDF5 file datasets:')
+            for item in hf.keys():
+                print('\t' + item + ":", hf[item])
+
+    def print_attributes(self):
+        with h5py.File(self.__file,'r') as hf:
+            # Printing attributes
+            print('HDF5 file attributes:')
+            for item in hf.attrs.keys():
+                print('\t' + item + ":", hf.attrs[item])
+
+    def get_allowed_h5exts(self):
+        return self.__h5exts
+
+    def get_file(self):
+        return self.__file
+
+    def get_filename(self):
+        return os.path.split(self.__file)[1]  
+
+    def get_path(self):
+        return os.path.split(self.__file)[0]
+
+
+class H5PICFile(H5File):
+    def __init__(self, file, h5ftype=None):
+        H5File.__init__(self, file)
+
         # Grid 3D types in filenames:
         self.__g3dtypes = ['density', 'field', 'current']
         self.__g3dsubgrid_str = 'subgrid'
@@ -29,17 +70,7 @@ class H5File:
         self.__rawtypes = ['raw']
         self.__n_time_chars = 8
 
-        self.file = file
-        self.h5ftype = h5ftype
-
-    # Returning boolean: if file extension is hdf5 extension
-    def is_h5_file(self, fext=None):
-        if (fext!=None):
-            return any(fext == h5ext for h5ext in self.__h5exts)
-        else:
-            fname, fext = os.path.splitext(self.file)
-            return any(fext == h5ext for h5ext in self.__h5exts)          
-
+        self.__h5ftype = h5ftype
 
     # Returning boolean: if file name contains 'raw'
     def is_g3d_file(self, fname):
@@ -52,61 +83,42 @@ class H5File:
     # Returning boolean:  if file extension is hdf5 extension and
     #                     if file name contains name of grid quantity
     def is_h5g3d_file(self):
-        fname, fext = os.path.splitext(self.file)
+        fname, fext = os.path.splitext(self.get_file())
         return self.is_h5_file(fext=fext) and self.is_g3d_file(fname=fname)
 
     # Returning boolean:  if file extension is hdf5 extension and
     #                     if file name contains 'raw'
     def is_h5raw_file(self):
-        fname, fext = os.path.splitext(self.file)
+        fname, fext = os.path.splitext(self.get_file())
         return self.is_h5_file(fext=fext) and self.is_raw_file(fname=fname)
 
     def fcheck(self):
-        if self.h5ftype == 'g3d':
+        if self.__h5ftype == 'g3d':
             return self.is_h5g3d_file()
-        elif self.h5ftype == 'raw':       
+        elif self.__h5ftype == 'raw':       
             return self.is_h5raw_file()
         else:
             print('Error: No file type specified ["g3d", "raw"]!')
             sys.exit(1)
 
-    def print_datasets(self):
-        with h5py.File(self.file,'r') as hf:
-            # Printing attributes
-            print('HDF5 file datasets:')
-            for item in hf.keys():
-                print('\t' + item + ":", hf[item])
-
-    def print_attributes(self):
-        with h5py.File(self.file,'r') as hf:
-            # Printing attributes
-            print('HDF5 file attributes:')
-            for item in hf.attrs.keys():
-                print('\t' + item + ":", hf.attrs[item])
-
-    def get_allowed_h5exts(self):
-        return self.__h5exts
-
-    def get_filename(self):
-        return os.path.split(self.file)[1]
-
     def get_filename_time(self):
-        name_w_time = os.path.splitext(os.path.split(self.file)[1])[0]
+        name_w_time = os.path.splitext(self.get_filename())[0]
         stridx = [m.start() for m in re.finditer('_', name_w_time)][-1]
         return float(name_w_time[(stridx+1):])
 
     def get_filename_wo_time(self):
-        name_w_time = os.path.splitext(os.path.split(self.file)[1])[0]
+        name_w_time = os.path.splitext(self.get_filename())[0]
         stridx = [m.start() for m in re.finditer('_', name_w_time)][-1]
         name_wo_time = name_w_time[0:stridx]
         return name_wo_time
 
     def is_subgrid(self):
-        fname = os.path.splitext(os.path.split(self.file)[1])[0]
+        fname = os.path.splitext(self.get_filename())[0]
         if (self.__g3dsubgrid_str in fname):
             return True
         else:
-            return False    
+            return False
+
 
 # Keys for HDF5 files
 # Keys for PIC HDF5 files
@@ -173,7 +185,6 @@ class H5Keys:
                                 'name':'NAME',
                               }
 
-
     def get_g3dkey(self,key):
         return self.__g3dkeys[key]
     def get_g3dkeys(self):
@@ -197,78 +208,70 @@ class H5Keys:
 
 
 
-class HiFile(H5Keys, H5File):
+class HiFile(H5Keys, H5PICFile):
     def __init__(self, file):
         H5Keys.__init__(self, 'hipace')
-        H5File.__init__(self, file)
-        self.file = file
+        H5PICFile.__init__(self, file)
+        self.read_attrs()
 
     def read_attrs(self):
         # Reading attributes
-        with h5py.File(self.file,'r') as hf:
-            self.nx = hf.attrs[   self.get_attrkey('nx') ]
-            self.xmin = hf.attrs[ self.get_attrkey('xmin') ]
-            self.xmax = hf.attrs[ self.get_attrkey('xmax') ]
-            self.time = hf.attrs[ self.get_attrkey('time') ]
-            self.dt = hf.attrs[   self.get_attrkey('dt') ]
+        with h5py.File(self.get_file(),'r') as hf:
+            self.__nx = hf.attrs[   self.get_attrkey('nx') ]
+            self.__xmin = hf.attrs[ self.get_attrkey('xmin') ]
+            self.__xmax = hf.attrs[ self.get_attrkey('xmax') ]
+            self.__time = hf.attrs[ self.get_attrkey('time') ]
+            self.__dt = hf.attrs[   self.get_attrkey('dt') ]
             type_bytes = hf.attrs[ self.get_attrkey('type') ]
             name_bytes = hf.attrs[ self.get_attrkey('name') ]
+
             if isinstance(type_bytes, str):
-                self.type = type_bytes
+                self.__type = type_bytes
             else:
-                self.type = type_bytes[0].decode('UTF-8')
+                self.__type = type_bytes[0].decode('UTF-8')
             if isinstance(name_bytes, str):
-                self.name = name_bytes
+                self.__name = name_bytes
             else:
-                self.name = name_bytes[0].decode('UTF-8')
-            # Make these private and write getter functions!
+                self.__name = name_bytes[0].decode('UTF-8')
 
     def get_x_arr(self,dim):
-        return np.linspace(self.xmin[dim],self.xmax[dim],self.nx[dim])
+        return np.linspace(self.__xmin[dim],self.__xmax[dim],self.__nx[dim])
 
     def get_z_arr(self):
-        return np.linspace(self.time+self.xmin[0],self.time+self.xmax[0],self.nx[0])
+        return np.linspace(self.__time+self.__xmin[0],self.__time+self.__xmax[0],self.__nx[0])
 
     def get_zeta_arr(self):
-        return np.linspace(self.xmin[0],self.xmax[0],self.nx[0])
+        return np.linspace(self.__xmin[0],self.__xmax[0],self.__nx[0])
 
     def get_xi_arr(self):
-        return np.linspace(-self.xmin[0],-self.xmax[0],self.nx[0])
+        return np.linspace(-self.__xmin[0],-self.__xmax[0],self.__nx[0])
 
     def get_nt(self):
-        return round(self.time/self.dt)
+        return round(self.__time/self.__dt)
 
     def get_time(self):
-        return self.time
+        return self.__time
 
     def get_nx(self,dim):
-        return self.nx[dim]        
+        return self.__nx[dim]        
 
     def get_xmin(self,dim):
-        return self.xmin[dim]
+        return self.__xmin[dim]
 
     def get_xmax(self,dim):
-        return self.xmax[dim]
+        return self.__xmax[dim]
 
     def get_dx(self,dim):
-        return (self.xmax[dim]-self.xmin[dim])/self.nx[dim]
+        return (self.__xmax[dim]-self.__xmin[dim])/self.__nx[dim]
 
-# class H5PIC(H5File):
-#   def __init__(self, file, piccode):
-#
-#     H5File.__init__(self, file)
-#
-#     self.piccode = piccode
-#
-#     if self.piccode == piccodes['hipace']:
-#       self.file = HiH5File()
-#     #elif self.piccode == piccodes['osiris']:
-#       #self.file = OsH5File()
-#     else:
-#       print('Error:\tPIC code "%s" is not supported!' % piccode)
-#       print('\tAllowed PIC codes: ',list(piccodes.values()))
-#       sys.exit()
+    def get_dt(self):
+        return self.__dt
 
+    def get_name(self):
+        return self.__name
+
+    def get_type(self):
+        return self.__type
 
 class HiRAW(HiFile):
     def __init__(self, file):
@@ -279,7 +282,7 @@ class HiRAW(HiFile):
     def read_data(self, verbose=True):
         if verbose:
             print('Reading data...')        
-        with h5py.File(self.file,'r') as hf:
+        with h5py.File(self.get_file(),'r') as hf:
             # Reading datasets
             self.x1 = np.array(hf.get(  self.get_rawkey('x1') ))
             self.x2 = np.array(hf.get(  self.get_rawkey('x2') ))
@@ -305,7 +308,8 @@ class HiRAW(HiFile):
             idx = np.nonzero((self.x1 >= zeta_range[0]) & (self.x1 < zeta_range[1]))
             self.__npart = np.size(idx)
             if verbose:
-                print('%i particles in selected range [%0.2f, %0.2f]' % (self.__npart,zeta_range[0],zeta_range[1]))
+                print('%i particles in selected range [%0.2f, %0.2f]' \
+                    % (self.__npart,zeta_range[0],zeta_range[1]))
             self.x1 = self.x1[idx]
             self.x2 = self.x2[idx]
             self.x3 = self.x3[idx]
@@ -319,13 +323,13 @@ class HiRAW(HiFile):
     #     if not self.__data_is_read:
     #         if ifread:
     #             if var in self.__rawkeys:
-    #                 with h5py.File(self.file,'r') as hf:
+    #                 with h5py.File(self.get_file(),'r') as hf:
     #                     exec("self.%s = np.array(hf.get(  self.get_rawkey('%s') ))" % (var,var))
     #             else:
     #                 print('Error:\tVariable "%s" does not exist!' % var )
     #                 sys.exit()                     
     #         else:    
-    #             print('Error:\tFile %s has not been read!' % (self.file) )
+    #             print('Error:\tFile %s has not been read!' % (self.get_file()) )
     #             sys.exit()
     #     exec('ret_array = self.%s' % var)  
     #     exec('print(self.%s)' % var)
@@ -341,33 +345,33 @@ class Grid3d(HiFile):
         HiFile.__init__(self, file)
         self.is_read_3D = False
         self.read_attrs()
-        with h5py.File(self.file,'r') as hf:
+        with h5py.File(self.get_file(),'r') as hf:
             self.h5keys = list(hf.keys())
             if len(self.h5keys) == 1:
                 self.dsetkey = self.h5keys[0]
             elif len(self.h5keys) == 0:
                 print('Error:\tHDF5 file "%s" does not '
-                  'contain any dataset!' %(self.file) )
+                  'contain any dataset!' %(self.get_file()) )
                 sys.exit()
             elif len(self.h5keys) > 1:
                 print('Error:\tHDF5 file "%s" contains more '
-                  'than one dataset!' %(self.file) )
+                  'than one dataset!' %(self.get_file()) )
                 sys.exit()
 
-        # self.fid = h5py.h5f.open(self.file.encode())
+        # self.fid = h5py.h5f.open(self.get_file().encode())
         # self.dset = h5py.h5d.open(self.fid, self.dsetkey.encode())
 
     def _read_3D(self):
         # read 3D, making sure data is read only once
         if self.is_read_3D == False:
-            with h5py.File(self.file,'r') as hf:
+            with h5py.File(self.get_file(),'r') as hf:
                 # Reading dataset (here not caring how dataset is called)
                 self.data3d = hf[self.dsetkey][()]
                 self.is_read_3D == True
         return self.data3d
 
     def _read_2D(self, i0=None, i1=None, i2=None):
-        with h5py.File(self.file,'r') as hf:
+        with h5py.File(self.get_file(),'r') as hf:
         # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1==None and i2==None:
                 data2d = hf[self.dsetkey][i0,:,:]
@@ -382,7 +386,7 @@ class Grid3d(HiFile):
         return(data2d)
 
     def _read_1D(self, i0=None, i1=None, i2=None):
-        with h5py.File(self.file,'r') as hf:
+        with h5py.File(self.get_file(),'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1!=None and i2==None:
                 data1d = hf[self.dsetkey][i0,i1,:]
@@ -397,7 +401,7 @@ class Grid3d(HiFile):
         return(data1d)
 
     def _read_0D(self, i0=None, i1=None, i2=None):
-        with h5py.File(self.file,'r') as hf:
+        with h5py.File(self.get_file(),'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1!=None and i2!=None:
                 data0d = hf[self.dsetkey][i0,i1,i2]
@@ -644,7 +648,7 @@ class Grid2d(HiFile):
         return(data1d)
 
     def read_0D(self, i0=None, i1=None, i2=None):
-        with h5py.File(self.file,'r') as hf:
+        with h5py.File(self.get_file(),'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1!=None and i2!=None:
                 data0d = hf[self.dsetkey][i0,i1,i2]
@@ -769,6 +773,240 @@ class Grid2d(HiFile):
         return np.divide(np.sum(sumx,axis=axtup),np.sum(norm,axis=axtup))
 
 class SliceMoms(H5File):
+    def __init__(self):
+        self.__time_array_name = 'time_array'
+        self.__zeta_array_name = 'zeta_array'
+        self.__order = 2
+        self.__Nzeta = None
+        self.__Nt = None
+        self.__arrays_allocated = False
+        self.__data_is_read = False
+
+    def get_h5order(self, file):
+        with h5py.File(file,'r') as hf:
+            if 'mom_order' in hf.attrs.keys():
+                h5order  = hf.attrs['mom_order']
+            else:
+                h5order = 2
+        return h5order
+
+
+    def alloc(self, Nzeta, Nt, order = 2):
+        self.__order = order
+
+        self.__Nzeta = Nzeta
+        self.__Nt = Nt
+
+        self.__zeta_array = np.zeros(Nt, dtype=np.float32)   
+        self.__time_array = np.zeros(Nt, dtype=np.float32)
+
+        if order == 0:
+            self.__mom = np.zeros((1, Nt, Nzeta), dtype=np.float32)
+        elif order==1:
+            self.__mom = np.zeros((7, Nt, Nzeta), dtype=np.float32)
+
+        elif order==2:
+            self.__mom = np.zeros((16, Nt, Nzeta), dtype=np.float32)
+            # # if crossterms:
+
+        elif order==3:
+            self.__mom = np.zeros((28, Nt, Nzeta), dtype=np.float32)
+
+        elif order==4:
+            self.__mom = np.zeros((37, Nt, Nzeta), dtype=np.float32)
+        else:
+            print('Error:\tOnly moment orders up to 4 implemented!')
+            sys.exit(1)              
+
+        self.__arrays_allocated = True
+
+    def read(self, file, order = None, verbose = True):
+        H5File.__init__(self, file)
+        if not self.is_h5_file():
+            print('Error:\tFile is not an HDF5 file!')
+            sys.exit(1)      
+
+        if verbose:
+            print('Reading %s ...' % file)
+
+        h5order = self.get_h5order(file)
+
+        with h5py.File(self.get_file(),'r') as hf:
+            if order == None:
+                order = h5order
+            else:
+                if order > h5order:
+                    print('Error:\tSpecified order is greater than moment order in hdf5 file!')
+                    sys.exit(1)     
+            self.__order = order
+
+            # Reading datasets
+            self.__time_array = np.array(hf.get( self.__time_array_name ))
+            self.__zeta_array = np.array(hf.get( self.__zeta_array_name ))
+
+            if verbose:
+                print('Reading moments. Order: %i' % self.__order)
+            self.__mom = np.array(hf.get( 'mom' ))
+
+        self.__data_is_read = True
+
+    def get_zeta_array(self):
+        if not self.__data_is_read:
+            print('Error:\tArrays have not been read!')
+            sys.exit(1)   
+        return self.__zeta_array
+
+    def get_time_array(self):
+        if not self.__data_is_read:
+            print('Error:\tArrays have not been read!')
+            sys.exit(1)   
+        return self.__time_array
+
+    def __coord_orders_to_idx(self, x1, x2, x3, p1, p2, p3, err_ignore=False):  
+
+        coords = np.asarray([x1,x2,x3,p1,p2,p3])
+        coords_nz = np.heaviside(coords,0)
+        n6 = np.linspace(1,6,6)
+
+        # print(coords)
+        # idx = np.argsort(np.sum(np.power(n6,coords)))
+        # print(idx)
+        # six_powers = np.power(6,np.linspace(0,4,5))
+
+        n6mod = n6 + np.asarray([0,0,0,2,2,2])
+        idx=0
+        if np.sum(coords) == 0:
+            idx = 0
+        elif np.sum(coords) == 1:
+            idx =  np.dot(coords,n6)
+        elif np.sum(coords) == 2 and np.sum(coords_nz) == 1:
+            idx =  6 + np.dot(coords_nz,n6)
+        elif np.sum(coords) == 2 and np.sum(coords_nz) == 2:
+            idx =  11 + math.floor(np.dot(coords_nz,n6)/2)
+        elif np.sum(coords) == 3 and np.sum(coords_nz) == 1:
+            idx =  15 + np.dot(coords_nz,n6)
+        elif np.sum(coords) == 3 and np.sum(coords_nz) == 2:
+            idx =  18 + math.floor(np.dot(coords,n6mod)/2)
+        elif np.sum(coords) == 4 and np.sum(coords_nz) == 1:
+            idx =  27 + np.dot(coords_nz,n6)
+        elif np.sum(coords) == 4 and np.sum(coords_nz) == 2:
+            idx =  32 + math.floor(np.dot(coords_nz,n6)/2)             
+        else:
+            if not err_ignore:
+                print('ERROR: Moment not yet implemented!')
+                sys.exit(1)
+            else:
+                idx = -1
+        return int(idx)
+
+    def _test_coords_orders_to_idx(self):
+        idx_list = []
+        coord_list = []
+        for x1 in range(0,4):
+            for p1 in range(0,4):
+                for x2 in range(0,4):
+                    for p2 in range(0,4):
+                        for x3 in range(0,4):
+                            for p3 in range(0,4):
+                                idx = self.__coord_orders_to_idx(x1,x2,x3,p1,p2,p3,err_ignore=True)
+                                if idx != -1:
+                                    idx_list.append(idx)                 
+                                    coord_list.append('x1=%i, x2=%i, x3=%i, '
+                                    'p1=%i, p2=%i, p3=%i' % (x1,x2,x3,p1,p2,p3))
+        sortidx = np.argsort(idx_list)
+        for i in range(0,len(idx_list)):
+            print(coord_list[sortidx[i]] + ': %i' % idx_list[sortidx[i]])      
+
+    def get(self, x=0, y=0, z=0, px=0, py=0, pz=0):
+        if not self.__data_is_read:
+            print('Error:\tArrays have not been read!')
+            sys.exit(1)
+        idx = self.__coord_orders_to_idx(x1=z, x2=x, x3=y, \
+                p1=pz, p2=px, p3=py)
+        return self.__mom[idx,:,:]
+
+    def get_charge(self):
+        return self.get()       
+
+    def set_time(self,time,nt):
+        if not self.__arrays_allocated:
+            print('Error:\tArrays need to be allocated!')
+            sys.exit(1)
+        if nt >= self.__Nt:
+            print('Error:\tnt exceeds Nt!')
+            sys.exit(1)                    
+        self.__time_array[nt] = time
+
+    def set_zeta_array(self,nparray):
+        if not self.__arrays_allocated:
+            print('Error:\tArrays need to be allocated!')
+            sys.exit(1)
+
+        if np.shape(nparray) != (self.__Nzeta,):
+            print('Error:\tArray does not match expected size (%i,)!' % self.__Nzeta)
+            sys.exit(1)
+        self.__zeta_array = nparray
+
+    def set_at_nt(self, nparray, nt, x1=0, x2=0, x3=0, p1=0, p2=0, p3=0):
+        if not self.__arrays_allocated:
+            print('Error:\tArrays need to be allocated!')
+            sys.exit(1)
+
+        if type(nparray) is not np.ndarray:
+            print('Error:\targument "nparray" must be numpy array!')
+            sys.exit(1)
+
+        if np.shape(nparray) != (self.__Nzeta,):
+            print('Error:\tArray does not match expected size (%i,)!' % self.__Nzeta)
+            sys.exit(1)
+
+        if x1+x2+x3+p1+p2+p3 > self.__order:
+            print('Error:\tAttempting to set moment with order ' \
+                'higher than expected (%i vs. %i)!' % (x1+x2+x3+p1+p2+p3,self.__order))
+            sys.exit(1)
+
+        idx = self.__coord_orders_to_idx(x1,x2,x3,p1,p2,p3)
+
+        self.__mom[idx,nt,:] = nparray       
+
+    def write(self, file, order = None):
+        H5File.__init__(self, file)
+        if order == None:
+            order = self.__order
+
+        if not self.is_h5_file():
+            print('Error:\tFile name does not have an hdf5 ending!')
+            sys.exit(1) 
+
+        # TODO: write order of moments and if crossterms into attributes!!!
+
+        h5f = h5py.File(file, "w")
+
+        h5f.attrs['mom_order'] = order
+
+        if not self.__arrays_allocated:
+            print('Error:\tArrays do not exist!')
+            sys.exit(1)
+
+        dset_zeta_array = h5f.create_dataset( self.__zeta_array_name, data = self.__zeta_array )
+        dset_time_array = h5f.create_dataset( self.__time_array_name, data = self.__time_array )
+        dset_mom = h5f.create_dataset(  "mom", data = self.__mom )
+
+        h5f.close()
+
+    def truncate_zeta_region(self, zeta_min, zeta_max, order = None, crossterms = False):
+
+        if order == None:
+            order = self.__order
+
+        idx = np.nonzero(np.logical_and( self.__zeta_array >= zeta_min, \
+            self.__zeta_array <= zeta_max ))[0]
+
+        self.__zeta_array = self.__zeta_array[idx]
+        self.__mom = self.__mom[:,:,idx]
+
+
+class SliceMoms_outdated(H5File):
     def __init__(self):
         self.time_array_name = 'time_array'
         self.zeta_array_name = 'zeta_array'
@@ -1194,77 +1432,96 @@ class H5Plot:
 
 class H5FList():
     def __init__(self, paths, h5ftype=None):
-
-        self.paths = paths
-        self.h5ftype = h5ftype
-        self.flist = None
+        self.__paths = paths
+        self.__h5ftype = h5ftype
+        self.__flist = None
 
     def get(self, verbose=True):
-        if not self.paths:
+        if not self.__paths:
             print('Error: No file provided!')
             sys.exit(1)
 
-        flist = []
+        if isinstance(self.__paths, list):
+            # if 'paths' is a list of directories
+            list_of_flists = []
+            for path in self.__paths:
+                list_of_flists.append(self.__get_individ(path, verbose))
+            flist = [item for sublist in list_of_flists for item in sublist]
+        elif isinstance(self.__paths, str):
+            # if 'paths' is a single directory
+            flist = self.__get_individ(self.__paths, verbose)
 
-        for path in self.paths:
-            if os.path.isfile(path):
-                file = path
-                h5f = H5File(file, h5ftype=self.h5ftype)
-                if h5f.fcheck():
-                    flist.append(file)
-                else:
-                    if verbose: print('Skipping: ' + file)
-            elif os.path.isdir(path):
-                if verbose: print('"' + path + '"' + ' is a directory.')
-                if verbose: 
-                    print('Processing all ' + self.h5ftype + 
-                          ' files in the provided directory.')
-                for root, dirs, files in os.walk(path):
-                    for filename in files:
-                        file = root + '/' + filename
-                        h5f = H5File(file, h5ftype=self.h5ftype)
-                        if h5f.fcheck():
-                            flist.append(file)
-                        else:
-                           if verbose: print('Skipping: ' + file)
-            elif not os.path.exists(path):
-                print('Error: Provided path "%s" does not exist!' % path)
-                sys.exit()
-            else:
-                print('Error: Provided path "%s" is neither a file nor a directory!' % path)
-                sys.exit()
         # Alphabetically sorting list
-        self.flist = sorted(flist)
-        return self.flist
+        self.__flist = sorted(flist)
+        return self.__flist
+
+    def __get_individ(self, path, verbose):
+        flist = []
+        if os.path.isfile(path):
+            file = path
+            h5f = H5PICFile(file, h5ftype=self.__h5ftype)
+            if h5f.fcheck():
+                flist.append(file)
+            else:
+                if verbose: print('Skipping: ' + file)
+        elif os.path.isdir(path):
+            if verbose: print('"' + path + '"' + ' is a directory.')
+            if verbose: 
+                print('Processing all ' + self.__h5ftype + 
+                      ' files in the provided directory.')
+            for root, dirs, files in os.walk(path):
+                for filename in files:
+                    file = root + '/' + filename
+                    h5f = H5PICFile(file, h5ftype=self.__h5ftype)
+                    if h5f.fcheck():
+                        flist.append(file)
+                    else:
+                       if verbose: print('Skipping: ' + file)
+        elif not os.path.exists(path):
+            print('Error: Provided path "%s" does not exist!' % path)
+            sys.exit()
+        else:
+            print('Error: Provided path "%s" is neither a file nor a directory!' % path)
+            sys.exit()
+        return flist 
 
     def get_uniques(self):
         n_time_chars = 8;
         fnames = []
-        if self.flist == None:
+        if self.__flist == None:
             self.get()
-        for f in self.flist:
-            h5f = H5File(f)
+        for f in self.__flist:
+            h5f = H5PICFile(f)
             fnames.append(h5f.get_filename_wo_time())
         return list(set(fnames))
 
     def split_by_uniques(self):
-        if self.flist == None:
+        if self.__flist == None:
             self.get()
         uniques = self.get_uniques()
 
         # initialize and append to list of lists
         lofl = [[] for i in range(len(uniques))] 
         for i in range(len(uniques)):
-            for f in self.flist:
+            for f in self.__flist:
                 if uniques[i] in os.path.split(f)[1]:
                     lofl[i].append(f)
         return lofl
 
+    def get_paths(self):
+        return self.__paths
+
+    def get_h5ftype(self):
+        return self.__h5ftype
+
 
 def mkdirs_if_nexist( path ):
-    
-    folders = []
+    """Function which recursively generates directories.
 
+    Args:
+        path (str): Path for which directories are generated.
+    """
+    folders = []
     while 1:
         path, folder = os.path.split(path)
         if folder != "":
@@ -1274,7 +1531,6 @@ def mkdirs_if_nexist( path ):
                 folders.append(path)
             break
     folders.reverse()
-
     path = ""
     for folder in folders:
         path = path + folder + "/"

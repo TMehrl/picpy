@@ -455,7 +455,7 @@ class G3d_plot:
             sys.exit()
 
     def is_number_density( self ):
-        name = self.g3d.name
+        name = self.g3d.get_name()
         if 'plasma' in name:
             if 'charge' in name:
                 return False
@@ -524,9 +524,9 @@ class G3d_plot_slice(G3d_plot):
                         self.slice = self.g3d.read()
                     else:
                         if (self.args.plane_index == None) and (self.args.plane_pos == None):
-                            index = math.floor(self.g3d.nx[2]/2) - 1
+                            index = math.floor(g3d.get_nx(2)/2) - 1
                             self.slice = self.g3d.read(i2=index)
-                            if self.g3d.nx[2]%2 == 0:
+                            if g3d.get_nx(2)%2 == 0:
                                 self.slice = (self.slice + self.g3d.read(i2=index+1))/2
                         elif (self.args.plane_index != None) and (self.args.plane_pos == None):
                             self.slice = self.g3d.read(i2=self.args.plane_index)
@@ -542,9 +542,9 @@ class G3d_plot_slice(G3d_plot):
                     self.slice = self.g3d.read_integrate(ax1=True)
                 else:    
                     if (self.args.plane_index == None) and (self.args.plane_pos == None):
-                        index = math.floor(self.g3d.nx[1]/2) - 1
+                        index = math.floor(self.g3d.get_nx(1)/2) - 1
                         self.slice = self.g3d.read(i1=index)
-                        if self.g3d.nx[1]%2 == 0:
+                        if self.g3d.get_nx(1)%2 == 0:
                             self.slice = ( self.slice + self.g3d.read(i1=index+1) )/2
                     elif (self.args.plane_index != None) and (self.args.plane_pos == None): 
                         self.slice = self.g3d.read(i1=self.args.plane_index)
@@ -560,9 +560,9 @@ class G3d_plot_slice(G3d_plot):
                 self.slice = self.g3d.read_integrate(ax0=True)
             else:
                 if (self.args.plane_index == None) and (self.args.plane_pos == None):
-                    index = math.floor(self.g3d.nx[0]/2) - 1
+                    index = math.floor(self.g3d.get_nx(0)/2) - 1
                     self.slice = self.g3d.read(i0=index)
-                    if self.g3d.nx[0]%2 == 0:
+                    if self.g3d.get_nx(0)%2 == 0:
                         self.slice = ( self.slice + self.g3d.read(i0=index+1) )/2
                 elif (self.args.plane_index != None) and (self.args.plane_pos == None):
                     self.slice = self.g3d.read(i0=self.args.plane_index)
@@ -582,9 +582,9 @@ class G3d_plot_slice(G3d_plot):
     def set_cmap( self, update=False, clim_input=None, cmap_input=False ):
 
         clim = [0.0, 0.0]
-        if self.g3d.type == pp_defs.hipace.h5.g3dtypes.density:
+        if self.g3d.get_type() == pp_defs.hipace.h5.g3dtypes.density:
             if self.is_number_density():
-                if 'beam' in self.g3d.name:
+                if 'beam' in self.g3d.get_name():
                     if not update:
                         self.colormap = cm.Reds;
                     elif update and not cmap_input:
@@ -658,7 +658,7 @@ class G3d_plot_slice(G3d_plot):
                     clim[0] = -1.0
                     clim[1] = 1.0
 
-        elif self.g3d.type == pp_defs.hipace.h5.g3dtypes.field:
+        elif self.g3d.get_type() == pp_defs.hipace.h5.g3dtypes.field:
             if not update:
                 self.colormap = cm.RdBu;
             elif update and not cmap_input:
@@ -686,7 +686,7 @@ class G3d_plot_slice(G3d_plot):
             if (clim[0] == 0.0) and (clim[1] == 0.0):
                 clim[0] = -1.0
                 clim[1] = 1.0            
-        elif self.g3d.type == pp_defs.hipace.h5.g3dtypes.current:
+        elif self.g3d.get_type() == pp_defs.hipace.h5.g3dtypes.current:
             if not update:
                 self.colormap = cm.PuOr;
             elif update and not cmap_input:
@@ -739,12 +739,12 @@ class G3d_plot_slice(G3d_plot):
             sys.stdout.write('Generating slice plot\n')
             sys.stdout.flush()
         saveformat = self.args.file_format
-        filesuffix = '_%06.f' % (np.floor(self.g3d.time))
+        filesuffix = '_%06.f' % (np.floor(self.g3d.get_time()))
 
         if self.args.save_prefix != parsedefs.save.prefix:
             fileprefix = self.args.save_prefix
         else:
-            fileprefix = self.g3d.name
+            fileprefix = self.g3d.get_name()
 
         if self.g3d.is_subgrid():
             self.app_str += '_subgrid'
@@ -801,7 +801,7 @@ class G3d_plot_slice(G3d_plot):
         ax.set_ylabel(self.ylabel, fontsize=14)
         ax.set_xlabel(self.xlabel, fontsize=14)
         cbar = fig.colorbar(cax)
-        cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )
+        cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.get_name() ), fontsize=14 )
         
         #manually setting cbar ticks to avoid cutoff of the last tick
         ticks = MaxNLocator().tick_values(self.clim[0], self.clim[1])
@@ -926,7 +926,7 @@ class G3d_plot_slice(G3d_plot):
         else:
             offset = 0
 
-        if self.g3d.type == pp_defs.hipace.h5.g3dtypes.field:
+        if self.g3d.get_type() == pp_defs.hipace.h5.g3dtypes.field:
             cbar = plt.colorbar(cbarmap, boundaries=np.arange(self.clim[0]-0.0002,self.clim[1]+0.0002,0.0001), extend=extend, pad=0.02+offset, fraction=0.08+4*counts**(1/2)/100.0) #, pad=0.1 )
         else: 
             cbar = plt.colorbar(cbarmap, boundaries=np.arange(self.clim[0],self.clim[1]+0.0002,0.0001), extend=extend, pad=0.02+offset, fraction=0.08+4*counts**(1/2)/100.0) #, pad=0.1 )
@@ -941,7 +941,7 @@ class G3d_plot_slice(G3d_plot):
         ax.set_ylabel(self.ylabel, fontsize=14)
         ax.set_xlabel(self.xlabel, fontsize=14)
         #cbar = fig.colorbar(cax)
-        cbar.ax.set_title( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )
+        cbar.ax.set_title( gen_pretty_grid_name( self.g3d.get_name() ), fontsize=14 )
         
         #manually setting cbar ticks to avoid cutoff of the last tick
         ticks = MaxNLocator().tick_values(self.clim[0], self.clim[1])
@@ -971,12 +971,12 @@ class G3d_plot_slice(G3d_plot):
     def save_fig(self, fig):
         
         saveformat = self.args.file_format
-        filesuffix = '_%06.f' % (np.floor(self.g3d.time))
+        filesuffix = '_%06.f' % (np.floor(self.g3d.get_time()))
 
         if self.args.save_prefix != parsedefs.save.prefix:
             fileprefix = self.args.save_prefix
         else:
-            fileprefix = self.g3d.name
+            fileprefix = self.g3d.get_name()
         
         if self.args.savepath == None:
             savepath = self.root_savepath + self.__relsavepath
@@ -1027,7 +1027,7 @@ class G3d_plot_line(G3d_plot):
 
     def set_yaxis( self ):
         if self.args.if_integrate:
-            self.ylabel = r'$k_p^2 \int \int$' + gen_pretty_grid_name( self.g3d.name )
+            self.ylabel = r'$k_p^2 \int \int$' + gen_pretty_grid_name( self.g3d.get_name() )
             if self.args.lineax == 'z':
                 self.ylabel = self.ylabel + r'$\,dx dy$'
             if self.args.lineax == 'x':
@@ -1035,17 +1035,17 @@ class G3d_plot_line(G3d_plot):
             if self.args.lineax == 'y':
                 self.ylabel = self.ylabel + r'$\,dx dz$'
         else:
-            self.ylabel = gen_pretty_grid_name( self.g3d.name )
+            self.ylabel = gen_pretty_grid_name( self.g3d.get_name() )
         ylim = [0.0, 0.0]
         # define axis labels and arrays
-        if self.g3d.type == pp_defs.hipace.h5.g3dtypes.density:
+        if self.g3d.get_type() == pp_defs.hipace.h5.g3dtypes.density:
             ylim[0] = np.amin(self.line)
             ylim[1] = np.amax(self.line)
-        elif self.g3d.type == pp_defs.hipace.h5.g3dtypes.field:
+        elif self.g3d.get_type() == pp_defs.hipace.h5.g3dtypes.field:
             self.colormap = cm.coolwarm
             ylim[0] = -np.amax(abs(self.line))
             ylim[1] = np.amax(abs(self.line))
-        elif self.g3d.type == pp_defs.hipace.h5.g3dtypes.current:
+        elif self.g3d.get_type() == pp_defs.hipace.h5.g3dtypes.current:
             self.colormap = cm.coolwarm
             ylim[0] = -np.amax(abs(self.line))
             ylim[1] = np.amax(abs(self.line))
@@ -1072,20 +1072,20 @@ class G3d_plot_line(G3d_plot):
                 if self.args.lout_idx == None:
                     # Default: central lineout
                     if self.args.piccode == pp_defs.code.inferno:
-                        self.line= self.g3d.read(i1 = self.g3d.nx[1]/2)
+                        self.line= self.g3d.read(i1 = g3d.get_nx(1)/2)
                         print(np.shape(self.line))
                     else:
-                        idx1 = math.floor(self.g3d.nx[1]/2) - 1
-                        idx2 = math.floor(self.g3d.nx[2]/2) - 1
+                        idx1 = math.floor(g3d.get_nx(1)/2) - 1
+                        idx2 = math.floor(g3d.get_nx(2)/2) - 1
                         self.line = self.g3d.read(i1=idx1, i2=idx2)
-                        if self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 0:
+                        if g3d.get_nx(1)%2 == 0 and g3d.get_nx(2)%2 == 0:
                             line01 = self.g3d.read(i1=idx1, i2=idx2+1)
                             line10 = self.g3d.read(i1=idx1+1, i2=idx2)
                             line11 = self.g3d.read(i1=idx1+1, i2=idx2+1)
                             self.line = ( self.line + line01 + line10 + line11 )/4
-                        elif self.g3d.nx[1]%2 == 1 and self.g3d.nx[2]%2 == 0:
+                        elif g3d.get_nx(1)%2 == 1 and g3d.get_nx(2)%2 == 0:
                             self.line = ( self.line + self.g3d.read(i1=idx1, i2=idx2+1) )/2
-                        elif self.g3d.nx[1]%2 == 0 and self.g3d.nx[2]%2 == 1:
+                        elif g3d.get_nx(1)%2 == 0 and g3d.get_nx(2)%2 == 1:
                             self.line = ( self.line + self.g3d.read(i1=idx1+1, i2=idx2) )/2
                 else:
                     if self.args.piccode == pp_defs.code.inferno:
@@ -1108,20 +1108,20 @@ class G3d_plot_line(G3d_plot):
             else:
                 if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
                     if self.args.piccode == pp_defs.code.inferno:
-                        self.line= self.g3d.read(i0 = self.g3d.nx[1]/2)
+                        self.line= self.g3d.read(i0 = g3d.get_nx(1)/2)
                     else:
                         # Default: central lineout
-                        idx1 = math.floor(self.g3d.nx[0]/2) - 1
-                        idx2 = math.floor(self.g3d.nx[2]/2) - 1
+                        idx1 = math.floor(g3d.get_nx(0)/2) - 1
+                        idx2 = math.floor(g3d.get_nx(2)/2) - 1
                         self.line = self.g3d.read(i0=idx1, i2=idx2)
-                        if self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 0:
+                        if g3d.get_nx(0)%2 == 0 and g3d.get_nx(2)%2 == 0:
                             line01 = self.g3d.read(i0=idx1, i2=idx2+1)
                             line10 = self.g3d.read(i0=idx1+1, i2=idx2)
                             line11 = self.g3d.read(i0=idx1+1, i2=idx2+1)
                             self.line = ( self.line + line01 + line10 + line11 )/4
-                        elif self.g3d.nx[0]%2 == 1 and self.g3d.nx[2]%2 == 0:
+                        elif g3d.get_nx(0)%2 == 1 and g3d.get_nx(2)%2 == 0:
                             self.line = ( self.line + self.g3d.read(i0=idx1, i2=idx2+1) )/2
-                        elif self.g3d.nx[0]%2 == 0 and self.g3d.nx[2]%2 == 1:
+                        elif g3d.get_nx(0)%2 == 0 and g3d.get_nx(2)%2 == 1:
                             self.line = ( self.line + self.g3d.read(i0=idx1+1, i2=idx2) )/2
                 elif (self.args.lout_idx != None) and (self.args.lout_zeta_pos == None):
                     self.line = self.g3d.read(i0=lout_idx[0], i2=lout_idx[1])
@@ -1150,17 +1150,17 @@ class G3d_plot_line(G3d_plot):
             else:                
                 if (self.args.lout_idx == None) and (self.args.lout_zeta_pos == None):
                     # Default: central lineout
-                    idx1 = math.floor(self.g3d.nx[0]/2) - 1
-                    idx2 = math.floor(self.g3d.nx[1]/2) - 1
+                    idx1 = math.floor(self.g3d.get_nx(0)/2) - 1
+                    idx2 = math.floor(self.g3d.get_nx(1)/2) - 1
                     self.line = self.g3d.read(i0=idx1, i1=idx2)
-                    if self.g3d.nx[0]%2 == 0 and self.g3d.nx[1]%2 == 0:
+                    if self.g3d.get_nx(0)%2 == 0 and self.g3d.get_nx(1)%2 == 0:
                         line01 = self.g3d.read(i0=idx1, i1=idx2+1)
                         line10 = self.g3d.read(i0=idx1+1, i1=idx2)
                         line11 = self.g3d.read(i0=idx1+1, i1=idx2+1)
                         self.line = ( self.line + line01 + line10 + line11 )/4
-                    elif self.g3d.nx[0]%2 == 1 and self.g3d.nx[1]%2 == 0:
+                    elif self.g3d.get_nx(0)%2 == 1 and self.g3d.get_nx(1)%2 == 0:
                         self.line = ( self.line + self.g3d.read(i0=idx1, i1=idx2+1) )/2
-                    elif self.g3d.nx[0]%2 == 0 and self.g3d.nx[1]%2 == 1:
+                    elif self.g3d.get_nx(0)%2 == 0 and self.g3d.get_nx(1)%2 == 1:
                         self.line = ( self.line + self.g3d.read(i0=idx1+1, i1=idx2) )/2
                 elif (self.args.lout_idx != None) and (self.args.lout_zeta_pos == None):
                     self.line = self.g3d.read(i0=lout_idx[0], i1=lout_idx[1])
@@ -1179,12 +1179,12 @@ class G3d_plot_line(G3d_plot):
             sys.stdout.write('Generating line plot...\n')
             sys.stdout.flush()
         saveformat = self.args.file_format
-        filesuffix = '_%06.f' % (np.floor(self.g3d.time))
+        filesuffix = '_%06.f' % (np.floor(self.g3d.get_time()))
 
         if self.args.save_prefix != parsedefs.save.prefix:
             fileprefix = self.args.save_prefix
         else:
-            fileprefix = self.g3d.name
+            fileprefix = self.g3d.get_name()
 
         if self.g3d.is_subgrid():
             self.app_str += '_subgrid_' 

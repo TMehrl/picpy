@@ -286,7 +286,7 @@ def cmp_plot_Ez(g3d_p,
     g3d_p.mkdirs_if_nexist()
 
     saveformat = g3d_p.args.file_format
-    filesuffix = '_%06.f' % (np.floor(g3d_p.g3d.time))
+    filesuffix = '_%06.f' % (np.floor(g3d_p.g3d.get_time()))
 
     fileprefix = g3d_p.g3d.name
 
@@ -407,7 +407,7 @@ def cmp_plot_Wr(args,
     else:
         plt.gcf().subplots_adjust(left=0.15)  
 
-    filesuffix = '_t_%06.f' % (np.floor(g3d.time))
+    filesuffix = '_t_%06.f' % (np.floor(g3d.get_time()))
     fileprefix = 'Wr_' + 'zeta_%0.1f' % zeta_pos
     saveformat = 'pdf'
     savepath = args.savepath

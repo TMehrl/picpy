@@ -193,70 +193,81 @@ def main():
         raw.read_attrs()
         raw.read_data(verbose=False)
 
-        sm.time_array[i] = raw.get_time()
+        sm.set_time(raw.get_time(),i)
         slices = pp_raw_ana.Slices(raw, nbins=Nbins, zrange=zeta_range, cellvol=cellvol)
 
         slices.calc_moments(order = mom_order, crossterms=crossterms, showtimings=args.timings )
-        sm.charge[i,:] = slices.charge
-        sm.avgx1[i,:] = slices.avgx1
-        sm.avgx2[i,:] = slices.avgx2
-        sm.avgx3[i,:] = slices.avgx3
-        sm.avgp1[i,:] = slices.avgp1
-        sm.avgp2[i,:] = slices.avgp2
-        sm.avgp3[i,:] = slices.avgp3
+
+        sm.set_at_nt(slices.charge,i)
+
+        sm.set_at_nt(slices.avgx1,i,x1=1)
+        sm.set_at_nt(slices.avgx2,i,x2=1)
+        sm.set_at_nt(slices.avgx3,i,x3=1)
+
+        sm.set_at_nt(slices.avgp1,i,p1=1)
+        sm.set_at_nt(slices.avgp2,i,p2=1)
+        sm.set_at_nt(slices.avgp3,i,p3=1)
 
         if mom_order>1:
-            sm.avgx1sq[i,:] = slices.avgx1sq
-            sm.avgx2sq[i,:] = slices.avgx2sq
-            sm.avgx3sq[i,:] = slices.avgx3sq
-            sm.avgp1sq[i,:] = slices.avgp1sq
-            sm.avgp2sq[i,:] = slices.avgp2sq
-            sm.avgp3sq[i,:] = slices.avgp3sq
-            sm.avgx1p1[i,:] = slices.avgx1p1
-            sm.avgx2p2[i,:] = slices.avgx2p2
-            sm.avgx3p3[i,:] = slices.avgx3p3
+            sm.set_at_nt(slices.avgx1sq,i,x1=2)
+            sm.set_at_nt(slices.avgx2sq,i,x2=2)
+            sm.set_at_nt(slices.avgx3sq,i,x3=2)
+            
+            sm.set_at_nt(slices.avgp1sq,i,p1=2)
+            sm.set_at_nt(slices.avgp2sq,i,p2=2)
+            sm.set_at_nt(slices.avgp3sq,i,p3=2)
 
-            if crossterms:
-                sm.avgx1x2[i,:] = slices.avgx1x2
-                sm.avgx3x1[i,:] = slices.avgx3x1
-                sm.avgx2x3[i,:] = slices.avgx2x3
-                sm.avgp1p2[i,:] = slices.avgp1p2
-                sm.avgp3p1[i,:] = slices.avgp3p1
-                sm.avgp2p3[i,:] = slices.avgp2p3
-                sm.avgx1p2[i,:] = slices.avgx1p2
-                sm.avgx1p3[i,:] = slices.avgx1p3
-                sm.avgx2p1[i,:] = slices.avgx2p1
-                sm.avgx2p3[i,:] = slices.avgx2p3
-                sm.avgx3p1[i,:] = slices.avgx3p1
-                sm.avgx3p2[i,:] = slices.avgx3p2
+            sm.set_at_nt(slices.avgx1p1,i,x1=1,p1=1)
+            sm.set_at_nt(slices.avgx2p2,i,x2=1,p2=1)
+            sm.set_at_nt(slices.avgx2p2,i,x3=1,p3=1)
+
+            # if crossterms:
+            #     sm.set_at_nt(slices.avgx1x2,i,x1=1,x2=1)
+            #     sm.set_at_nt(slices.avgx3x1,i,x1=1,x3=1)
+            #     sm.set_at_nt(slices.avgx2x3,i,x2=1,x3=1)
+            #     sm.set_at_nt(slices.avgp1p2,i,p1=1,p2=1)
+            #     sm.set_at_nt(slices.avgp3p1,i,p1=1,p3=1)
+            #     sm.set_at_nt(slices.avgp2p3,i,p2=1,p3=1)
+
+
+            #     sm.avgx1p2[i,:] = slices.avgx1p2
+            #     sm.avgx1p3[i,:] = slices.avgx1p3
+            #     sm.avgx2p1[i,:] = slices.avgx2p1
+            #     sm.avgx2p3[i,:] = slices.avgx2p3
+            #     sm.avgx3p1[i,:] = slices.avgx3p1
+            #     sm.avgx3p2[i,:] = slices.avgx3p2
 
         if mom_order>2:
-            sm.avgx1cube[i,:] = slices.avgx1cube
-            sm.avgx2cube[i,:] = slices.avgx2cube
-            sm.avgx3cube[i,:] = slices.avgx3cube
-            sm.avgp1cube[i,:] = slices.avgp1cube
-            sm.avgp2cube[i,:] = slices.avgp2cube
-            sm.avgp3cube[i,:] = slices.avgp3cube
-            sm.avgx1sqp1[i,:] = slices.avgx1sqp1
-            sm.avgx2sqp2[i,:] = slices.avgx2sqp2
-            sm.avgx3sqp3[i,:] = slices.avgx3sqp3
-            sm.avgx1p1sq[i,:] = slices.avgx1p1sq
-            sm.avgx2p2sq[i,:] = slices.avgx2p2sq
-            sm.avgx3p3sq[i,:] = slices.avgx3p3sq
+            sm.set_at_nt(slices.avgx1cube,i,x1=3)
+            sm.set_at_nt(slices.avgx2cube,i,x2=3)
+            sm.set_at_nt(slices.avgx3cube,i,x3=3)
 
+            sm.set_at_nt(slices.avgp1cube,i,p1=3)
+            sm.set_at_nt(slices.avgp2cube,i,p2=3)
+            sm.set_at_nt(slices.avgp3cube,i,p3=3)
+
+            sm.set_at_nt(slices.avgx1sqp1,i,x1=2,p1=1)
+            sm.set_at_nt(slices.avgx2sqp2,i,x2=2,p2=1)
+            sm.set_at_nt(slices.avgx3sqp3,i,x3=2,p3=1)
+
+            sm.set_at_nt(slices.avgx1p1sq,i,x1=1,p1=2)
+            sm.set_at_nt(slices.avgx2p2sq,i,x2=1,p2=2)
+            sm.set_at_nt(slices.avgx3p3sq,i,x3=1,p3=2)
 
         if mom_order>3:
-            sm.avgx1quar[i,:] = slices.avgx1quar
-            sm.avgx2quar[i,:] = slices.avgx2quar
-            sm.avgx3quar[i,:] = slices.avgx3quar
-            sm.avgp1quar[i,:] = slices.avgp1quar
-            sm.avgp2quar[i,:] = slices.avgp2quar
-            sm.avgp3quar[i,:] = slices.avgp3quar
-            sm.avgx1sqp1sq[i,:] = slices.avgx1sqp1sq
-            sm.avgx2sqp2sq[i,:] = slices.avgx2sqp2sq
-            sm.avgx3sqp3sq[i,:] = slices.avgx3sqp3sq
+            sm.set_at_nt(slices.avgx1quar,i,x1=4)
+            sm.set_at_nt(slices.avgx2quar,i,x2=4)
+            sm.set_at_nt(slices.avgx3quar,i,x3=4)
 
-    sm.zeta_array = slices.centers
+            sm.set_at_nt(slices.avgp1quar,i,p1=4)
+            sm.set_at_nt(slices.avgp2quar,i,p2=4)
+            sm.set_at_nt(slices.avgp3quar,i,p3=4)
+
+            sm.set_at_nt(slices.avgx1sqp1sq,i,x1=2,p1=2)
+            sm.set_at_nt(slices.avgx2sqp2sq,i,x2=2,p2=2)
+            sm.set_at_nt(slices.avgx3sqp3sq,i,x3=2,p3=2)
+
+    sm.set_zeta_array(slices.centers)
 
     h5savepathname = args.savepath + '/' + args.save_name
 

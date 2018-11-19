@@ -136,7 +136,7 @@ class Blowout():
         ax.set_ylabel(r'$k_p r$', fontsize=14)
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
 
-        filesuffix = '_t_%06.f' % (np.floor(self.g3d.time))
+        filesuffix = '_t_%06.f' % (np.floor(self.g3d.get_time()))
         fileprefix = 'plasma_charge'
         saveformat = 'png'
         savepath = self.args.savepath
@@ -169,7 +169,7 @@ class Blowout():
         ax.set_ylabel(r'$\rho$', fontsize=14)
         ax.set_xlabel(r'$k_p r$', fontsize=14)
 
-        filesuffix = '_t_%06.f' % (np.floor(self.g3d.time))
+        filesuffix = '_t_%06.f' % (np.floor(self.g3d.get_time()))
         fileprefix = 'plasma_charge_r'
         saveformat = 'eps'
         savepath = self.args.savepath
@@ -240,7 +240,7 @@ class Blowout():
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)    
         ax.legend([r'$r_b$ from zero crossing', r'$r_b$ from global maximum'])
 
-        filesuffix = '_t_%06.f' % (np.floor(self.g3d.time))
+        filesuffix = '_t_%06.f' % (np.floor(self.g3d.get_time()))
         fileprefix = 'plasma_charge_rb'
         saveformat = 'eps'
         savepath = self.args.savepath
@@ -349,7 +349,7 @@ class Blowout():
         ax_deltarho.set_xlabel(r'$k_p \zeta$', fontsize=14) 
         deltarho_fileprefix = 'delta_rho'
 
-        filesuffix = '_t_%06.f' % (np.floor(self.g3d.time))
+        filesuffix = '_t_%06.f' % (np.floor(self.g3d.get_time()))
         saveformat = 'eps'
         savepath = self.args.savepath
 
@@ -418,7 +418,7 @@ class Blowout():
         cbar = fig.colorbar(cax)
         cbar.ax.set_ylabel(r'$\rho$', fontsize=14 )
 
-        filesuffix = '_t_%06.f' % (np.floor(self.g3d.time))
+        filesuffix = '_t_%06.f' % (np.floor(self.g3d.get_time()))
         fileprefix = 'plasma_charge_model'
         saveformat = 'png'
         savepath = self.args.savepath
@@ -446,7 +446,7 @@ class Blowout():
         cbar = fig.colorbar(cax)
         cbar.ax.set_ylabel(r'$\rho$', fontsize=14 )
 
-        filesuffix = '_t_%06.f' % (np.floor(self.g3d.time))
+        filesuffix = '_t_%06.f' % (np.floor(self.g3d.get_time()))
         fileprefix = 'plasma_charge_model_flocmax'
         saveformat = 'png'
         savepath = self.args.savepath

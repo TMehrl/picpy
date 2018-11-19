@@ -162,7 +162,7 @@ def main():
         ax.set_xlabel(r'$k_p x$', fontsize=14)
         ax.set_aspect('equal')
         cbar = fig.colorbar(cax)
-        #cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.name ), fontsize=14 )
+
         if args.ifshow:
             plt.show()
 
