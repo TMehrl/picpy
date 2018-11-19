@@ -16,7 +16,7 @@ from matplotlib.colors import LogNorm
 import pp_defs
 from pp_h5dat import HiRAW
 from pp_h5dat import H5FList
-from pp_h5dat import SliceMoms
+from pp_h5dat import SliceMoms_outdated
 import pp_raw_ana
 
 # Parse defaults/definitions
@@ -181,7 +181,7 @@ def main():
 
     Ntimesteps = int( math.ceil(Nfiles/args.Nskip) )
 
-    sm = SliceMoms()
+    sm = SliceMoms_outdated()
     sm.alloc(Nzeta = Nbins, Nt = Ntimesteps, order = mom_order)
 
     for i in range(0, Ntimesteps):

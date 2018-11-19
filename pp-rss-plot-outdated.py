@@ -17,7 +17,7 @@ from matplotlib.colors import LogNorm
 from matplotlib.ticker import FormatStrFormatter
 import pp_defs
 import h5py
-from pp_h5dat import SliceMoms
+from pp_h5dat import SliceMoms_outdated
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
 import pp_raw_ana
@@ -858,7 +858,7 @@ def main():
 
     file = args.path
 
-    slm = SliceMoms()
+    slm = SliceMoms_outdated()
     slm.read(file)
 
     if slm.get_h5order(file) > 0:

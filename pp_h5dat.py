@@ -1099,7 +1099,7 @@ class SliceMoms_outdated(H5File):
 
         h5order = self.get_h5order(file)
 
-        with h5py.File(self.file,'r') as hf:
+        with h5py.File(file,'r') as hf:
             if order == None:
                 order = h5order
             else:
