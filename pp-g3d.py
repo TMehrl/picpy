@@ -724,7 +724,7 @@ class G3d_plot_slice(G3d_plot):
 
         if self.args.gradax != None:
             self.app_str += '_grad%s' % self.args.gradax
-            cblabel = r'$d($' + gen_pretty_grid_name( self.g3d.name ) + r'$)/k_p%s$' % self.args.gradax
+            cblabel = r'$d($' + gen_pretty_grid_name( self.g3d.name ) + r'$)/k_p d%s$' % self.args.gradax
         elif self.args.if_integrate:
             self.app_str += '_int'
             cblabel = r'$k_p \int$' + gen_pretty_grid_name( self.g3d.name )
