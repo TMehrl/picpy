@@ -467,6 +467,7 @@ class Grid3d(HiFile):
     def __ax_in_plane(self, ax, i0, i1, i2):
         return ((ax+1) in (np.multiply([i0 != None, i1 != None, i2 != None],[1, 2, 3])))
 
+
     def read_grad(  self, 
                     ax,
                     i0=None, 
@@ -480,6 +481,8 @@ class Grid3d(HiFile):
 
         Args:
             ax (int): Axis along which gradient is formed.
+
+            dim (int): Dimension along which gradient is formed.
             i0 (int, optional): Index along axis0
             i1 (int, optional): Index along axis1
             i2 (int, optional): Index along axis2
@@ -490,6 +493,7 @@ class Grid3d(HiFile):
         Returns:
             ndarray: ...
         """
+
         grad = np.gradient(self._read_3D(),axis=ax)/self.get_dx(ax)
 
         # read and differentiate along specified axes 

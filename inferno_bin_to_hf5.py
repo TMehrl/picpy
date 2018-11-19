@@ -91,24 +91,17 @@ def main():
         Nz = np.int(array[0])
         Nr = np.int(array[1])
         # print('Nz: %i , Nr: %i' %(Nz, Nr))
-        # f = open(files, "rb")
-        # f.seek(8, os.SEEK_SET)
-        # box_dimensions = np.fromfile(files, dtype=np.float64, count=4)
-        zmin, rmin, zmax, rmax = array[2:6]
         
-        # f.seek(40, os.SEEK_SET)
-        # 
-        # array = np.fromfile(f, dtype=np.float64)
-
+        zmin, rmin, zmax, rmax = array[2:6]
         
         data = np.reshape(array[6:], (Nz, Nr))
         #data = np.transpose(data)
-        
+        # print(np.shape(data))
         if 'ExmBy' in files:
-            data = np.append(-np.flip(data, axis=1), data, axis=1)
+            data = np.append(-np.flip(data[:,1:], axis=1), data, axis=1)
         else:
-            data = np.append(np.flip(data, axis=1), data, axis=1)
-
+            data = np.append(np.flip(data[:,1:], axis=1), data, axis=1)
+        # print(np.shape(data))
         # control plot if needed
         # plt.pcolormesh(data, cmap=cm.plasma)
         # plt.show()
