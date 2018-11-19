@@ -478,7 +478,6 @@ class Grid3d(HiFile):
                     x2=None):
 
         """Read 3D data, form derivative along given axis return 0D, 1D, 2D or 3D gradient array.
-
         Args:
             ax (int): Axis along which gradient is formed.
 
@@ -491,7 +490,7 @@ class Grid3d(HiFile):
             x2 (float, optional): Position along axis2
 
         Returns:
-            ndarray: ...
+            ndarray: 0D, 1D, 2D or 3D gradient array
         """
 
         grad = np.gradient(self._read_3D(),axis=ax)/self.get_dx(ax)
