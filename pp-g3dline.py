@@ -524,9 +524,9 @@ class G3d_plot_slice(G3d_plot):
                         self.slice = self.g3d.read()
                     else:
                         if (self.args.plane_index == None) and (self.args.plane_pos == None):
-                            index = math.floor(g3d.get_nx(2)/2) - 1
+                            index = math.floor(self.g3d.get_nx(2)/2) - 1
                             self.slice = self.g3d.read(i2=index)
-                            if g3d.get_nx(2)%2 == 0:
+                            if self.g3d.get_nx(2)%2 == 0:
                                 self.slice = (self.slice + self.g3d.read(i2=index+1))/2
                         elif (self.args.plane_index != None) and (self.args.plane_pos == None):
                             self.slice = self.g3d.read(i2=self.args.plane_index)
