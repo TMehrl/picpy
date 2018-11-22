@@ -1072,20 +1072,20 @@ class G3d_plot_line(G3d_plot):
                 if self.args.lout_idx == None:
                     # Default: central lineout
                     if self.args.piccode == pp_defs.code.inferno:
-                        self.line= self.g3d.read(i1 = g3d.get_nx(1)/2)
+                        self.line= self.g3d.read(i1 = self.g3d.get_nx(1)/2)
                         print(np.shape(self.line))
                     else:
-                        idx1 = math.floor(g3d.get_nx(1)/2) - 1
-                        idx2 = math.floor(g3d.get_nx(2)/2) - 1
+                        idx1 = math.floor(self.g3d.get_nx(1)/2) - 1
+                        idx2 = math.floor(self.g3d.get_nx(2)/2) - 1
                         self.line = self.g3d.read(i1=idx1, i2=idx2)
-                        if g3d.get_nx(1)%2 == 0 and g3d.get_nx(2)%2 == 0:
+                        if self.g3d.get_nx(1)%2 == 0 and self.g3d.get_nx(2)%2 == 0:
                             line01 = self.g3d.read(i1=idx1, i2=idx2+1)
                             line10 = self.g3d.read(i1=idx1+1, i2=idx2)
                             line11 = self.g3d.read(i1=idx1+1, i2=idx2+1)
                             self.line = ( self.line + line01 + line10 + line11 )/4
-                        elif g3d.get_nx(1)%2 == 1 and g3d.get_nx(2)%2 == 0:
-                            self.line = ( self.line + self.g3d.read(i1=idx1, i2=idx2+1) )/2
-                        elif g3d.get_nx(1)%2 == 0 and g3d.get_nx(2)%2 == 1:
+                        elif self.g3d.get_nx(1)%2 == 1 and self.g3d.get_nx(2)%2 == 0:
+                            self.line = ( self.line + self.self.g3d.read(i1=idx1, i2=idx2+1) )/2
+                        elif self.g3d.get_nx(1)%2 == 0 and self.g3d.get_nx(2)%2 == 1:
                             self.line = ( self.line + self.g3d.read(i1=idx1+1, i2=idx2) )/2
                 else:
                     if self.args.piccode == pp_defs.code.inferno:

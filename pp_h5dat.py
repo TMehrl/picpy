@@ -614,13 +614,13 @@ class Grid2d(HiFile):
         # self.fid = h5py.h5f.open(self.file.encode())
         # self.dset = h5py.h5d.open(self.fid, self.dsetkey.encode())
 
-    def read_3D(self):
+    def _read_3D(self):
         print('Error:\tGrid2D can not read in 3D dataset!' )
         sys.exit()
         return 
 
 
-    def read_2D(self, i0=None, i1=None, i2=None):
+    def _read_2D(self, i0=None, i1=None, i2=None):
         with h5py.File(self.get_file(),'r') as hf:
         # Reading dataset (here not caring how dataset is called)
             
@@ -631,7 +631,7 @@ class Grid2d(HiFile):
             #     data2d = hf[self.dsetkey][:,i2]
         return(data2d)
 
-    def read_1D(self, i0=None, i1=None, i2=None):
+    def _read_1D(self, i0=None, i1=None, i2=None):
         with h5py.File(self.get_file(),'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1==None:
@@ -647,7 +647,7 @@ class Grid2d(HiFile):
                 sys.exit()
         return(data1d)
 
-    def read_0D(self, i0=None, i1=None, i2=None):
+    def _read_0D(self, i0=None, i1=None, i2=None):
         with h5py.File(self.get_file(),'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1!=None and i2!=None:
