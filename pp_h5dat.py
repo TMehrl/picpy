@@ -804,14 +804,11 @@ class SliceMoms(H5File):
             self.__mom = np.zeros((1, Nt, Nzeta), dtype=np.float32)
         elif order==1:
             self.__mom = np.zeros((7, Nt, Nzeta), dtype=np.float32)
-
         elif order==2:
             self.__mom = np.zeros((16, Nt, Nzeta), dtype=np.float32)
             # # if crossterms:
-
         elif order==3:
             self.__mom = np.zeros((28, Nt, Nzeta), dtype=np.float32)
-
         elif order==4:
             self.__mom = np.zeros((37, Nt, Nzeta), dtype=np.float32)
         else:
@@ -1427,7 +1424,7 @@ class H5Plot:
     def get_line_plots(self):
         return zip(self.__lp_X, self.__lp_Y, self.__lp_labels, self.__lp_linestyles, self.__lp_colors)
 
-    def get_data(self, idx):
+    def get_data(self, idx=0):
         return self.__lp_X[idx], self.__lp_Y[idx]      
 
 class H5FList():
@@ -1485,8 +1482,7 @@ class H5FList():
             sys.exit()
         return flist 
 
-    def get_uniques(self):
-        n_time_chars = 8;
+    def get_uniques(self, n_time_chars = 8):
         fnames = []
         if self.__flist == None:
             self.get()
@@ -1495,10 +1491,10 @@ class H5FList():
             fnames.append(h5f.get_filename_wo_time())
         return list(set(fnames))
 
-    def split_by_uniques(self):
+    def split_by_uniques(self, n_time_chars = 8):
         if self.__flist == None:
             self.get()
-        uniques = self.get_uniques()
+        uniques = self.get_uniques(n_time_chars=n_time_chars)
 
         # initialize and append to list of lists
         lofl = [[] for i in range(len(uniques))] 

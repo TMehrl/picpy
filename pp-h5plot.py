@@ -362,8 +362,9 @@ def main():
         else:
             plt.legend(frameon=False)
     plt.gcf().subplots_adjust(left=args.adjleft, bottom=args.adjbottom)       
-    if not (-3.0 < math.log(np.max(abs(y)),10) < 3.0):
-        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))     
+    if np.max(np.abs(y)) > 0.0:
+        if not (-3.0 < math.log(np.max(np.abs(y)),10) < 3.0):
+            ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))     
     plt.show()
 
     spath, fname  = os.path.split(args.paths[0])
