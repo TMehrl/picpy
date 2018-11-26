@@ -1225,7 +1225,7 @@ class G3d_plot_line(G3d_plot):
                           abs(self.line[nonzero_idx]))
         elif smooth:
             plt.plot( self.x_array,
-                      gaussian_filter1d(self.line, smooth)
+                      gaussian_filter1d(self.line, smooth))
         else:
             plt.plot( self.x_array,
                       self.line)
