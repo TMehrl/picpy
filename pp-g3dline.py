@@ -1271,7 +1271,9 @@ class G3d_plot_line(G3d_plot):
             savepath = self.args.savepath + self.__relsavepath
 
         mkdirs_if_nexist(savepath)
-
+        if self.args.smoothing:
+            savename += '_smoothed'
+            
         if saveformat==parsedefs.file_format.png:
             fig.savefig( savepath + '/' + savename + '.' + saveformat,
                       format=saveformat,
