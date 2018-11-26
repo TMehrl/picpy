@@ -89,6 +89,7 @@ def g3d_parser():
                           dest = "smoothing",
                           action = "store",
                           default = False,
+                          type=float,
                           metavar="SIGMA",
                           help = "Smoothing of the line plot. Sigma is the input "
                           " into the 1D gaussian filter (default: %(default)s).")
