@@ -5,6 +5,7 @@ import os
 import math
 import argparse
 import numpy as np
+from scipy.ndimage import gaussian_filter1d
 import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
@@ -84,6 +85,13 @@ def g3d_parser():
                           action = "store_true",
                           default=False,                          
                           help = "Plot integrated quantity (default: %(default)s).")
+    parser.add_argument(  "--smooth",
+                          dest = "smoothing",
+                          action = "store",
+                          default = False,
+                          metavar="SIGMA",
+                          help = "Smoothing of the line plot. Sigma is the input "
+                          " into the 1D gaussian filter (default: %(default)s).")
     parser.add_argument(  "--avgax",
                           action='store',
                           dest="avgax",
@@ -1174,7 +1182,7 @@ class G3d_plot_line(G3d_plot):
         if self.is_number_density():
             self.line = np.abs(self.line)
 
-    def plot( self, ifsave=True, fig=False ):
+    def plot( self, ifsave=True, fig=False, smooth=False ):
         if self.args.verbose: 
             sys.stdout.write('Generating line plot...\n')
             sys.stdout.flush()
@@ -1215,7 +1223,10 @@ class G3d_plot_line(G3d_plot):
             nonzero_idx = np.where( abs(self.line) > 0.0 )
             plt.semilogy( self.x_array[nonzero_idx],
                           abs(self.line[nonzero_idx]))
-        else:    
+        elif smooth:
+            plt.plot( self.x_array,
+                      gaussian_filter1d(self.line, smooth)
+        else:
             plt.plot( self.x_array,
                       self.line)
             
@@ -1325,7 +1336,7 @@ def slice(args):
                         if timestamp in line_data_files or args.manual:
                             g3d_pline = G3d_plot_line(line_data_files, args)
                             g3d_pline.set_yaxis()
-                            g3d_pline.plot(fig=fig)
+                            g3d_pline.plot(fig=fig, smooth=args.smooth)
                 else:
                     g3d_p.save_fig(fig)
                     plt.close(fig)
