@@ -1336,7 +1336,7 @@ def slice(args):
                         if timestamp in line_data_files or args.manual:
                             g3d_pline = G3d_plot_line(line_data_files, args)
                             g3d_pline.set_yaxis()
-                            g3d_pline.plot(fig=fig, smooth=args.smooth)
+                            g3d_pline.plot(fig=fig, smooth=args.smoothing)
                 else:
                     g3d_p.save_fig(fig)
                     plt.close(fig)
