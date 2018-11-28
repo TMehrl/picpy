@@ -1263,7 +1263,7 @@ class G3d_plot_line(G3d_plot):
                                    self.app_str, \
                                    filesuffix)
 
-        plt.title(savename)
+        #plt.title(savename)
 
         if self.args.savepath == None:
             savepath = self.root_savepath + self.__relsavepath
