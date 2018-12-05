@@ -281,7 +281,7 @@ class HiRAW(HiFile):
 
     def read_data(self, verbose=True):
         if verbose:
-            print('Reading data...')        
+            print('Reading data: "%s" ...' % self.get_file())        
         with h5py.File(self.get_file(),'r') as hf:
             # Reading datasets
             self.x1 = np.array(hf.get(  self.get_rawkey('x1') ))
