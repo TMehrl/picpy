@@ -5,6 +5,7 @@ import os
 import math
 import argparse
 import numpy as np
+from scipy.ndimage import gaussian_filter1d
 import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
@@ -84,6 +85,14 @@ def g3d_parser():
                           action = "store_true",
                           default=False,                          
                           help = "Plot integrated quantity (default: %(default)s).")
+    parser.add_argument(  "--smooth",
+                          dest = "smoothing",
+                          action = "store",
+                          default = False,
+                          type=float,
+                          metavar="SIGMA",
+                          help = "Smoothing of the line plot. Sigma is the input "
+                          " into the 1D gaussian filter (default: %(default)s).")
     parser.add_argument(  "--avgax",
                           action='store',
                           dest="avgax",
@@ -524,9 +533,9 @@ class G3d_plot_slice(G3d_plot):
                         self.slice = self.g3d.read()
                     else:
                         if (self.args.plane_index == None) and (self.args.plane_pos == None):
-                            index = math.floor(g3d.get_nx(2)/2) - 1
+                            index = math.floor(self.g3d.get_nx(2)/2) - 1
                             self.slice = self.g3d.read(i2=index)
-                            if g3d.get_nx(2)%2 == 0:
+                            if self.g3d.get_nx(2)%2 == 0:
                                 self.slice = (self.slice + self.g3d.read(i2=index+1))/2
                         elif (self.args.plane_index != None) and (self.args.plane_pos == None):
                             self.slice = self.g3d.read(i2=self.args.plane_index)
@@ -1072,20 +1081,20 @@ class G3d_plot_line(G3d_plot):
                 if self.args.lout_idx == None:
                     # Default: central lineout
                     if self.args.piccode == pp_defs.code.inferno:
-                        self.line= self.g3d.read(i1 = g3d.get_nx(1)/2)
+                        self.line= self.g3d.read(i1 = self.g3d.get_nx(1)/2)
                         print(np.shape(self.line))
                     else:
-                        idx1 = math.floor(g3d.get_nx(1)/2) - 1
-                        idx2 = math.floor(g3d.get_nx(2)/2) - 1
+                        idx1 = math.floor(self.g3d.get_nx(1)/2) - 1
+                        idx2 = math.floor(self.g3d.get_nx(2)/2) - 1
                         self.line = self.g3d.read(i1=idx1, i2=idx2)
-                        if g3d.get_nx(1)%2 == 0 and g3d.get_nx(2)%2 == 0:
+                        if self.g3d.get_nx(1)%2 == 0 and self.g3d.get_nx(2)%2 == 0:
                             line01 = self.g3d.read(i1=idx1, i2=idx2+1)
                             line10 = self.g3d.read(i1=idx1+1, i2=idx2)
                             line11 = self.g3d.read(i1=idx1+1, i2=idx2+1)
                             self.line = ( self.line + line01 + line10 + line11 )/4
-                        elif g3d.get_nx(1)%2 == 1 and g3d.get_nx(2)%2 == 0:
-                            self.line = ( self.line + self.g3d.read(i1=idx1, i2=idx2+1) )/2
-                        elif g3d.get_nx(1)%2 == 0 and g3d.get_nx(2)%2 == 1:
+                        elif self.g3d.get_nx(1)%2 == 1 and self.g3d.get_nx(2)%2 == 0:
+                            self.line = ( self.line + self.self.g3d.read(i1=idx1, i2=idx2+1) )/2
+                        elif self.g3d.get_nx(1)%2 == 0 and self.g3d.get_nx(2)%2 == 1:
                             self.line = ( self.line + self.g3d.read(i1=idx1+1, i2=idx2) )/2
                 else:
                     if self.args.piccode == pp_defs.code.inferno:
@@ -1174,7 +1183,7 @@ class G3d_plot_line(G3d_plot):
         if self.is_number_density():
             self.line = np.abs(self.line)
 
-    def plot( self, ifsave=True, fig=False ):
+    def plot( self, ifsave=True, fig=False, smooth=False ):
         if self.args.verbose: 
             sys.stdout.write('Generating line plot...\n')
             sys.stdout.flush()
@@ -1215,7 +1224,10 @@ class G3d_plot_line(G3d_plot):
             nonzero_idx = np.where( abs(self.line) > 0.0 )
             plt.semilogy( self.x_array[nonzero_idx],
                           abs(self.line[nonzero_idx]))
-        else:    
+        elif smooth:
+            plt.plot( self.x_array,
+                      gaussian_filter1d(self.line, smooth))
+        else:
             plt.plot( self.x_array,
                       self.line)
             
@@ -1251,7 +1263,7 @@ class G3d_plot_line(G3d_plot):
                                    self.app_str, \
                                    filesuffix)
 
-        plt.title(savename)
+        #plt.title(savename)
 
         if self.args.savepath == None:
             savepath = self.root_savepath + self.__relsavepath
@@ -1259,7 +1271,9 @@ class G3d_plot_line(G3d_plot):
             savepath = self.args.savepath + self.__relsavepath
 
         mkdirs_if_nexist(savepath)
-
+        if self.args.smoothing:
+            savename += '_smoothed'
+            
         if saveformat==parsedefs.file_format.png:
             fig.savefig( savepath + '/' + savename + '.' + saveformat,
                       format=saveformat,
@@ -1325,7 +1339,7 @@ def slice(args):
                         if timestamp in line_data_files or args.manual:
                             g3d_pline = G3d_plot_line(line_data_files, args)
                             g3d_pline.set_yaxis()
-                            g3d_pline.plot(fig=fig)
+                            g3d_pline.plot(fig=fig, smooth=args.smoothing)
                 else:
                     g3d_p.save_fig(fig)
                     plt.close(fig)

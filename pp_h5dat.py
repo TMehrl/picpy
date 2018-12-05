@@ -598,30 +598,30 @@ class Grid2d(HiFile):
     def __init__(self, file):
         HiFile.__init__(self, file)
         self.read_attrs()
-        with h5py.File(self.file,'r') as hf:
+        with h5py.File(self.get_file(),'r') as hf:
             self.h5keys = list(hf.keys())
             if len(self.h5keys) == 1:
                 self.dsetkey = self.h5keys[0]
             elif len(self.h5keys) == 0:
                 print('Error:\tHDF5 file "%s" does not '
-                  'contain any dataset!' %(self.file) )
+                  'contain any dataset!' %(self.get_file() ) )
                 sys.exit()
             elif len(self.h5keys) > 1:
                 print('Error:\tHDF5 file "%s" contains more '
-                  'than one dataset!' %(self.file) )
+                  'than one dataset!' %(self.get_file() ) )
                 sys.exit()
 
         # self.fid = h5py.h5f.open(self.file.encode())
         # self.dset = h5py.h5d.open(self.fid, self.dsetkey.encode())
 
-    def read_3D(self):
+    def _read_3D(self):
         print('Error:\tGrid2D can not read in 3D dataset!' )
         sys.exit()
         return 
 
 
-    def read_2D(self, i0=None, i1=None, i2=None):
-        with h5py.File(self.file,'r') as hf:
+    def _read_2D(self, i0=None, i1=None, i2=None):
+        with h5py.File(self.get_file(),'r') as hf:
         # Reading dataset (here not caring how dataset is called)
             
             data2d = hf[self.dsetkey][()]
@@ -631,8 +631,8 @@ class Grid2d(HiFile):
             #     data2d = hf[self.dsetkey][:,i2]
         return(data2d)
 
-    def read_1D(self, i0=None, i1=None, i2=None):
-        with h5py.File(self.file,'r') as hf:
+    def _read_1D(self, i0=None, i1=None, i2=None):
+        with h5py.File(self.get_file(),'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1==None:
                 data1d = hf[self.dsetkey][i0,:]
@@ -647,7 +647,7 @@ class Grid2d(HiFile):
                 sys.exit()
         return(data1d)
 
-    def read_0D(self, i0=None, i1=None, i2=None):
+    def _read_0D(self, i0=None, i1=None, i2=None):
         with h5py.File(self.get_file(),'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1!=None and i2!=None:
