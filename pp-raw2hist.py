@@ -306,14 +306,10 @@ def main():
     for file in flist:
         raw = HiRAW(file)
         raw.read_data(verbose=args.verbose)
+        if args.verbose:
+            print( "The file contains %i particles." % raw.get_npart() )         
         if args.zeta_range != None:
             raw.select_zeta_range(args.zeta_range)
-            if args.verbose:
-                print( "There are %i particles in the selected range." % raw.get_npart() )             
-        else:
-            if args.verbose:
-                print( "The file contains %i particles." % raw.get_npart() ) 
-
         if raw.get_npart() > 0:           
             args.func(raw, args)
         else:
