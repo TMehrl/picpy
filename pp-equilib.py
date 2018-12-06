@@ -11,8 +11,6 @@ import scipy.interpolate as interpolate
 import matplotlib
 import matplotlib.pyplot as plt
 
-pp_path = os.environ['PP_PATH']
-sys.path.append(pp_path)
 from pp_h5dat import Grid3d
 from pp_h5dat import mkdirs_if_nexist
 from pp_plt_tools import saveas_eps_pdf
