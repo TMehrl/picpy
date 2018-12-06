@@ -128,11 +128,11 @@ def cart_to_r_transform(x, y, fxy, x0 = 0.0, y0 = 0.0, rlim = None):
         if 0.0 <= phi < math.pi/2:
             f_integral += np.diagonal(f_interp(x_interp,y_interp))
         elif math.pi/2 <= phi < math.pi:
-            f_integral += np.flip(np.diagonal(np.flipud(f_interp(x_interp,y_interp))))
+            f_integral += np.flip(np.diagonal(np.flipud(f_interp(x_interp,y_interp))),axis=0)
         elif math.pi <= phi < 3*math.pi/2:
             f_integral += np.diagonal(np.flipud(np.fliplr(f_interp(x_interp,y_interp))))
         elif 3*math.pi/2 <= phi <= 2*math.pi:
-            f_integral += np.flip(np.diagonal(np.fliplr(f_interp(x_interp,y_interp)))) 
+            f_integral += np.flip(np.diagonal(np.fliplr(f_interp(x_interp,y_interp))),axis=0) 
 
     fr = f_integral/Nphi
 
