@@ -205,7 +205,7 @@ def density_inversion(r_nb, nb, r_psi, psi, savepath = './plots/equilib', ifplot
         ax = plt.gca()        
         ax.set_xlabel(r'$x$', fontsize=14)
         ax.set_ylabel(r'$F$', fontsize=14) 
-        plt.legend()
+        plt.legend(frameon=False)
         saveas_eps_pdf(fig, savepath, 'F')        
 
     return x, F
