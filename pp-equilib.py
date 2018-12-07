@@ -8,8 +8,10 @@ import numpy as np
 import scipy
 import scipy.integrate as integrate
 import scipy.interpolate as interpolate
+from scipy.optimize import curve_fit
 import matplotlib
 import matplotlib.pyplot as plt
+
 
 from pp_h5dat import Grid3d
 from pp_h5dat import mkdirs_if_nexist
@@ -46,7 +48,7 @@ def parseargs():
                           action='store_true',
                           dest='verbose',
                           default=True,
-                          help = 'Print info (Default).')
+                          help = 'Print info (Default).')    
     parser.add_argument(  '-q', '--quiet',
                           action='store_false',
                           dest='verbose',
@@ -58,7 +60,13 @@ def parseargs():
                           metavar='RLIM',
                           type=float,
                           default=None)
-
+    parser.add_argument(  "-s", "--save-path",
+                          action="store",
+                          dest="savepath",
+                          metavar="PATH",
+                          default='./plots/equilib',
+                          help = """Path to which generated files will be saved.
+                              (default: %(default)s)""")
     return parser
 
 
@@ -76,6 +84,8 @@ class Data_xy_slice:
         return self.__x_array, self.__y_array, self.__fxy
 
 
+def exp_func(x, a, b):
+    return a * np.exp(-1 * x/b)
 
 def cart_int(x,y,fxy,axis='x'):
     if axis == 'x':
@@ -118,8 +128,6 @@ def cart_to_r_transform(x, y, fxy, x0 = 0.0, y0 = 0.0, rlim = None):
     Nphi = np.size(x)
     phi_array = np.linspace(0,2*math.pi,num=Nphi)
 
-    # Nphi = 1
-    # phi_array = [0*math.pi/2 + 0.2]
 
     for phi in phi_array:
         x_interp = x0 + math.cos(phi) * r
@@ -138,13 +146,69 @@ def cart_to_r_transform(x, y, fxy, x0 = 0.0, y0 = 0.0, rlim = None):
 
     return r, fr
 
-def density_inversion(r_nb, nb, r_psi, psi):
-    psi_interp = np.interp(r_nb, r_psi, psi)
+def density_inversion(r_nb, nb, r_psi, psi, savepath = './plots/equilib', ifplot=True):
+
+    psi_norm = psi - np.min(psi)
+
+    psi_interp = np.interp(r_nb, r_psi, psi_norm)
     dnb = np.diff(nb)
     dpsi = np.diff(psi_interp)
-    dn_per_dpsi = np.divide(dnb,dpsi)
 
-    return psi_interp[:-1], dn_per_dpsi
+    x = psi_interp[:-1]
+    F = -1*np.divide(dnb,dpsi)/(2*math.pi)
+
+    popt, pcov = curve_fit(exp_func, x, F)
+
+    if ifplot:
+        mkdirs_if_nexist(savepath)
+
+        fig = plt.figure()
+        plt.plot(r_nb, nb)
+        ax = plt.gca()        
+        ax.set_xlabel(r'$k_p r$', fontsize=14)
+        ax.set_ylabel(r'$n_b/n_0$', fontsize=14)   
+        saveas_eps_pdf(fig, savepath, 'nb')
+
+        fig = plt.figure()
+        plt.plot(r_nb[:-1], np.divide(dnb,np.diff(r_nb)))
+        ax = plt.gca()        
+        ax.set_xlabel(r'$k_p r$', fontsize=14)
+        ax.set_ylabel(r'$d(n_b/n_0)/(k_p dr)$', fontsize=14)   
+        saveas_eps_pdf(fig, savepath, 'dnb_dr')
+
+        fig = plt.figure()
+        plt.plot(r_nb[:-1], np.divide(dpsi,np.diff(r_nb)))
+        ax = plt.gca()        
+        ax.set_xlabel(r'$k_p r$', fontsize=14)
+        ax.set_ylabel(r'$d(e\psi/mc^2)/(k_p dr)$', fontsize=14)    
+        saveas_eps_pdf(fig, savepath, 'dpsi_dr')
+
+
+        fig = plt.figure()
+        plt.plot(psi_norm, r_nb)
+        ax = plt.gca()        
+        ax.set_ylabel(r'$k_p r$', fontsize=14)
+        ax.set_xlabel(r'$e\psi/mc^2$', fontsize=14) 
+        saveas_eps_pdf(fig, savepath, 'r_vs_psi')
+
+
+        fig = plt.figure()
+        plt.plot(r_nb, psi_norm)
+        ax = plt.gca()        
+        ax.set_xlabel(r'$k_p r$', fontsize=14)
+        ax.set_ylabel(r'$e\psi/mc^2$', fontsize=14) 
+        saveas_eps_pdf(fig, savepath, 'psi')
+
+        fig = plt.figure()
+        plt.plot(x, F, '-', label=r'F(x)')
+        plt.plot(x, exp_func(x, *popt), '--', label=r'fit: $%0.2f \cdot exp(-x/%0.2f)$' % tuple(popt))
+        ax = plt.gca()        
+        ax.set_xlabel(r'$x$', fontsize=14)
+        ax.set_ylabel(r'$F$', fontsize=14) 
+        plt.legend()
+        saveas_eps_pdf(fig, savepath, 'F')        
+
+    return x, F
 
 
 class Equilib:
@@ -172,41 +236,10 @@ def main():
         print('ERROR: Either wx or mpsi path must be specified!')
         sys.exit(1)
     
-    r_psi, mpsi = cart_to_r_transform(x_psi, y_psi, mpsi_xy,rlim=args.rlim)
+    r_psi, mpsi = cart_to_r_transform(x_psi, y_psi, mpsi_xy, rlim=args.rlim)
 
-    x, F = density_inversion(r_n, nbr, r_psi, -1*mpsi)
+    x, F = density_inversion(r_n, nbr, r_psi, mpsi, savepath = args.savepath, ifplot = True)
 
-    savepath = './plots/equilib'
-
-    mkdirs_if_nexist(savepath)
-
-    fig = plt.figure()
-    plt.plot(r_n, nbr)
-    ax = plt.gca()        
-    ax.set_xlabel(r'$k_p r$', fontsize=14)
-    ax.set_ylabel(r'$n_b/n_0$', fontsize=14)   
-    saveas_eps_pdf(fig, savepath, 'nb')
-
-    fig = plt.figure()
-    plt.plot(r_psi, mpsi)
-    ax = plt.gca()        
-    ax.set_xlabel(r'$k_p r$', fontsize=14)
-    ax.set_ylabel(r'$e\psi/mc^2$', fontsize=14) 
-    saveas_eps_pdf(fig, savepath, 'psi')
-
-    fig = plt.figure()
-    plt.plot(mpsi, r_psi)
-    ax = plt.gca()        
-    ax.set_ylabel(r'$k_p r$', fontsize=14)
-    ax.set_xlabel(r'$e\psi/mc^2$', fontsize=14) 
-    saveas_eps_pdf(fig, savepath, 'r_vs_psi')
-
-    fig = plt.figure()
-    plt.plot(x, F)
-    ax = plt.gca()        
-    ax.set_xlabel(r'$x$', fontsize=14)
-    ax.set_ylabel(r'$F$', fontsize=14) 
-    saveas_eps_pdf(fig, savepath, 'F')
 
 if __name__ == "__main__":
     main()
