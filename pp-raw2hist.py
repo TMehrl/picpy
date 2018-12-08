@@ -67,7 +67,7 @@ def r2h_1d_subparser(subparsers, parent_parser):
                           action='store',
                           dest="psv",
                           metavar="VAR",
-                          choices=[ 'x', 'y', 'z', 'px', 'py', 'pz'],
+                          choices=[ 'x', 'y', 'z', 'r', 'px', 'py', 'pz'],
                           default=None,
                           required=True,
                           help= 'Phase space variable')
@@ -179,6 +179,10 @@ def get_props(raw,psv_str):
        label = r'$k_p \zeta$' 
        psv = raw.x1
        savename = 'zeta'
+    elif psv_str == 'r':
+       label = r'$k_p r$' 
+       psv = np.sqrt(np.power(raw.x2,2) + np.power(raw.x3,2)) 
+       savename = 'r'    
     elif psv_str == 'px':
        label = r'$p_x/m c$' 
        psv = raw.p2
@@ -216,6 +220,20 @@ def oneD(raw, args):
 
     hist, bin_edges = np.histogram(psv,bins=nbins,weights=raw.q,density=True,range=args.range)
     x_array = bin_edges[0:-1] + (bin_edges[1] - bin_edges[0])/2
+
+    if args.psv == 'r':
+        ## Scaling dr with 1/r
+        # rmax = np.max(psv)
+        # r_range = [0, rmax]
+        # r_lsp = np.linspace(0,rmax,nbins)
+        # lsp_centers = r_lsp[:-1] + np.diff(r_lsp)
+        # dr_unnormed = np.divide(np.diff(r_lsp),lsp_centers)
+        # dr_normed =  rmax * dr_unnormed/np.sum(dr_unnormed) 
+        # r_bin_edges = np.insert(np.cumsum(dr_normed),0,0)
+        #hist, bin_edges = np.histogram(psv,bins=r_bin_edges,weights=raw.q,density=True,range=args.range)
+
+        ## Scaling number of hits with 1/r
+        hist = np.divide(hist,x_array)/(2*math.pi)
 
     fig = plt.figure(figsize=(6,5))
     plt.plot( x_array, hist )

@@ -9,9 +9,10 @@ import scipy
 import scipy.integrate as integrate
 import scipy.interpolate as interpolate
 from scipy.optimize import curve_fit
+from scipy.ndimage import filters
+
 import matplotlib
 import matplotlib.pyplot as plt
-
 
 from pp_h5dat import Grid3d
 from pp_h5dat import mkdirs_if_nexist
@@ -85,7 +86,7 @@ class Data_xy_slice:
 
 
 def exp_func(x, a, b):
-    return a * np.exp(-1 * x/b)
+    return a * np.exp(-b * x)
 
 def cart_int(x,y,fxy,axis='x'):
     if axis == 'x':
@@ -201,7 +202,7 @@ def density_inversion(r_nb, nb, r_psi, psi, savepath = './plots/equilib', ifplot
 
         fig = plt.figure()
         plt.plot(x, F, '-', label=r'F(x)')
-        plt.plot(x, exp_func(x, *popt), '--', label=r'fit: $%0.2f \cdot exp(-x/%0.2f)$' % tuple(popt))
+        plt.plot(x, exp_func(x, *popt), '--', label=r'fit: $%0.2f \cdot exp(-%0.2f \cdot x)$' % tuple(popt))
         ax = plt.gca()        
         ax.set_xlabel(r'$x$', fontsize=14)
         ax.set_ylabel(r'$F$', fontsize=14) 
@@ -222,7 +223,34 @@ def main():
 
     nbdat = Data_xy_slice(args.nb_path, args.zeta_pos)
     x_n, y_n, nb_xy = nbdat.read()
-    r_n, nbr = cart_to_r_transform(x_n, y_n, np.abs(nb_xy),rlim=args.rlim)
+
+    nb_abs_filtered = filters.gaussian_filter(np.abs(nb_xy), 4, mode='mirror')
+    # nb_abs_filtered = np.abs(nb_xy)
+
+    fig = plt.figure()
+    cax = plt.pcolor(nb_abs_filtered)
+    ax = plt.gca()        
+    ax.set_xlabel(r'$x$', fontsize=14)
+    ax.set_ylabel(r'$y$', fontsize=14) 
+    cbar = fig.colorbar(cax)
+
+    fig = plt.figure()
+    cax = plt.pcolor(np.abs(nb_xy))
+    ax = plt.gca()        
+    ax.set_xlabel(r'$x$', fontsize=14)
+    ax.set_ylabel(r'$y$', fontsize=14)
+    cbar = fig.colorbar(cax) 
+
+    fig = plt.figure()
+    cax = plt.pcolor(np.abs(nb_xy) - nb_abs_filtered)
+    ax = plt.gca()        
+    ax.set_xlabel(r'$x$', fontsize=14)
+    ax.set_ylabel(r'$y$', fontsize=14) 
+    cbar = fig.colorbar(cax)
+
+    plt.show()
+
+    r_n, nbr = cart_to_r_transform(x_n, y_n, nb_abs_filtered, rlim=args.rlim)
 
     if (args.mpsi_path != None) and (args.wx_path == None):
         psidat = Data_xy_slice(args.mpsi_path, args.zeta_pos)
@@ -235,7 +263,7 @@ def main():
     else:
         print('ERROR: Either wx or mpsi path must be specified!')
         sys.exit(1)
-    
+
     r_psi, mpsi = cart_to_r_transform(x_psi, y_psi, mpsi_xy, rlim=args.rlim)
 
     x, F = density_inversion(r_n, nbr, r_psi, mpsi, savepath = args.savepath, ifplot = True)
