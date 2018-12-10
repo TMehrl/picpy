@@ -17,6 +17,7 @@ import pp_defs
 from pp_h5dat import HiRAW
 from pp_h5dat import H5FList
 from pp_h5dat import SliceMoms
+from pp_h5dat import mkdirs_if_nexist
 import pp_raw_ana
 
 # Parse defaults/definitions
@@ -45,7 +46,7 @@ def ps_parseargs():
                           action='store_false',
                           dest='verbose',
                           help = 'Don''t print info.')
-    parser.add_argument(  "-s", "--save-path",
+    parser.add_argument(  "--save-path",
                           dest="savepath",
                           metavar="PATH",
                           default=parsedefaults.savepath,
@@ -57,7 +58,7 @@ def ps_parseargs():
                           default=parsedefaults.raw_ident_str,
                           help = 'Identification string for beam raw file. '
                                 '(Default: "%(default)s")')
-    parser.add_argument(  "-n", "--save-name",
+    parser.add_argument(  "--save-name",
                           dest="save_name",
                           metavar="NAME",
                           default=parsedefaults.save_name,
@@ -268,6 +269,8 @@ def main():
             sm.set_at_nt(slices.avgx3sqp3sq,i,x3=2,p3=2)
 
     sm.set_zeta_array(slices.centers)
+
+    mkdirs_if_nexist(args.savepath)
 
     h5savepathname = args.savepath + '/' + args.save_name
 
