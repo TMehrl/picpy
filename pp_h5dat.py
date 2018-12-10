@@ -18,19 +18,20 @@ piccodes = { 'hipace':'hipace',
 # to check whether file is an HDF5 file
 # and to print keys of attributes and datasets
 class H5File:
-    def __init__(self, file):
+    def __init__(self, file, intention):
 
         # Allowed hdf5 extensions:
         self.__h5exts = ['.h5','.hdf5']
         self.__file = file
 
-        if not self.is_file():
-            print('Error:\tFile "%s" does not exist!' %(self.get_file()) )
-            sys.exit(1)            
+        if 'r' in intention:
+            if not self.is_file():
+                print('Error:\tFile "%s" does not exist!' %(self.get_file()) )
+                sys.exit(1)            
 
-        if not self.is_h5_file():
-            print('Error:\tFile "%s" is not an HDF5 file!' %(self.get_file()) )
-            sys.exit(1)    
+            if not self.is_h5_file():
+                print('Error:\tFile "%s" is not an HDF5 file!' %(self.get_file()) )
+                sys.exit(1)
 
     # Returning boolean: if file extension is hdf5 extension
     def is_h5_file(self, fext=None):
@@ -71,7 +72,7 @@ class H5File:
 
 class H5PICFile(H5File):
     def __init__(self, file, h5ftype=None):
-        H5File.__init__(self, file)
+        H5File.__init__(self, file, 'r')
 
         # Grid 3D types in filenames:
         self.__g3dtypes = ['density', 'field', 'current']
@@ -828,7 +829,7 @@ class SliceMoms(H5File):
         self.__arrays_allocated = True
 
     def read(self, file, order = None, verbose = True):
-        H5File.__init__(self, file)
+        H5File.__init__(self, file, 'r')
         if not self.is_h5_file():
             print('Error:\tFile is not an HDF5 file!')
             sys.exit(1)      
@@ -977,7 +978,7 @@ class SliceMoms(H5File):
         self.__mom[idx,nt,:] = nparray       
 
     def write(self, file, order = None):
-        H5File.__init__(self, file)
+        H5File.__init__(self, file, 'w')
         if order == None:
             order = self.__order
 
@@ -1096,7 +1097,7 @@ class SliceMoms_outdated(H5File):
 
 
     def read(self, file, order = None, verbose = True):
-        H5File.__init__(self, file)
+        H5File.__init__(self, file, 'r')
         if not self.is_h5_file():
             print('Error:\tFile is not an HDF5 file!')
             sys.exit(1)      
@@ -1180,7 +1181,7 @@ class SliceMoms_outdated(H5File):
 
 
     def write(self, file, order = None):
-        H5File.__init__(self, file)
+        H5File.__init__(self, file, 'w')
         if order == None:
             order = self.__order
 
@@ -1521,12 +1522,26 @@ class H5FList():
         return self.__h5ftype
 
 
-def mkdirs_if_nexist( path ):
+
+def _localize_path_ifnabs(path):
+    # If path is not an absolute path and not explicitly a local path,
+    # assume path is local and prepend './'
+    if (not os.path.isabs(path)) and (not path[0] == '.'):
+        path = './' + path
+    return path
+
+def mkdirs_if_nexist(path, localize=True):
     """Function which recursively generates directories.
 
     Args:
         path (str): Path for which directories are generated.
     """
+    
+    if localize:
+        path = _localize_path_ifnabs(path)
+
+    return_path = path
+
     folders = []
     while 1:
         path, folder = os.path.split(path)
@@ -1543,3 +1558,5 @@ def mkdirs_if_nexist( path ):
         if not os.path.isdir(path):
             print("Creating folder: " + path)
             os.mkdir(path)
+
+    return return_path

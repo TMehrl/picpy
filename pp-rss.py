@@ -270,9 +270,9 @@ def main():
 
     sm.set_zeta_array(slices.centers)
 
-    mkdirs_if_nexist(args.savepath)
+    savepath = mkdirs_if_nexist(args.savepath)
 
-    h5savepathname = args.savepath + '/' + args.save_name
+    h5savepathname = savepath + '/' + args.save_name
 
     sys.stdout.write('Saving to file: %s\n' % (h5savepathname))
     sys.stdout.flush()
