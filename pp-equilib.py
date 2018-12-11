@@ -27,19 +27,18 @@ def parseargs():
     parser.add_argument(  'nb_path',
                           metavar='NB_PATH',                          
                           type=str,
-                          help = 'Path to nb file.')
+                          help = 'Path to nb file.')   
+    parser.add_argument(  'wx_path',
+                          metavar='WX_PATH',
+                          type=str,
+                          default=None,                           
+                          help = 'Path to Wr file.')
     parser.add_argument(  'zeta_pos', 
                           metavar='ZETA_POS',                          
                           type=float,
                           nargs='+',
                           default=None,                           
-                          help = 'Zeta position.')     
-    parser.add_argument(  '--wx-path',
-                          dest='wx_path',
-                          metavar='WX_PATH',
-                          type=str,
-                          default=None,                           
-                          help = 'Path to Wr file.')
+                          help = 'Zeta position.')      
     parser.add_argument(  '--mpsi-path',
                           dest='mpsi_path',        
                           metavar='MPSI_PATH',
@@ -111,8 +110,17 @@ def cart_int(x,y,fxy,axis='x'):
     else:
         print('ERROR: Only "x" or "y" allowed for axis!')
         sys.exit(1)
-
     return x, y, f_int
+
+def cart_grad(x,y,fxy,axis='x'):
+    if axis == 'x':
+        f_grad = np.gradient(fxy, x[1]-x[0], axis=0)
+    elif axis == 'y':
+        f_grad = np.gradient(fxy, y[1]-y[0], axis=1)
+    else:
+        print('ERROR: Only "x" or "y" allowed for axis!')
+        sys.exit(1)
+    return x, y, f_grad
 
 def plot_xy_slice(x,y,fxy):
     fig = plt.figure()
@@ -164,13 +172,13 @@ def cart_to_r_transform(x, y, fxy, x0 = 0.0, y0 = 0.0, rlim = None):
 
 def density_inversion(r_nb, nb, r_psi, psi, zeta_pos, savepath = './plots/equilib', ifplot=True):
 
-    psi_norm = psi - np.min(psi)
+    psi_norm = psi - psi[0]
 
     psi_interp = np.interp(r_nb, r_psi, psi_norm)
     dnb = np.diff(nb)
     dpsi = np.diff(psi_interp)
 
-    x = psi_interp[:-1]
+    x = psi_interp[1:]
     F = -1*np.divide(dnb,dpsi)/(2*math.pi)
 
     popt, pcov = curve_fit(exp_func, x, F)
@@ -269,17 +277,14 @@ def main():
 
         r_n, nbr = cart_to_r_transform(x_n, y_n, nb_abs_filtered, rlim=args.rlim)
 
-        if (args.mpsi_path != None) and (args.wx_path == None):
+        if (args.mpsi_path != None):
             psidat = Data_xy_slice(args.mpsi_path, zeta_pos)
             x_psi, y_psi, mpsi_xy = psidat.read(navg=args.nzetaavg)
 
-        elif (args.mpsi_path == None) and (args.wx_path != None):
+        else:
             wxdat = Data_xy_slice(args.wx_path, zeta_pos)
             x_wx, y_wy, wx_xy  = wxdat.read(navg=args.nzetaavg)
             x_psi, y_psi, mpsi_xy = cart_int(x_wx, y_wy, wx_xy, axis='x')
-        else:
-            print('ERROR: Either wx or mpsi path must be specified!')
-            sys.exit(1)
 
         r_psi, mpsi = cart_to_r_transform(x_psi, y_psi, mpsi_xy, rlim=args.rlim)
 
