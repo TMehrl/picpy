@@ -381,41 +381,96 @@ class Grid3d(HiFile):
                 self.is_read_3D == True
         return self.data3d
 
-    def _read_2D(self, i0=None, i1=None, i2=None):
+    def _read_2D(self, i0=None, i1=None, i2=None, navg=None):
         with h5py.File(self.get_file(),'r') as hf:
         # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1==None and i2==None:
                 data2d = hf[self.dsetkey][i0,:,:]
+                if navg != None:
+                    navgrg = int(navg/2)
+                    norm = 0
+                    for j0 in range(-navgrg,navgrg+1):
+                        data2d += hf[self.dsetkey][i0+j0,:,:]
+                        norm += 1
+                    data2d = (data2d - hf[self.dsetkey][i0,:,:])/norm                 
             elif i0==None and i1!=None and i2==None:
                 data2d = hf[self.dsetkey][:,i1,:]
+                if navg != None:
+                    navgrg = int(navg/2)
+                    norm = 0
+                    for j1 in range(-navgrg,navgrg+1):
+                        data2d += hf[self.dsetkey][:,i1+j1,:]
+                        norm += 1
+                    data2d = (data2d - hf[self.dsetkey][:,i1,:])/norm                   
             elif i0==None and i1==None and i2!=None:
                 data2d = hf[self.dsetkey][:,:,i2]
+                if navg != None:
+                    navgrg = int(navg/2)
+                    norm = 0
+                    for j2 in range(-navgrg,navgrg+1):
+                        data2d += hf[self.dsetkey][:,:,i2+j2]
+                        norm += 1
+                    data2d = (data2d - hf[self.dsetkey][:,:,i2])/norm                 
             else:
                 print('Error:\tExactly one index must '
                   'be provided for HDF slice read in!')
                 sys.exit()
         return(data2d)
 
-    def _read_1D(self, i0=None, i1=None, i2=None):
+    def _read_1D(self, i0=None, i1=None, i2=None, navg=None):
         with h5py.File(self.get_file(),'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1!=None and i2==None:
                 data1d = hf[self.dsetkey][i0,i1,:]
+                if navg != None:
+                    navgrg = int(navg/2)
+                    norm = 0
+                    for j0 in range(-navgrg,navgrg+1):
+                        for j1 in range(-navgrg,navgrg+1):
+                            data1d += hf[self.dsetkey][i0+j0,i1+j1,:]
+                            norm += 1
+                    data1d = (data1d - hf[self.dsetkey][i0,i1,:])/norm                 
             elif i0!=None and i1==None and i2!=None:
                 data1d = hf[self.dsetkey][i0,:,i2]
+                if navg != None:
+                    navgrg = int(navg/2)
+                    norm = 0
+                    for j0 in range(-navgrg,navgrg+1):
+                        for j2 in range(-navgrg,navgrg+1):
+                            data1d += hf[self.dsetkey][i0+j0,:,i2+j2]
+                            norm += 1
+                    data1d = (data1d - hf[self.dsetkey][i0,:,i2])/norm             
             elif i0==None and i1!=None and i2!=None:
                 data1d = hf[self.dsetkey][:,i1,i2]
+                if navg != None:
+                    navgrg = int(navg/2)
+                    norm = 0
+                    for j1 in range(-navgrg,navgrg+1):
+                        for j2 in range(-navgrg,navgrg+1):
+                            data1d += hf[self.dsetkey][:,i1+j1,i2+j2]
+                            norm += 1
+                    data1d = (data1d - hf[self.dsetkey][:,i1,i2])/norm                
             else:
                 print('Error:\tExactly two indices must '
                   'be provided for HDF line read in!')
                 sys.exit()
         return(data1d)
 
-    def _read_0D(self, i0=None, i1=None, i2=None):
+    def _read_0D(self, i0=None, i1=None, i2=None, navg=None):
         with h5py.File(self.get_file(),'r') as hf:
             # Reading dataset (here not caring how dataset is called)
             if i0!=None and i1!=None and i2!=None:
                 data0d = hf[self.dsetkey][i0,i1,i2]
+                if navg != None:
+                    navgrg = int(navg/2)
+                    norm = 0
+                    for j0 in range(-navgrg,navgrg+1):
+                        for j1 in range(-navgrg,navgrg+1):
+                            for j2 in range(-navgrg,navgrg+1):
+                                data0d += hf[self.dsetkey][i0+j0,i1+j1,i2+j2]
+                                norm += 1
+                    data0d = (data0d - hf[self.dsetkey][i0,i1,i2])/norm
+
             else:
                 print('Error:\tExactly three indices must '
                   'be provided for HDF point read in!')
@@ -432,7 +487,8 @@ class Grid3d(HiFile):
              x0=None,
              x1=None,
              x2=None,
-             gradax=None):
+             gradax=None,
+             navg=None):
         
         if gradax != None:
             return self.read_grad(gradax,i0=i0,i1=i1,i2=i2,x0=x0,x1=x1,x2=x2)
@@ -441,11 +497,11 @@ class Grid3d(HiFile):
                 if self.__n_none(i0, i1, i2) == 3:
                     return self._read_3D()
                 elif self.__n_none(i0, i1, i2) == 2:
-                    return self._read_2D(i0=i0, i1=i1, i2=i2) 
+                    return self._read_2D(i0=i0, i1=i1, i2=i2, navg=navg) 
                 elif self.__n_none(i0, i1, i2) == 1:
-                    return self._read_1D(i0=i0, i1=i1, i2=i2)             
+                    return self._read_1D(i0=i0, i1=i1, i2=i2, navg=navg)             
                 elif self.__n_none(i0, i1, i2) == 0:
-                    return self._read_0D(i0=i0, i1=i1, i2=i2)
+                    return self._read_0D(i0=i0, i1=i1, i2=i2, navg=navg)
             elif self.__n_none(i0, i1, i2) == 3:
                 if x0 != None:
                     i0 = np.argmin(np.abs(self.get_x_arr(0)-x0))
@@ -453,7 +509,7 @@ class Grid3d(HiFile):
                     i1 = np.argmin(np.abs(self.get_x_arr(1)-x1))
                 if x2 != None:
                     i2 = np.argmin(np.abs(self.get_x_arr(2)-x2))
-                return self.read(i0=i0, i1=i1, i2=i2)                    
+                return self.read(i0=i0, i1=i1, i2=i2, navg=navg)                    
             else:
                 print('Error:\tMixed indices and positions '
                   'not allowed for grid 3d read in!')

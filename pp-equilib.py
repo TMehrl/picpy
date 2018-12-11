@@ -31,6 +31,7 @@ def parseargs():
     parser.add_argument(  'zeta_pos', 
                           metavar='ZETA_POS',                          
                           type=float,
+                          nargs='+',
                           default=None,                           
                           help = 'Zeta position.')     
     parser.add_argument(  '--wx-path',
@@ -61,6 +62,20 @@ def parseargs():
                           metavar='RLIM',
                           type=float,
                           default=None)
+    parser.add_argument(  '--n-zeta-avg',
+                          help='Numer of grid cells to longtidudinally average over.',
+                          action='store',
+                          dest="nzetaavg",
+                          metavar='NAVG',
+                          type=int,
+                          default=None)    
+    parser.add_argument(  '--ssmooth',
+                          help='Number of gridpoints (sigma) to be Gaussian smoothed.',
+                          action='store',
+                          dest="smooth_sigma",
+                          metavar='SIGMA',
+                          type=int,
+                          default=0)    
     parser.add_argument(  "-s", "--save-path",
                           action="store",
                           dest="savepath",
@@ -76,9 +91,9 @@ class Data_xy_slice:
         self.__h5file = h5file
         self.__zeta_pos = zeta_pos
 
-    def read(self):
+    def read(self, navg=None):
         g3d = Grid3d(self.__h5file)
-        self.__fxy = g3d.read(x0=self.__zeta_pos)
+        self.__fxy = g3d.read(x0=self.__zeta_pos, navg=navg)
         self.__x_array = g3d.get_x_arr(1)
         self.__y_array = g3d.get_x_arr(2)
 
@@ -147,7 +162,7 @@ def cart_to_r_transform(x, y, fxy, x0 = 0.0, y0 = 0.0, rlim = None):
 
     return r, fr
 
-def density_inversion(r_nb, nb, r_psi, psi, savepath = './plots/equilib', ifplot=True):
+def density_inversion(r_nb, nb, r_psi, psi, zeta_pos, savepath = './plots/equilib', ifplot=True):
 
     psi_norm = psi - np.min(psi)
 
@@ -168,21 +183,21 @@ def density_inversion(r_nb, nb, r_psi, psi, savepath = './plots/equilib', ifplot
         ax = plt.gca()        
         ax.set_xlabel(r'$k_p r$', fontsize=14)
         ax.set_ylabel(r'$n_b/n_0$', fontsize=14)   
-        saveas_eps_pdf(fig, savepath, 'nb')
+        saveas_eps_pdf(fig, savepath, 'nb_zeta_%0.2f' % zeta_pos)
 
         fig = plt.figure()
         plt.plot(r_nb[:-1], np.divide(dnb,np.diff(r_nb)))
         ax = plt.gca()        
         ax.set_xlabel(r'$k_p r$', fontsize=14)
         ax.set_ylabel(r'$d(n_b/n_0)/(k_p dr)$', fontsize=14)   
-        saveas_eps_pdf(fig, savepath, 'dnb_dr')
+        saveas_eps_pdf(fig, savepath, 'dnb_dr_zeta_%0.2f' % zeta_pos)
 
         fig = plt.figure()
         plt.plot(r_nb[:-1], np.divide(dpsi,np.diff(r_nb)))
         ax = plt.gca()        
         ax.set_xlabel(r'$k_p r$', fontsize=14)
         ax.set_ylabel(r'$d(e\psi/mc^2)/(k_p dr)$', fontsize=14)    
-        saveas_eps_pdf(fig, savepath, 'dpsi_dr')
+        saveas_eps_pdf(fig, savepath, 'dpsi_dr_zeta_%0.2f' % zeta_pos)
 
 
         fig = plt.figure()
@@ -190,7 +205,7 @@ def density_inversion(r_nb, nb, r_psi, psi, savepath = './plots/equilib', ifplot
         ax = plt.gca()        
         ax.set_ylabel(r'$k_p r$', fontsize=14)
         ax.set_xlabel(r'$e\psi/mc^2$', fontsize=14) 
-        saveas_eps_pdf(fig, savepath, 'r_vs_psi')
+        saveas_eps_pdf(fig, savepath, 'r_vs_psi_zeta_%0.2f' % zeta_pos)
 
 
         fig = plt.figure()
@@ -198,7 +213,7 @@ def density_inversion(r_nb, nb, r_psi, psi, savepath = './plots/equilib', ifplot
         ax = plt.gca()        
         ax.set_xlabel(r'$k_p r$', fontsize=14)
         ax.set_ylabel(r'$e\psi/mc^2$', fontsize=14) 
-        saveas_eps_pdf(fig, savepath, 'psi')
+        saveas_eps_pdf(fig, savepath, 'psi_zeta_%0.2f' % zeta_pos)
 
         fig = plt.figure()
         plt.plot(x, F, '-', label=r'F(x)')
@@ -207,7 +222,7 @@ def density_inversion(r_nb, nb, r_psi, psi, savepath = './plots/equilib', ifplot
         ax.set_xlabel(r'$x$', fontsize=14)
         ax.set_ylabel(r'$F$', fontsize=14) 
         plt.legend(frameon=False)
-        saveas_eps_pdf(fig, savepath, 'F')        
+        saveas_eps_pdf(fig, savepath, 'F_zeta_%0.2f' % zeta_pos)        
 
     return x, F
 
@@ -221,52 +236,54 @@ def main():
     parser = parseargs()
     args = parser.parse_args()
 
-    nbdat = Data_xy_slice(args.nb_path, args.zeta_pos)
-    x_n, y_n, nb_xy = nbdat.read()
+    for zeta_pos in args.zeta_pos:
+        nbdat = Data_xy_slice(args.nb_path, zeta_pos)
+        x_n, y_n, nb_xy = nbdat.read(navg=args.nzetaavg)
 
-    nb_abs_filtered = filters.gaussian_filter(np.abs(nb_xy), 4, mode='mirror')
-    # nb_abs_filtered = np.abs(nb_xy)
+        nb_abs_filtered = filters.gaussian_filter(np.abs(nb_xy), args.smooth_sigma, mode='mirror')
+        # nb_abs_filtered = np.abs(nb_xy)
 
-    fig = plt.figure()
-    cax = plt.pcolor(nb_abs_filtered)
-    ax = plt.gca()        
-    ax.set_xlabel(r'$x$', fontsize=14)
-    ax.set_ylabel(r'$y$', fontsize=14) 
-    cbar = fig.colorbar(cax)
+        fig = plt.figure()
+        cax = plt.pcolor(np.abs(nb_xy))
+        ax = plt.gca()        
+        ax.set_xlabel(r'$x$', fontsize=14)
+        ax.set_ylabel(r'$y$', fontsize=14)
+        cbar = fig.colorbar(cax)
+        saveas_png(fig, args.savepath, 'nb_%0.2f' % zeta_pos)
 
-    fig = plt.figure()
-    cax = plt.pcolor(np.abs(nb_xy))
-    ax = plt.gca()        
-    ax.set_xlabel(r'$x$', fontsize=14)
-    ax.set_ylabel(r'$y$', fontsize=14)
-    cbar = fig.colorbar(cax) 
+        fig = plt.figure()
+        cax = plt.pcolor(nb_abs_filtered)
+        ax = plt.gca()        
+        ax.set_xlabel(r'$x$', fontsize=14)
+        ax.set_ylabel(r'$y$', fontsize=14) 
+        cbar = fig.colorbar(cax)
+        saveas_png(fig, args.savepath, 'nb_filtered_%0.2f' % zeta_pos)
 
-    fig = plt.figure()
-    cax = plt.pcolor(np.abs(nb_xy) - nb_abs_filtered)
-    ax = plt.gca()        
-    ax.set_xlabel(r'$x$', fontsize=14)
-    ax.set_ylabel(r'$y$', fontsize=14) 
-    cbar = fig.colorbar(cax)
+        fig = plt.figure()
+        cax = plt.pcolor(np.abs(nb_xy) - nb_abs_filtered)
+        ax = plt.gca()        
+        ax.set_xlabel(r'$x$', fontsize=14)
+        ax.set_ylabel(r'$y$', fontsize=14) 
+        cbar = fig.colorbar(cax)
+        saveas_png(fig, args.savepath, 'nb_diff_%0.2f' % zeta_pos)
 
-    plt.show()
+        r_n, nbr = cart_to_r_transform(x_n, y_n, nb_abs_filtered, rlim=args.rlim)
 
-    r_n, nbr = cart_to_r_transform(x_n, y_n, nb_abs_filtered, rlim=args.rlim)
+        if (args.mpsi_path != None) and (args.wx_path == None):
+            psidat = Data_xy_slice(args.mpsi_path, zeta_pos)
+            x_psi, y_psi, mpsi_xy = psidat.read(navg=args.nzetaavg)
 
-    if (args.mpsi_path != None) and (args.wx_path == None):
-        psidat = Data_xy_slice(args.mpsi_path, args.zeta_pos)
-        x_psi, y_psi, mpsi_xy = psidat.read()
+        elif (args.mpsi_path == None) and (args.wx_path != None):
+            wxdat = Data_xy_slice(args.wx_path, zeta_pos)
+            x_wx, y_wy, wx_xy  = wxdat.read(navg=args.nzetaavg)
+            x_psi, y_psi, mpsi_xy = cart_int(x_wx, y_wy, wx_xy, axis='x')
+        else:
+            print('ERROR: Either wx or mpsi path must be specified!')
+            sys.exit(1)
 
-    elif (args.mpsi_path == None) and (args.wx_path != None):
-        wxdat = Data_xy_slice(args.wx_path, args.zeta_pos)
-        x_wx, y_wy, wx_xy  = wxdat.read()
-        x_psi, y_psi, mpsi_xy = cart_int(x_wx, y_wy, wx_xy,axis='x')
-    else:
-        print('ERROR: Either wx or mpsi path must be specified!')
-        sys.exit(1)
+        r_psi, mpsi = cart_to_r_transform(x_psi, y_psi, mpsi_xy, rlim=args.rlim)
 
-    r_psi, mpsi = cart_to_r_transform(x_psi, y_psi, mpsi_xy, rlim=args.rlim)
-
-    x, F = density_inversion(r_n, nbr, r_psi, mpsi, savepath = args.savepath, ifplot = True)
+        x, F = density_inversion(r_n, nbr, r_psi, mpsi, zeta_pos = zeta_pos, savepath = args.savepath, ifplot = True)
 
 
 if __name__ == "__main__":
