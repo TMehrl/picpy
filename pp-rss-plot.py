@@ -45,10 +45,10 @@ def ps_parseopts():
 
     parser = argparse.ArgumentParser(description=desc)
     #parser = OptionParser(usage=usg, description=desc)
-    parser.add_argument(  'path',
-                          metavar = 'PATH',
-                          help = 'Path to raw files.')    
-    parser.add_argument(  "-v", "--verbose",
+    parser.add_argument('path',
+                        metavar = 'PATH',
+                        help = 'Path to raw files.')    
+    parser.add_argument("-v", "--verbose",
                         action="store_true",
                         dest="verbose",
                         default=True,
@@ -57,13 +57,13 @@ def ps_parseopts():
                         action="store_false",
                         dest="verbose",
                         help = "Don't print info.")
-    parser.add_argument(  "-s", "--save-path",
-                          action="store",
-                          dest="savepath",
-                          metavar="PATH",
-                          default=parsedefs.save.path + '/raw-slice-series',
-                          help = """Path to which generated files will be saved.
-                              (default: %(default)s)""")
+    parser.add_argument("-s", "--save-path",
+                        action="store",
+                        dest="savepath",
+                        metavar="PATH",
+                        default=parsedefs.save.path + '/raw-slice-series',
+                        help = """Path to which generated files will be saved.
+                            (default: %(default)s)""")
     parser.add_argument("-n", "--name-prefix",
                         dest="save_prefix",
                         metavar="NAME",
@@ -97,50 +97,50 @@ def ps_parseopts():
                         metavar="NFILES",
                         default=0,
                         help= """Number of files to analyze.""")
-    parser.add_argument(  "-o", "--mom-order",
-                          type=int,
-                          action='store',
-                          dest="mom_order",
-                          metavar="MOMORDER",
-                          choices=[1, 2, 3, 4,],
-                          default=None,
-                          help='Order of moment evaluation (Default: %(default)s).')    
-    parser.add_argument(  '-t', '--time',
-                          help='time for which rms plots are to be generated',
-                          action='store',
-                          dest="time",
-                          nargs=1,
-                          type=float,
-                          default=None)
-    parser.add_argument(  '--zeta-pos',
-                          help='zeta position for which rms plots are to be generated',
-                          action='store',
-                          dest="zeta_pos",
-                          type=float,
-                          default=None)    
-    parser.add_argument(  "--use-time",
-                          action="store_false",
-                          dest="t_is_z",
-                          default=True,                          
-                          help = "Use time 't' for axes labels (instead of z).")                           
-    parser.add_argument(  '--zeta-range',
-                          help='zeta range',
-                          action='store',
-                          dest="zeta_range",
-                          metavar=('ZETA_MIN', 'ZETA_MAX'),
-                          nargs=2,
-                          type=float,
-                          default=None)    
-    parser.add_argument(  "--h5",
-                          dest = "h5plot",
-                          action="store_true",
-                          default=True,
-                          help = "Save plot as hdf5 file (Default: %(default)s).") 
-    parser.add_argument(  "--latexoff",
-                          dest = "latexoff",
-                          action="store_false",
-                          default=True,
-                          help = "Use LaTeX font (Default: %(default)s).")
+    parser.add_argument("-o", "--mom-order",
+                        type=int,
+                        action='store',
+                        dest="mom_order",
+                        metavar="MOMORDER",
+                        choices=[1, 2, 3, 4,],
+                        default=None,
+                        help='Order of moment evaluation (Default: %(default)s).')    
+    parser.add_argument('-t', '--time',
+                        help='time for which rms plots are to be generated',
+                        action='store',
+                        dest="time",
+                        nargs=1,
+                        type=float,
+                        default=None)
+    parser.add_argument('--zeta-pos',
+                        help='zeta position for which rms plots are to be generated',
+                        action='store',
+                        dest="zeta_pos",
+                        type=float,
+                        default=None)    
+    parser.add_argument("--use-time",
+                        action="store_false",
+                        dest="t_is_z",
+                        default=True,                          
+                        help = "Use time 't' for axes labels (instead of z).")                           
+    parser.add_argument('--zeta-range',
+                        help='zeta range',
+                        action='store',
+                        dest="zeta_range",
+                        metavar=('ZETA_MIN', 'ZETA_MAX'),
+                        nargs=2,
+                        type=float,
+                        default=None)    
+    parser.add_argument("--h5",
+                        dest = "h5plot",
+                        action="store_true",
+                        default=True,
+                        help = "Save plot as hdf5 file (Default: %(default)s).") 
+    parser.add_argument("--latexoff",
+                        dest = "latexoff",
+                        action="store_false",
+                        default=True,
+                        help = "Use LaTeX font (Default: %(default)s).")
     return parser
 
 
@@ -187,6 +187,21 @@ def plot_save_slice_rms(slm, savepath, verbose=True, t_is_z=True):
     cbar = fig_spx.colorbar( cax )
     cbar.ax.set_ylabel(r'$k_p \sigma_{p_x}$', fontsize=14)  
     saveas_png(fig_spx, savepath, 'sigma_px')
+
+    xpx = slm.get(x=1,px=1)
+    fig_e = plt.figure()
+    cax = plt.pcolormesh( x,
+                          y,
+                          xpx,
+                          cmap=cm.BrBG,
+                          vmin=-np.amax(np.abs(xpx)), vmax=np.amax(np.abs(xpx)) )
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(xlabel_str, fontsize=14)    
+    cbar = fig_e.colorbar( cax )
+    cbar.ax.set_ylabel(r'$k_p \left\langle x p_x\right\rangle$', fontsize=14)
+    saveas_png(fig_e, savepath, 'xpx')
+
 
     emittance = np.sqrt( np.multiply(slm.get(x=2), slm.get(px=2)) 
                          - np.power(slm.get(x=1,px=1),2) )

@@ -293,6 +293,8 @@ def main():
             if args.latexon:
                 if not '$' in label:
                     label = r'$\textrm{' + label + '}$'
+                else:
+                    label = r'%s' % label
 
             if args.diff: 
                 if (j == 0 and i == 0):

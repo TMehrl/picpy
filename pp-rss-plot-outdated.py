@@ -188,6 +188,21 @@ def plot_save_slice_rms(slm, savepath, verbose=True, t_is_z=True):
     cbar.ax.set_ylabel(r'$k_p \sigma_{p_x}$', fontsize=14)  
     saveas_png(fig_spx, savepath, 'sigma_px')
 
+    xpx = slm.avgx2p2
+    fig_e = plt.figure()
+    cax = plt.pcolormesh( x,
+                          y,
+                          xpx,
+                          cmap=cm.BrBG,
+                          vmin=-np.amax(np.abs(xpx)), vmax=np.amax(np.abs(xpx)) )
+    ax = plt.gca()
+    ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+    ax.set_ylabel(xlabel_str, fontsize=14)    
+    cbar = fig_e.colorbar( cax )
+    cbar.ax.set_ylabel(r'$k_p \left\langle x p_x\right\rangle$', fontsize=14)
+    saveas_png(fig_e, savepath, 'xpx')
+
+
     emittance = np.sqrt( np.multiply(slm.avgx2sq, slm.avgp2sq) 
                          - np.power(slm.avgx2p2,2) )
     fig_e = plt.figure()
