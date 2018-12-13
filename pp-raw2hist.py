@@ -244,8 +244,11 @@ def oneD(raw, args):
     raw.read_attrs()
     timestamp = '_%08.1f' % (raw.get_time()) 
     savename += get_zeta_range_str(args.zeta_range)  + timestamp
-
-    saveas_eps_pdf(fig, args.savepath, savename, h5plot=True, verbose=True, fformat='pdf')
+    
+    if args.file_format == 'png':
+        saveas_png(fig, args.savepath, savename, verbose=True)
+    else:
+        saveas_eps_pdf(fig, args.savepath, savename, h5plot=True, verbose=True, fformat=args.file_format)
 
 
 
