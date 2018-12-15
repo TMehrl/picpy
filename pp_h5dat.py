@@ -14,42 +14,62 @@ piccodes = { 'hipace':'hipace',
               'osiris':'osiris'
             }
 
+
+class File:
+    def __init__(self, file, intent):    
+        self.__file = file
+
+        if 'r' in intent:
+            if not self.is_file():
+                print('Error:\tFile "%s" does not exist!' %(self.get_file()) )
+                sys.exit(1)          
+
+    def get_file(self):
+        return self.__file
+
+    def get_filename(self):
+        return os.path.split(self.get_file())[1]  
+
+    def get_path(self):
+        return os.path.split(self.get_file())[0]
+
+    def is_file(self):
+        return os.path.isfile(self.get_file()) 
+
+
+
 # General HDF5 file class with routines
 # to check whether file is an HDF5 file
 # and to print keys of attributes and datasets
-class H5File:
-    def __init__(self, file, intention):
+class H5File(File):
+    def __init__(self, file, intent):
+
+        File.__init__(self, file, intent)
 
         # Allowed hdf5 extensions:
         self.__h5exts = ['.h5','.hdf5']
-        self.__file = file
 
-        if 'r' in intention:
-            if not self.is_file():
-                print('Error:\tFile "%s" does not exist!' %(self.get_file()) )
-                sys.exit(1)            
-
-            if not self.is_h5_file():
-                print('Error:\tFile "%s" is not an HDF5 file!' %(self.get_file()) )
-                sys.exit(1)
+        if not self.is_h5_file():
+            print('Error:\tFile "%s" is not an HDF5 file!' %(self.get_file()) )
+            sys.exit(1)
 
     # Returning boolean: if file extension is hdf5 extension
     def is_h5_file(self, fext=None):
         if (fext!=None):
             return any(fext == h5ext for h5ext in self.__h5exts)
         else:
-            fname, fext = os.path.splitext(self.__file)
+            fname, fext = os.path.splitext(self.get_file())
             return any(fext == h5ext for h5ext in self.__h5exts)          
 
     def print_datasets(self):
-        with h5py.File(self.__file,'r') as hf:
+        with h5py.File(self.get_file(),'r') as hf:
             # Printing attributes
             print('HDF5 file datasets:')
             for item in hf.keys():
                 print('\t' + item + ":", hf[item])
 
     def print_attributes(self):
-        with h5py.File(self.__file,'r') as hf:
+        with h5py.File(self.get_file(),'r') as hf:
             # Printing attributes
             print('HDF5 file attributes:')
             for item in hf.attrs.keys():
@@ -58,17 +78,6 @@ class H5File:
     def get_allowed_h5exts(self):
         return self.__h5exts
 
-    def get_file(self):
-        return self.__file
-
-    def get_filename(self):
-        return os.path.split(self.__file)[1]  
-
-    def get_path(self):
-        return os.path.split(self.__file)[0]
-
-    def is_file(self):
-        return os.path.isfile(self.__file) 
 
 class H5PICFile(H5File):
     def __init__(self, file, h5ftype=None):
