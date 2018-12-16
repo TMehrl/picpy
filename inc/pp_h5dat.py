@@ -50,8 +50,7 @@ class H5File(File):
         self.__h5exts = ['.h5','.hdf5']
 
         if not self.is_h5_file():
-            print('Error:\tFile "%s" is not an HDF5 file!' %(self.get_file()) )
-            sys.exit(1)
+            print('File "%s" is not an HDF5 file!' %(self.get_file()) )
 
     # Returning boolean: if file extension is hdf5 extension
     def is_h5_file(self, fext=None):
