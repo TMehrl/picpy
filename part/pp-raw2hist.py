@@ -12,7 +12,12 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib import cm
-from . inc import pp_defs
+
+mypath = os.path.dirname(os.path.abspath( __file__ ))
+#incpath = os. mypath
+#sys.path.append(incpath)
+
+from inc import pp_defs
 from inc.pp_h5dat import HiRAW
 from inc.pp_h5dat import H5FList
 from inc.pp_plt_tools import saveas_png
