@@ -24,10 +24,14 @@ scripts = {
 def main(**args):
     exelist = [scripts[args['script']]] + args['args']
     if args['bkg']:
-        exelist = ['nohup'] + [' '.join(exelist)] + ['1>'] + ['pp.out'] + ['2>'] + ['pp.err'] + ['&']
-        print('executing %s in background' % args['script'])
-        print(exelist)
-    subprocess.call(exelist)
+        print('Executing %s in background.' \
+                '\nWriting stdout to "pp.out" and stderr to "pp.err"'\
+                % args['script'])
+        subprocess.Popen(['nohup'] + exelist,
+                         stdout=open('pp.out', 'w'),
+                         stderr=open('pp.err', 'a'))
+    else:
+        subprocess.Popen(exelist)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
