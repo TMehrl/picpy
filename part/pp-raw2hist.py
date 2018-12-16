@@ -14,14 +14,13 @@ from matplotlib.ticker import FormatStrFormatter
 from matplotlib import cm
 
 mypath = os.path.dirname(os.path.abspath( __file__ ))
-#incpath = os. mypath
-#sys.path.append(incpath)
-
-from inc import pp_defs
-from inc.pp_h5dat import HiRAW
-from inc.pp_h5dat import H5FList
-from inc.pp_plt_tools import saveas_png
-from inc.pp_plt_tools import saveas_eps_pdf
+incpath = os.path.split(mypath)[0] + '/inc'
+sys.path.append(incpath)
+import pp_defs
+from pp_h5dat import HiRAW
+from pp_h5dat import H5FList
+from pp_plt_tools import saveas_png
+from pp_plt_tools import saveas_eps_pdf
 
 
 def raw2hist_parser():

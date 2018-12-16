@@ -14,6 +14,10 @@ from matplotlib.colors import ListedColormap
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib.ticker import MaxNLocator
 from matplotlib import cm
+
+mypath = os.path.dirname(os.path.abspath( __file__ ))
+incpath = os.path.split(mypath)[0] + '/inc'
+sys.path.append(incpath)
 import pp_defs
 from pp_h5dat import Grid3d
 from pp_h5dat import H5FList

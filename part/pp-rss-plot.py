@@ -15,8 +15,11 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.colors import LogNorm
 from matplotlib.ticker import FormatStrFormatter
+
+mypath = os.path.dirname(os.path.abspath( __file__ ))
+incpath = os.path.split(mypath)[0] + '/inc'
+sys.path.append(incpath)
 import pp_defs
-import h5py
 from pp_h5dat import SliceMoms
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist

@@ -14,6 +14,9 @@ from scipy.ndimage import filters
 import matplotlib
 import matplotlib.pyplot as plt
 
+mypath = os.path.dirname(os.path.abspath( __file__ ))
+incpath = os.path.split(mypath)[0] + '/inc'
+sys.path.append(incpath)
 from pp_h5dat import Grid3d
 from pp_h5dat import mkdirs_if_nexist
 from pp_plt_tools import saveas_eps_pdf
