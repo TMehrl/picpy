@@ -15,6 +15,7 @@ def main():
     else:
         print('PP_PATH is already in PATH')
 
+    subprocess.call('activate-global-python-argcomplete')
     subprocess.call('eval "$(register-python-argcomplete picpy.py)"', shell=True)
     subprocess.call('eval "$(register-python-argcomplete pp)"', shell=True)
 

@@ -12,11 +12,11 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib import cm
-import pp_defs
-from pp_h5dat import HiRAW
-from pp_h5dat import H5FList
-from pp_plt_tools import saveas_png
-from pp_plt_tools import saveas_eps_pdf
+from . inc import pp_defs
+from inc.pp_h5dat import HiRAW
+from inc.pp_h5dat import H5FList
+from inc.pp_plt_tools import saveas_png
+from inc.pp_plt_tools import saveas_eps_pdf
 
 
 def raw2hist_parser():
