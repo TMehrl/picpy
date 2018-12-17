@@ -5,20 +5,23 @@ import os
 import math
 import argparse
 import numpy as np
+from scipy.optimize import curve_fit
+from scipy import asarray as ar,exp
 import matplotlib
 import itertools
 import matplotlib.pyplot as plt
 #matplotlib.use('TkAgg')
 from matplotlib import cm
 from matplotlib.ticker import FormatStrFormatter
+
+mypath = os.path.dirname(os.path.abspath( __file__ ))
+incpath = os.path.split(mypath)[0] + '/inc'
+sys.path.append(incpath)
 from pp_h5dat import H5FList
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist
 from scipy.stats import norm
 
-
-from scipy.optimize import curve_fit
-from scipy import asarray as ar,exp
 
 def flip(items, ncol):
     return itertools.chain(*[items[i::ncol] for i in range(ncol)])

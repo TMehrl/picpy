@@ -6,7 +6,12 @@ import subprocess
 
 
 def main():
+    """
+    setup main function.
 
+    Set environment variables for picpy
+    execution and for argcomplete.
+    """ 
     pp_path = os.path.dirname(os.path.abspath( __file__ ))
 
     if "PP_PATH" not in os.environ:

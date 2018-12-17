@@ -10,6 +10,10 @@ import itertools
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.ticker import FormatStrFormatter
+
+mypath = os.path.dirname(os.path.abspath( __file__ ))
+incpath = os.path.split(mypath)[0] + '/inc'
+sys.path.append(incpath)
 from pp_h5dat import H5FList
 from pp_h5dat import H5Plot
 from pp_h5dat import mkdirs_if_nexist

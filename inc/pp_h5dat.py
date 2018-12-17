@@ -497,7 +497,20 @@ class Grid3d(HiFile):
              x2=None,
              gradax=None,
              navg=None):
-        
+        """Read 3D data and return 0D, 1D, 2D or 3D gradient array.
+        Args:
+            i0 (int, optional): Index along axis0.
+            i1 (int, optional): Index along axis1.
+            i2 (int, optional): Index along axis2.
+            x0 (float, optional): Position along axis0.
+            x1 (float, optional): Position along axis1.
+            x2 (float, optional): Position along axis2.
+            ax (int, optional): Axis along which gradient is formed.
+            navg (int, optional): Numer of gridpoints to be averaged for.                    
+
+        Returns:
+            ndarray: 0D, 1D, 2D or 3D numpy array
+        """        
         if gradax != None:
             return self.read_grad(gradax,i0=i0,i1=i1,i2=i2,x0=x0,x1=x1,x2=x2)
         else:
@@ -556,7 +569,9 @@ class Grid3d(HiFile):
                     x1=None,
                     x2=None):
 
-        """Read 3D data, form derivative along given axis return 0D, 1D, 2D or 3D gradient array.
+        """Read 3D data, form derivative along given axis 
+        and return 0D, 1D, 2D or 3D gradient array.
+        
         Args:
             ax (int): Axis along which gradient is formed.
 

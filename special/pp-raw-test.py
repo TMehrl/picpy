@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-
-import numpy as np
 import os
+import numpy as np
 from optparse import OptionParser
 from optparse import OptionGroup
 import math
@@ -12,6 +11,10 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib.colors import LogNorm
+
+mypath = os.path.dirname(os.path.abspath( __file__ ))
+incpath = os.path.split(mypath)[0] + '/inc'
+sys.path.append(incpath)
 import pp_defs
 from pp_h5dat import RAW
 import pp_raw_ana

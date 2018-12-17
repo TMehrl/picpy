@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 import csv
 import os
-import glob
 import numpy as np
 import argparse
+import scipy.optimize
+import scipy.special
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib import cm
-import pp_defs
-from pp_h5dat import mkdirs_if_nexist
 from mpl_toolkits.mplot3d import Axes3D
-
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.lines as mlines
 
-import scipy.optimize
-import scipy.special
+mypath = os.path.dirname(os.path.abspath( __file__ ))
+incpath = os.path.split(mypath)[0] + '/inc'
+sys.path.append(incpath)
+import pp_defs
+from pp_h5dat import mkdirs_if_nexist
 
 from decimal import *
 

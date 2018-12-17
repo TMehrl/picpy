@@ -4,6 +4,7 @@ import sys
 import os
 import math
 import numpy as np
+from scipy import special
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
@@ -11,8 +12,11 @@ import matplotlib.colors as colors
 from matplotlib import cm
 from matplotlib.colors import LogNorm
 import scipy
+
+mypath = os.path.dirname(os.path.abspath( __file__ ))
+incpath = os.path.split(mypath)[0] + '/inc'
+sys.path.append(incpath)
 from pp_h5dat import Grid3d
-from scipy import special
 
 
 from mpl_toolkits.axes_grid1 import AxesGrid

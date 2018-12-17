@@ -2,7 +2,6 @@
 
 import csv
 import os
-import glob
 import sys
 import numpy as np
 import argparse
@@ -11,6 +10,10 @@ import h5py
 
 import matplotlib.pyplot as plt
 from matplotlib import cm
+
+mypath = os.path.dirname(os.path.abspath( __file__ ))
+incpath = os.path.split(mypath)[0] + '/inc'
+sys.path.append(incpath)
 from pp_h5dat import mkdirs_if_nexist
 
 def binSlab_parser():

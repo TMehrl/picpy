@@ -11,9 +11,12 @@ import matplotlib.colors as colors
 from matplotlib import cm
 from matplotlib.colors import LogNorm
 import scipy
-from pp_h5dat import Grid3d
 from scipy import special
 
+mypath = os.path.dirname(os.path.abspath( __file__ ))
+incpath = os.path.split(mypath)[0] + '/inc'
+sys.path.append(incpath)
+from pp_h5dat import Grid3d
 
 from mpl_toolkits.axes_grid1 import AxesGrid
 

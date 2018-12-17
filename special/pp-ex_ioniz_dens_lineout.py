@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import csv
 import os
-import glob
+import scipy.optimize
+import scipy.special
 import numpy as np
 import argparse
 import matplotlib
@@ -9,17 +10,18 @@ import matplotlib
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 from matplotlib import cm
+from matplotlib.colors import LinearSegmentedColormap
+import matplotlib.lines as mlines
+
+mypath = os.path.dirname(os.path.abspath( __file__ ))
+incpath = os.path.split(mypath)[0] + '/inc'
+sys.path.append(incpath)
 import pp_defs
 from pp_h5dat import mkdirs_if_nexist
 from pp_h5dat import H5Plot
 from mpl_toolkits.mplot3d import Axes3D
 from pp_h5dat import Grid3d
 
-from matplotlib.colors import LinearSegmentedColormap
-import matplotlib.lines as mlines
-
-import scipy.optimize
-import scipy.special
 
 from decimal import *
 
