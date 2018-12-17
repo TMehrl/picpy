@@ -4,6 +4,7 @@ import os
 import sys
 import subprocess
 
+
 def main():
 
     pp_path = os.path.dirname(os.path.abspath( __file__ ))
@@ -24,6 +25,12 @@ def main():
     subprocess.call('eval "$(register-python-argcomplete picpy.py)"', shell=True)
     subprocess.call('eval "$(register-python-argcomplete pp)"', shell=True)
 
+    print('Consider adding the following lines in you bashrc:')
+    print('export PP_PATH=%s' % pp_path)
+    print('export PATH=$PP_PATH:$PATH')
+    print('eval "$(register-python-argcomplete picpy.py)"')
+    print('eval "$(register-python-argcomplete pp)"')
+    print('activate-global-python-argcomplete')
 
 if __name__ == "__main__":
     main()

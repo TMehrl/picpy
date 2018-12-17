@@ -154,12 +154,17 @@ def main():
     if len(h5fl.get_uniques()) > 1:
         print('ERROR: Processing of multiple beams is not implemented yet!')
         print(h5fl.split_by_uniques())
-        sys.exit()
+        sys.exit(1)
 
     if args.Nfiles == None:
         Nfiles = len(flist)
     else:
         Nfiles = args.Nfiles
+
+    if Nfiles < 1:
+        print('No raw files selected!')
+        print('Exiting...')
+        sys.exit(1)        
 
     # Getting file information
     raw = HiRAW(flist[0])

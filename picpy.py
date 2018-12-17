@@ -25,7 +25,23 @@ scripts = {
   "rss": part_path + "pp-rss.py",
   "rss-plot": part_path + "pp-rss-plot.py",
   "raw2hist": part_path + "pp-raw2hist.py",
-  "h5plot" : special_path + "pp-h5plot.py"
+  "3trackingbin" : special_path + "pp-3trackingbin.py",
+  "binLine" : special_path + "pp-binLine.py",
+  "binSlab" : special_path + "pp-binSlab.py",
+  "blowout-geo" : special_path + "pp-blowout-geo.py",
+  "calc_Ez_slope" : special_path + "pp-calc_Ez_slope.py",
+  "comparison" : special_path + "pp-comparison.py",
+  "equilib" : special_path + "pp-equilib.py",
+  "ex_ioniz_dens_lineout" : special_path + "pp-ex_ioniz_dens_lineout.py",
+  "gauss_fit" : special_path + "pp-gauss_fit.py",
+  "h5plot" : special_path + "pp-h5plot.py",
+  "ionization" : special_path + "pp-ionization.py",
+  "lvt" : special_path + "pp-lvt.py",
+  "mkmov" : special_path + "pp-mkmov.py",
+  "raw-test" : special_path + "pp-raw-test.py",
+  "tracking" : special_path + "pp-tracking.py",
+  "tracking3d" : special_path + "pp-tracking3d.py",
+  "trackingbin" : special_path + "pp-trackingbin.py"
 }
 
 def main(**args):
@@ -38,10 +54,10 @@ def main(**args):
     ----------
     args : dict
         args contains the information which script
-        (keyword 'script') is to be called with which
+        (keyword 'script') is to be called with what
         arguments (keyword 'args'). 
         If args['bkg'] == True, the script is called
-        with the POSIX command 'nohup' in background. 
+        in background with the POSIX command 'nohup'. 
     """  
     exelist = [scripts[args['script']]] + args['args']
     if args['bkg']:
@@ -52,7 +68,7 @@ def main(**args):
                          stdout=open('pp.out', 'w'),
                          stderr=open('pp.err', 'a'))
     else:
-        subprocess.Popen(exelist)
+        subprocess.call(exelist)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
