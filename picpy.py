@@ -2,9 +2,15 @@
 
 import os
 import sys
+import importlib
 import subprocess
 import argparse
-import argcomplete
+
+argcomplete_spec = importlib.util.find_spec("argcomplete")
+found_argcomplete = argcomplete_spec is not None
+if found_argcomplete:
+    import argcomplete
+
 
 # get picpy package root path
 pp_path = os.path.dirname(os.path.abspath( __file__ ))
@@ -82,6 +88,7 @@ if __name__ == "__main__":
                             "(Default: %(default)s).")
     parser.add_argument('args', 
                         nargs=argparse.REMAINDER )
-    argcomplete.autocomplete(parser)
+    if found_argcomplete:
+        argcomplete.autocomplete(parser)
     args = parser.parse_args()
     main(**vars(args))
