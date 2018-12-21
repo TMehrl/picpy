@@ -382,10 +382,11 @@ def main():
         save_name = args.savename
     else:
         save_name = fname + save_append_str + '_' + type_str
+
     if args.file_format == 'png':
         saveas_png(fig, savepath=spath, savename=save_name, dpi=args.dpi)
     else:
-        saveas_eps_pdf(fig, savepath=spath, savename=save_name, fformat=args.file_format)
+        saveas_eps_pdf(fig, savepath=args.savepath, savename=save_name, h5plot=True, verbose=True, fformat=args.file_format)
     plt.close(fig)
 
 if __name__ == "__main__":

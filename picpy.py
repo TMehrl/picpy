@@ -67,12 +67,14 @@ def main(**args):
     """  
     exelist = [scripts[args['script']]] + args['args']
     if args['bkg']:
-        print('Executing %s in background.' \
-                '\nWriting stdout to "pp.out" and stderr to "pp.err"'\
-                % args['script'])
+        stdout_fname = "%s.out" % args['script']
+        stderr_fname = "%s.err" % args['script']
+        print(  'Executing %s in background.' \
+                '\nWriting stdout to "%s" and stderr to "%s"'\
+                % (args['script'], stdout_fname, stderr_fname) )
         subprocess.Popen(['nohup'] + exelist,
-                         stdout=open('pp.out', 'w'),
-                         stderr=open('pp.err', 'a'))
+                         stdout=open(stdout_fname, 'w'),
+                         stderr=open(stderr_fname, 'a'))
     else:
         subprocess.call(exelist)
 
