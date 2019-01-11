@@ -1605,8 +1605,11 @@ class H5FList():
 def _localize_path_ifnabs(path):
     # If path is not an absolute path and not explicitly a local path,
     # assume path is local and prepend './'
-    if (not os.path.isabs(path)) and (not path[0] == '.'):
-        path = './' + path
+    if path != None:
+        if (not os.path.isabs(path)) and (not path[0] == '.'):
+            path = './' + path
+    else:
+        path = None
     return path
 
 def mkdirs_if_nexist(path, localize=True):
@@ -1621,21 +1624,22 @@ def mkdirs_if_nexist(path, localize=True):
 
     return_path = path
 
-    folders = []
-    while 1:
-        path, folder = os.path.split(path)
-        if folder != "":
-            folders.append(folder)
-        else:
-            if path != "":
-                folders.append(path)
-            break
-    folders.reverse()
-    path = ""
-    for folder in folders:
-        path = path + folder + "/"
-        if not os.path.isdir(path):
-            print("Creating folder: " + path)
-            os.mkdir(path)
+    if path != None:
+        folders = []
+        while 1:
+            path, folder = os.path.split(path)
+            if folder != "":
+                folders.append(folder)
+            else:
+                if path != "":
+                    folders.append(path)
+                break
+        folders.reverse()
+        path = ""
+        for folder in folders:
+            path = path + folder + "/"
+            if not os.path.isdir(path):
+                print("Creating folder: " + path)
+                os.mkdir(path)
 
     return return_path
