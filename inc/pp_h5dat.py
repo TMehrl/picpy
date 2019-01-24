@@ -191,7 +191,9 @@ class H5Keys:
                                 'q':'q',
                                 'p1':'p1',
                                 'p2':'p2',
-                                'p3':'p3'
+                                'p3':'p3',
+                                'ipart' : 'ipart',
+                                'iproc' : 'iproc'
                               }
 
             # HDF5 Attribute Keys
@@ -210,7 +212,6 @@ class H5Keys:
         return self.__g3dkeys
     def print_g3dkeys(self):
         for key in self.__g3dkeys: print(key)
-
     def get_rawkey(self,key):
         return self.__rawkeys[key]
     def get_rawkeys(self):
@@ -310,6 +311,12 @@ class HiRAW(HiFile):
             self.p1 = np.array(hf.get(  self.get_rawkey('p1') ))
             self.p2 = np.array(hf.get(  self.get_rawkey('p2') ))
             self.p3 = np.array(hf.get(  self.get_rawkey('p3') ))
+
+            if self.get_rawkey('ipart') in hf.keys():
+                self.ipart = np.array(hf.get(  self.get_rawkey('ipart') ))
+
+            if self.get_rawkey('iproc') in hf.keys():
+                self.iproc = np.array(hf.get(  self.get_rawkey('iproc') ))
 
             self.__npart = len(self.q)
 

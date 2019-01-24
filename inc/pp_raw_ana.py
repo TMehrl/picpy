@@ -2,14 +2,14 @@
 # pp_raw_ana.py
 
 import os
-from numba import jit
+import sys
 import numpy as np
+from numba import jit
 import gc
 import h5py
-import pp_defs
-import sys
 import time
-
+import pp_defs
+from pp_h5dat import HiRAW
 
 def moments(array1, array2, weights, order=2, central=True, roots=False):
 
@@ -399,7 +399,141 @@ class Slices:
                 print('Calc. 4th order moms:\t%0.2e %s' % ((timings.avg4-timings.avg3), 's'))
         self.if_moms_calc = True
 
-# # Class to generate histograms
-# class hist:
-    
+
+
+
+class TagSelect:
+    def __init__(self):
+        self.raw = None
+        self.ipart_sel = np.empty(0,dtype=np.int32)
+        self.iproc_sel = np.empty(0,dtype=np.int32)
+
+    def __conditional_overwrite_raw(self,raw,overwrite=False):
+        print('Raw already imported!')
+        if overwrite:
+            print('Overwriting raw object...')
+            self.raw = raw
+        else:
+            print('Set "overwrite=True" to overwrite raw object!')
+
+    def import_raw_from_h5_file(self,file,verbose=True,overwrite=False):
+        raw = HiRAW(file)
+        raw.read_data(verbose=verbose)
+        if self.raw != None:
+            self.__conditional_overwrit_raw(raw,overwrite=overwrite)
+        else:
+            self.raw = raw           
+
+    def import_raw_struct(self,raw,overwrite=False):
+        if self.raw != None:
+            self.__conditional_overwrit_raw(raw, overwrite=overwrite)
+        else:
+            self.raw = raw            
+
+    # def __no_parts_selected():
+
+    def select_part(self, selection_criterion='', overwrite=False, combine=False):
+        if self.raw == None:
+            print('Error: raw object not yet imported!')
+        else:
+            if selection_criterion == '':
+                ipart_sel = self.raw.ipart
+                iproc_sel = self.raw.iproc
+            else:                
+                x1 = self.raw.x1
+                x2 = self.raw.x2
+                x3 = self.raw.x3
+                p1 = self.raw.p1
+                p2 = self.raw.p2
+                p3 = self.raw.p3
+
+                z = self.raw.x1
+                x = self.raw.x2
+                y = self.raw.x3
+                pz = self.raw.p1
+                px = self.raw.p2
+                py = self.raw.p3
+
+                q = self.raw.q
+
+                idx_sel = np.nonzero( eval(selection_criterion) )
+                ipart_sel = self.raw.ipart[idx_sel]
+                iproc_sel = self.raw.iproc[idx_sel]
+
+            if len(self.iproc_sel) == 0 and len(self.ipart_sel) == 0:
+                self.iproc_sel = iproc_sel
+                self.ipart_sel = ipart_sel
+            else:       
+                self.__cond_owrt_cmb_tags(  iproc_sel=iproc_sel,\
+                                            ipart_sel=ipart_sel,\
+                                            overwrite=overwrite,\
+                                            combine=combine)
+
+    def write_taglist(self, tlname):
+        if len(self.iproc_sel) == 0 or len(self.ipart_sel) == 0:
+            print('Warning: No tags selected!') 
+        else:
+            # combine to 2d matrix
+            M = np.vstack((self.iproc_sel, self.ipart_sel)).T
+            np.savetxt(tlname, M, fmt='%d', delimiter=',')
+
+    def _uniquify_tags(self):
+
+        # Removing redundant occurences
+        ipartmax = np.amax(self.ipart_sel)
+
+        iunique = self.iproc_sel * (ipartmax+1) + self.ipart_sel
+
+        _, idx_uniques = np.unique(iunique,return_index=True)
+
+        self.iproc_sel = self.iproc_sel[idx_uniques]
+        self.ipart_sel = self.ipart_sel[idx_uniques]
+
+    def __cond_owrt_cmb_tags(self,iproc_sel,ipart_sel,overwrite=False,combine=False):
+        print('Tags already selected!')
+        
+        if not overwrite and not combine:
+            print('Set "overwrite=True" to overwrite tags, set "combine=True" to combine tags.')
+
+        if overwrite:
+            print('Overwriting tags...')
+            self.iproc_sel = iproc_sel
+            self.ipart_sel = ipart_sel
+
+        if combine:
+            print('Combining tags...')
+            np.append(self.iproc_sel, iproc_sel)
+            np.append(self.ipart_sel, ipart_sel)
+            self._uniquify_tags()
+
+    def read_taglist(self, tlname,overwrite=False,combine=False):
+        M = np.genfromtxt(tlname, delimiter=',')
+        iproc_sel = M[:,0]
+        ipart_sel = M[:,1]
+        
+        if len(self.iproc_sel) == 0 and len(self.ipart_sel) == 0:
+            self.iproc_sel = iproc_sel
+            self.ipart_sel = ipart_sel
+        else:       
+            self.__cond_owrt_cmb_tags(  iproc_sel=iproc_sel,\
+                                        ipart_sel=ipart_sel,\
+                                        overwrite=overwrite,\
+                                        combine=combine)
+
+    def get_ntags(self):
+        return len(self.ipart_sel)
+
+    def get_matching_idx(self, iproc_ext_in, ipart_ext_in):
+        if len(self.iproc_sel) == 0 or len(self.ipart_sel) == 0:
+            print('Warning: No tags selected!') 
+        else:
+            ipartmax = max(np.amax(ipart_ext_in),np.amax(self.ipart_sel))
+
+            iunique_sel = self.iproc_sel * (ipartmax+1) + self.ipart_sel
+            iunique_ext = iproc_ext_in * (ipartmax+1) + ipart_ext_in
+
+            _, idx, _ = np.intersect1d(iunique_ext,iunique_sel,assume_unique=True,return_indices=True)
+
+            return idx
+
 
