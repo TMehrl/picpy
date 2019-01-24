@@ -21,6 +21,7 @@ from pp_h5dat import HiRAW
 from pp_h5dat import H5FList
 from pp_plt_tools import saveas_png
 from pp_plt_tools import saveas_eps_pdf
+from pp_raw_ana import TagSelect
 
 
 def raw2hist_parser():
@@ -59,7 +60,25 @@ def raw2hist_parser():
                           dest = "latexfont",
                           action="store_true",
                           default=False,
-                          help = "Use LaTeX font (Default: %(default)s).")                              
+                          help = "Use LaTeX font (Default: %(default)s).")  
+    parser.add_argument(  "--psel",
+                          dest = "part_selection_criterion",
+                          action="store",
+                          default='',
+                          type=str,
+                          help = "Particle selection criterion (e.g. 'x**2 + y**2 < 0.1', default: %(default)s).")
+    parser.add_argument(  "--tfout",
+                          dest = "tagfile_out",
+                          action="store",
+                          default=None,
+                          type=str,
+                          help = "Save selected particle tags to specified tag file (Default: %(default)s).")    
+    parser.add_argument(  "--tfin",
+                          dest = "tagfile_in",
+                          action="store",
+                          default=None,
+                          type=str,
+                          help = "Particle selection from specified tag file (Default: %(default)s).")                                                                                
     return parser
 
 
@@ -173,31 +192,31 @@ def r2h_2d_subparser(subparsers, parent_parser):
 def get_props(raw,psv_str):
     if psv_str == 'x':
        label = r'$k_p x$' 
-       psv = raw.x2
+       psv = raw.get('x2')
        savename = 'x'
     elif psv_str == 'y':
        label = r'$k_p y$' 
-       psv = raw.x3
+       psv = raw.get('x3')
        savename = 'y'       
     elif psv_str == 'z' or psv_str == 'zeta':
        label = r'$k_p \zeta$' 
-       psv = raw.x1
+       psv = raw.get('x1')
        savename = 'zeta'
     elif psv_str == 'r':
        label = r'$k_p r$' 
-       psv = np.sqrt(np.power(raw.x2,2) + np.power(raw.x3,2)) 
+       psv = np.sqrt(np.power(raw.get('x2'),2) + np.power(raw.get('x3'),2)) 
        savename = 'r'    
     elif psv_str == 'px':
        label = r'$p_x/m c$' 
-       psv = raw.p2
+       psv = raw.get('p2')
        savename = 'px'
     elif psv_str == 'py':
        label = r'$p_y/m c$' 
-       psv = raw.p3
+       psv = raw.get('p3')
        savename = 'py'
     elif psv_str == 'pz':
        label = r'$p_z/m c$' 
-       psv = raw.p1
+       psv = raw.get('p1')
        savename = 'pz'
     else:
         print("ERROR: Phase space variable '%s' not recognized!" % psv_str)
@@ -222,7 +241,11 @@ def oneD(raw, args):
     else:
         nbins = args.nbins
 
-    hist, bin_edges = np.histogram(psv,bins=nbins,weights=raw.q,density=True,range=args.range)
+    hist, bin_edges = np.histogram( psv,\
+                                    bins=nbins,\
+                                    weights=raw.get('q'),\
+                                    density=True,\
+                                    range=args.range)
     x_array = bin_edges[0:-1] + (bin_edges[1] - bin_edges[0])/2
 
     if args.psv == 'r':
@@ -234,7 +257,7 @@ def oneD(raw, args):
         # dr_unnormed = np.divide(np.diff(r_lsp),lsp_centers)
         # dr_normed =  rmax * dr_unnormed/np.sum(dr_unnormed) 
         # r_bin_edges = np.insert(np.cumsum(dr_normed),0,0)
-        #hist, bin_edges = np.histogram(psv,bins=r_bin_edges,weights=raw.q,density=True,range=args.range)
+        #hist, bin_edges = np.histogram(psv,bins=r_bin_edges,weights=raw.get('q'),density=True,range=args.range)
 
         ## Scaling number of hits with 1/r
         hist = np.divide(hist,x_array)/(2*math.pi)
@@ -273,7 +296,7 @@ def twoD(raw, args):
 
     if args.verbose:
         print("Generating 2d histogram...")
-    H, xedges, yedges = np.histogram2d(varx,vary,bins=nbins,weights=raw.q,range=hrange)
+    H, xedges, yedges = np.histogram2d(varx,vary,bins=nbins,weights=raw.get('q'),range=hrange)
     x_array = xedges[0:-1] + (xedges[1] - xedges[0])/2
     y_array = yedges[0:-1] + (yedges[1] - yedges[0])/2
 
@@ -331,8 +354,24 @@ def main():
     for file in flist:
         raw = HiRAW(file)
         raw.read_data(verbose=args.verbose)
+
         if args.verbose:
-            print( "The file contains %i particles." % raw.get_npart() )         
+            print( "The file contains %i particles." % raw.get_npart() ) 
+
+        # Particle selection
+        ts = TagSelect()
+        ts.import_raw_obj(raw)
+        if args.tagfile_in != None:
+            # particle selection from tagfile_in
+            ts.read_taglist(args.tagfile_in)
+        else:
+            # particle selection from criterion
+            ts.select_part(args.part_selection_criterion)
+        raw = ts.get_raw_select()
+        print( "%i particles selected" % raw.get_npart() )
+        if args.tagfile_out != None:
+            ts.write_taglist(args.tagfile_out)
+
         if args.zeta_range != None:
             raw.select_zeta_range(args.zeta_range)
         if raw.get_npart() > 0:           

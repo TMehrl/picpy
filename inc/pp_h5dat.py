@@ -293,77 +293,87 @@ class HiFile(H5Keys, H5PICFile):
     def get_type(self):
         return self.__type
 
+
+
 class HiRAW(HiFile):
     def __init__(self, file):
         HiFile.__init__(self, file)
         self.__npart = 0
         self.__data_is_read = False
 
+        self.__coord2idx = {
+            "x1": 0,
+            "x2": 1,
+            "x3": 2,
+            "p1": 3,
+            "p2": 4,
+            "p3": 5,
+            "q": 6,
+            "iproc": 7,
+            "ipart": 8 }
+
+    def __save_coord(self,coord, nparray):
+        self.__part[self.__coord2idx[coord],:] = nparray
+
+    def get(self,coord=''):
+        if self.__data_is_read:
+            if coord=='':
+                return self.__part
+            else:
+                return self.__part[self.__coord2idx[coord]]
+        else:
+            print('Error: Data not yet read!')
+            sys.exit(1) 
+
     def read_data(self, verbose=True):
         if verbose:
             print('Reading data: "%s" ...' % self.get_file())        
         with h5py.File(self.get_file(),'r') as hf:
+            
+            ncoords = 7
+
+            # Get number of particles
+            dsetq = hf[self.get_rawkey('q')]
+            npart = (dsetq.shape)[0]
+
+            if self.get_rawkey('ipart') in hf.keys() \
+                and self.get_rawkey('iproc') in hf.keys():
+                ncoords += 2
+
+            # Allocating array
+            self.__part = np.zeros((ncoords, npart), dtype=np.float32)
+
             # Reading datasets
-            self.x1 = np.array(hf.get(  self.get_rawkey('x1') ))
-            self.x2 = np.array(hf.get(  self.get_rawkey('x2') ))
-            self.x3 = np.array(hf.get(  self.get_rawkey('x3') ))
-            self.q =  np.array(hf.get(  self.get_rawkey('q')  ))
-            self.p1 = np.array(hf.get(  self.get_rawkey('p1') ))
-            self.p2 = np.array(hf.get(  self.get_rawkey('p2') ))
-            self.p3 = np.array(hf.get(  self.get_rawkey('p3') ))
+            keys = list(self.__coord2idx.keys())
+            for i in range(0,ncoords):
+                self.__save_coord(  keys[i],\
+                                    np.array(hf.get(  self.get_rawkey(keys[i]) )))
 
-            if self.get_rawkey('ipart') in hf.keys():
-                self.ipart = np.array(hf.get(  self.get_rawkey('ipart') ))
-
-            if self.get_rawkey('iproc') in hf.keys():
-                self.iproc = np.array(hf.get(  self.get_rawkey('iproc') ))
-
-            self.__npart = len(self.q)
+            self.__npart = npart
 
         self.__data_is_read = True
+        
         if verbose:
             print('Data is read.') 
 
+    def select_by_idx(self,idx):
+        self.__part = self.__part[:,idx]
+
     def get_npart(self):
+        self.__npart = (self.__part.shape)[1]
         return self.__npart
 
     def select_zeta_range(self, zeta_range, verbose=True):
         if not self.__data_is_read:
             self.read_data()
         if zeta_range != [] and len(zeta_range) == 2:
-            idx = np.nonzero((self.x1 >= zeta_range[0]) & (self.x1 < zeta_range[1]))
+            idx = np.nonzero((self.get('x1') >= zeta_range[0]) & (self.get('x1') < zeta_range[1]))
             self.__npart = np.size(idx)
             if verbose:
                 print('%i particles in selected range [%0.2f, %0.2f]' \
                     % (self.__npart,zeta_range[0],zeta_range[1]))
-            self.x1 = self.x1[idx]
-            self.x2 = self.x2[idx]
-            self.x3 = self.x3[idx]
-            self.p1 = self.p1[idx]
-            self.p2 = self.p2[idx]
-            self.p3 = self.p3[idx]
-            self.q = self.q[idx]
+            self.__part = self.__part[:,idx]
 
-    # def get_var(self, var, idx = [], ifread = True):
-    #     ret_array = []
-    #     if not self.__data_is_read:
-    #         if ifread:
-    #             if var in self.__rawkeys:
-    #                 with h5py.File(self.get_file(),'r') as hf:
-    #                     exec("self.%s = np.array(hf.get(  self.get_rawkey('%s') ))" % (var,var))
-    #             else:
-    #                 print('Error:\tVariable "%s" does not exist!' % var )
-    #                 sys.exit()                     
-    #         else:    
-    #             print('Error:\tFile %s has not been read!' % (self.get_file()) )
-    #             sys.exit()
-    #     exec('ret_array = self.%s' % var)  
-    #     exec('print(self.%s)' % var)
-    #     print(ret_array)
-    #     if idx == []:
-    #         return ret_array
-    #     else:
-    #         return ret_array[idx]
 
 #### 3D-grid
 class Grid3d(HiFile):

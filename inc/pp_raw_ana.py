@@ -236,15 +236,18 @@ class Slices:
             timings.startcm = time.time()
 
         # Select subset of particles which are in range
-        idx_part_in_range = np.logical_and(self.raw.x1 > self.edges[0], 
-                                           self.raw.x1 <= self.edges[-1])
-        x1 = self.raw.x1[idx_part_in_range]
-        x2 = self.raw.x2[idx_part_in_range]
-        x3 = self.raw.x3[idx_part_in_range]
-        p1 = self.raw.p1[idx_part_in_range]
-        p2 = self.raw.p2[idx_part_in_range]
-        p3 = self.raw.p3[idx_part_in_range]
-        q = self.raw.q[idx_part_in_range] * self.cellvol
+        idx_part_in_range = np.logical_and(self.raw.get('x1') > self.edges[0], 
+                                           self.raw.get('x1') <= self.edges[-1])
+
+        self.raw.select_by_idx(idx_part_in_range)
+
+        x1 = self.raw.get('x1')
+        x2 = self.raw.get('x2')
+        x3 = self.raw.get('x3')
+        p1 = self.raw.get('p1')
+        p2 = self.raw.get('p2')
+        p3 = self.raw.get('p3')
+        q = self.raw.get('q') * self.cellvol
 
         # Assign each particle the index of the bin it is located in
         if self.if_edges_eq_spaced:
@@ -404,9 +407,18 @@ class Slices:
 
 class TagSelect:
     def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.reset_raw()
+        self.reset_tags()
+
+    def reset_raw(self):
         self.raw = None
+
+    def reset_tags(self):
         self.ipart_sel = np.empty(0,dtype=np.int32)
-        self.iproc_sel = np.empty(0,dtype=np.int32)
+        self.iproc_sel = np.empty(0,dtype=np.int32)        
 
     def __conditional_overwrite_raw(self,raw,overwrite=False):
         print('Raw already imported!')
@@ -424,41 +436,43 @@ class TagSelect:
         else:
             self.raw = raw           
 
-    def import_raw_struct(self,raw,overwrite=False):
+    def import_raw_obj(self,raw,overwrite=False):
         if self.raw != None:
             self.__conditional_overwrit_raw(raw, overwrite=overwrite)
         else:
-            self.raw = raw            
+            self.raw = raw
 
-    # def __no_parts_selected():
+    def select_part(self, \
+                    selection_criterion='', \
+                    overwrite=False, \
+                    combine=False):
 
-    def select_part(self, selection_criterion='', overwrite=False, combine=False):
         if self.raw == None:
             print('Error: raw object not yet imported!')
         else:
             if selection_criterion == '':
-                ipart_sel = self.raw.ipart
-                iproc_sel = self.raw.iproc
+                ipart_sel = self.raw.get('ipart')
+                iproc_sel = self.raw.get('iproc')
             else:                
-                x1 = self.raw.x1
-                x2 = self.raw.x2
-                x3 = self.raw.x3
-                p1 = self.raw.p1
-                p2 = self.raw.p2
-                p3 = self.raw.p3
+                x1 = self.raw.get('x1')
+                x2 = self.raw.get('x2')
+                x3 = self.raw.get('x3')
+                p1 = self.raw.get('p1')
+                p2 = self.raw.get('p2')
+                p3 = self.raw.get('p3')
 
-                z = self.raw.x1
-                x = self.raw.x2
-                y = self.raw.x3
-                pz = self.raw.p1
-                px = self.raw.p2
-                py = self.raw.p3
+                z = self.raw.get('x1')
+                x = self.raw.get('x2')
+                y = self.raw.get('x3')
+                pz = self.raw.get('p1')
+                px = self.raw.get('p2')
+                py = self.raw.get('p3')
 
-                q = self.raw.q
+                q = self.raw.get('q')
 
                 idx_sel = np.nonzero( eval(selection_criterion) )
-                ipart_sel = self.raw.ipart[idx_sel]
-                iproc_sel = self.raw.iproc[idx_sel]
+                ipart_sel = self.raw.get('ipart')[idx_sel]
+                iproc_sel = self.raw.get('iproc')[idx_sel]
 
             if len(self.iproc_sel) == 0 and len(self.ipart_sel) == 0:
                 self.iproc_sel = iproc_sel
@@ -469,13 +483,57 @@ class TagSelect:
                                             overwrite=overwrite,\
                                             combine=combine)
 
+
+    def __select_raw(self):
+        
+        idx = self.get_matching_idx(self.raw.get('iproc'), \
+                                    self.raw.get('ipart'))
+        self.raw.select_by_idx(idx)
+
+    def get_raw_select(self):
+        if self.raw == None:
+            print('Error: No raw object imported!')
+            sys.exit(1)            
+
+        if len(self.iproc_sel) == 0 or len(self.ipart_sel) == 0:
+            print('Warning: No tags selected!\n'\
+                  'returning all...')
+        else:
+            self.__select_raw()
+            
+        return self.raw
+
     def write_taglist(self, tlname):
+
+        csvext = '.csv'
+        fname, fext = os.path.splitext(tlname)
+        if fext != csvext:
+            tlname += csvext
+
         if len(self.iproc_sel) == 0 or len(self.ipart_sel) == 0:
             print('Warning: No tags selected!') 
         else:
             # combine to 2d matrix
             M = np.vstack((self.iproc_sel, self.ipart_sel)).T
+            print('Writing tags to "%s"!' % tlname) 
             np.savetxt(tlname, M, fmt='%d', delimiter=',')
+
+    def read_taglist(self, tlname, overwrite=False, combine=False):
+        
+        print('Reading taglist "%s"!' % tlname) 
+
+        M = np.genfromtxt(tlname, delimiter=',',dtype=np.int32)
+        iproc_sel = M[:,0]
+        ipart_sel = M[:,1]
+
+        if len(self.iproc_sel) == 0 and len(self.ipart_sel) == 0:
+            self.iproc_sel = iproc_sel
+            self.ipart_sel = ipart_sel
+        else:       
+            self.__cond_owrt_cmb_tags(  iproc_sel=iproc_sel,\
+                                        ipart_sel=ipart_sel,\
+                                        overwrite=overwrite,\
+                                        combine=combine)
 
     def _uniquify_tags(self):
 
@@ -489,11 +547,16 @@ class TagSelect:
         self.iproc_sel = self.iproc_sel[idx_uniques]
         self.ipart_sel = self.ipart_sel[idx_uniques]
 
-    def __cond_owrt_cmb_tags(self,iproc_sel,ipart_sel,overwrite=False,combine=False):
+    def __cond_owrt_cmb_tags(   self, \
+                                iproc_sel, \
+                                ipart_sel, \
+                                overwrite=False, \
+                                combine=False):
         print('Tags already selected!')
         
         if not overwrite and not combine:
-            print('Set "overwrite=True" to overwrite tags, set "combine=True" to combine tags.')
+            print('Set "overwrite=True" to overwrite tags,' \
+                  'set "combine=True" to combine tags.')
 
         if overwrite:
             print('Overwriting tags...')
@@ -506,25 +569,13 @@ class TagSelect:
             np.append(self.ipart_sel, ipart_sel)
             self._uniquify_tags()
 
-    def read_taglist(self, tlname,overwrite=False,combine=False):
-        M = np.genfromtxt(tlname, delimiter=',')
-        iproc_sel = M[:,0]
-        ipart_sel = M[:,1]
-        
-        if len(self.iproc_sel) == 0 and len(self.ipart_sel) == 0:
-            self.iproc_sel = iproc_sel
-            self.ipart_sel = ipart_sel
-        else:       
-            self.__cond_owrt_cmb_tags(  iproc_sel=iproc_sel,\
-                                        ipart_sel=ipart_sel,\
-                                        overwrite=overwrite,\
-                                        combine=combine)
 
     def get_ntags(self):
         return len(self.ipart_sel)
 
     def get_matching_idx(self, iproc_ext_in, ipart_ext_in):
         if len(self.iproc_sel) == 0 or len(self.ipart_sel) == 0:
+            idx = np.empty(0,dtype=np.int32)
             print('Warning: No tags selected!') 
         else:
             ipartmax = max(np.amax(ipart_ext_in),np.amax(self.ipart_sel))
@@ -534,6 +585,6 @@ class TagSelect:
 
             _, idx, _ = np.intersect1d(iunique_ext,iunique_sel,assume_unique=True,return_indices=True)
 
-            return idx
+        return idx       
 
 

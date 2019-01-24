@@ -43,7 +43,7 @@ def main():
 
 
     fig = plt.figure()
-    plt.hist2d(raw.x1, raw.p1, bins=[256, 512], norm=LogNorm())
+    plt.hist2d(raw.get('x1'), raw.get('p1'), bins=[256, 512], norm=LogNorm())
     plt.colorbar()
     ax = plt.gca()
     ax.set_ylabel('p1', fontsize=14)
