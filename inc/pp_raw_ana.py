@@ -11,41 +11,6 @@ import time
 import pp_defs
 from pp_h5dat import HiRAW
 
-def moments(array1, array2, weights, order=2, central=True, roots=False):
-
-    # normalize weights
-    w = weights/np.sum(weights);
-
-    # compute means
-    mean = [  np.dot( array1, w),
-              np.dot( array2, w) ]
-
-    if central:
-        a1 = array1 - mean[0]
-        a2 = array2 - mean[1]
-    else:
-        a1 = array1
-        a2 = array2
-
-    if order == 1:
-        mom = mean
-    elif order == 2:
-        mom = [ np.dot( np.multiply(a1, a1), w ),
-                np.dot( np.multiply(a1, a2), w ),
-                np.dot( np.multiply(a2, a2), w ) ]
-    elif order == 3:
-        mom = [ np.dot( np.multiply( np.multiply(a1, a1), a1) , w ),
-                np.dot( np.multiply( np.multiply(a1, a1), a2) , w ),
-                np.dot( np.multiply( np.multiply(a1, a2), a2) , w ),
-                np.dot( np.multiply( np.multiply(a2, a2), a2) , w ) ]
-    else:
-        print('Moments with orders > 3 not yet implemented!')
-
-    if roots:
-        return np.power(mom,1/order)
-    else:
-        return mom
-
 
 @jit(nopython=True) # Set "nopython" mode for best performance
 def sl_mom1(psv1,weights,i1,i2):
@@ -55,8 +20,10 @@ def sl_mom1(psv1,weights,i1,i2):
         i1b = i1[ibin]
         i2b = i2[ibin]
         weight_sum = np.sum(weights[i1b:i2b])
-        if weight_sum > 0:
+        if weight_sum > 0 and i2b > 0:
             mom1[ibin] = np.dot(psv1[i1b:i2b], weights[i1b:i2b])/weight_sum
+        else: 
+            mom1[ibin] = 0
     return mom1
 
 @jit(nopython=True) # Set "nopython" mode for best performance
@@ -67,8 +34,12 @@ def sl_mom2(psv1,psv2,weights,i1,i2):
         i1b = i1[ibin]
         i2b = i2[ibin]
         weight_sum = np.sum(weights[i1b:i2b])
-        if weight_sum > 0:
-            mom2[ibin] = np.dot( np.multiply(psv1[i1b:i2b],psv2[i1b:i2b]), weights[i1b:i2b])/weight_sum
+        if weight_sum > 0 and i2b > 0:
+            mom2[ibin] = np.dot( \
+                            np.multiply(psv1[i1b:i2b],psv2[i1b:i2b]), \
+                            weights[i1b:i2b])/weight_sum
+        else: 
+            mom2[ibin] = 0
     return mom2
 
 
@@ -80,8 +51,12 @@ def sl_mom3(psv1,psv2,psv3,weights,i1,i2):
         i1b = i1[ibin]
         i2b = i2[ibin]
         weight_sum = np.sum(weights[i1b:i2b])
-        if weight_sum > 0:
-            mom3[ibin] = np.dot( np.multiply(np.multiply(psv1[i1b:i2b],psv2[i1b:i2b]),psv3[i1b:i2b]), weights[i1b:i2b])/weight_sum
+        if weight_sum > 0 and i2b > 0:
+            mom3[ibin] = np.dot( \
+                np.multiply(np.multiply(psv1[i1b:i2b],psv2[i1b:i2b]),\
+                            psv3[i1b:i2b]), weights[i1b:i2b])/weight_sum
+        else: 
+            mom3[ibin] = 0            
     return mom3
 
 
@@ -93,8 +68,15 @@ def sl_mom4(psv1,psv2,psv3,psv4,weights,i1,i2):
         i1b = i1[ibin]
         i2b = i2[ibin]
         weight_sum = np.sum(weights[i1b:i2b])
-        if weight_sum > 0:
-            mom4[ibin] = np.dot( np.multiply(np.multiply(psv1[i1b:i2b],psv2[i1b:i2b]),np.multiply(psv3[i1b:i2b],psv4[i1b:i2b])), weights[i1b:i2b])/weight_sum
+        if weight_sum > 0 and i2b > 0:
+            mom4[ibin] = np.dot( \
+                np.multiply(np.multiply(psv1[i1b:i2b],\
+                                        psv2[i1b:i2b]),\
+                            np.multiply(psv3[i1b:i2b],\
+                                        psv4[i1b:i2b])), \
+                weights[i1b:i2b])/weight_sum
+        else:
+            mom4[ibin] = 0
     return mom4
 
 
@@ -247,7 +229,7 @@ class Slices:
         p1 = self.raw.get('p1')
         p2 = self.raw.get('p2')
         p3 = self.raw.get('p3')
-        q = self.raw.get('q') * self.cellvol
+        q = np.abs(self.raw.get('q')) * self.cellvol
 
         # Assign each particle the index of the bin it is located in
         if self.if_edges_eq_spaced:
@@ -287,6 +269,7 @@ class Slices:
 
         # Setting idx range for each bin
         i1 = np.cumsum(self.npart) - self.npart
+        # i2 = np.heaviside(np.cumsum(self.npart) - 1, 0).astype(np.int64)
         i2 = np.cumsum(self.npart) - 1
 
         if showtimings: 
@@ -404,7 +387,7 @@ class Slices:
 
 
 
-
+# Class for particle selection and tag management
 class TagSelect:
     def __init__(self):
         self.reset()

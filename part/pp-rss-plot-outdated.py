@@ -560,12 +560,12 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
         xlabel_str = r'$\omega_p t$'
 
 
-    Xb0 = np.ones(slm.avgx2[0,:].shape)
-    Yb0 = np.ones(slm.avgx3[0,:].shape)
+    Xb0_norm = np.ones(slm.avgx2[0,:].shape)
+    Yb0_norm = np.ones(slm.avgx3[0,:].shape)
     for i in range(0,len(slm.zeta_array)):
         if (slm.avgx2[0,i] != 0.0):
-            Xb0[i] = slm.avgx2[0,i]
-            Yb0[i] = slm.avgx3[0,i]
+            Xb0_norm[i] = slm.avgx2[0,i]
+            Yb0_norm[i] = slm.avgx3[0,i]
 
     if time == None:
         time = slm.time_array[-1]
@@ -615,8 +615,8 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
 
     for i in range(0,len(slm.zeta_array)):
 #        if (slm.zeta_array[i] <= zeta_hseed):
-        Xb_norm[:,i] = np.absolute( slm.avgx2[:,i]/Xb0[i] )
-        Yb_norm[:,i] = np.absolute( slm.avgx3[:,i]/Yb0[i] )
+        Xb_norm[:,i] = np.absolute( slm.avgx2[:,i]/Xb0_norm[i] )
+        Yb_norm[:,i] = np.absolute( slm.avgx3[:,i]/Yb0_norm[i] )
 
     figXb = plt.figure()
     cax = plt.pcolormesh(   slm.zeta_array,
@@ -679,7 +679,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
     plt.close(figYbnorm)
 
     figXb0 = plt.figure()
-    plt.plot(slm.zeta_array, Xb0)
+    plt.plot(slm.zeta_array, slm.avgx2[0,:])
     ax = plt.gca()
     ymin, ymax = ax.get_ylim()
     if ymin > 0 and ymax > 0:
@@ -692,7 +692,7 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
     plt.close(figXb0)
 
     figYb0 = plt.figure()
-    plt.plot(slm.zeta_array, Yb0)
+    plt.plot(slm.zeta_array, slm.avgx3[0,:])
     ax = plt.gca()
     ymin, ymax = ax.get_ylim()
     if ymin > 0 and ymax > 0:
