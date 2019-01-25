@@ -390,17 +390,18 @@ class Slices:
 
 
 def bool_str_to_np_ops(string):
-    outstr = string
     if (('or' in string) and ('and' in string)):
-        print(string)
+        outstr = string
         print('Error: Currtently, only one type of boolean operator supported!')
         print('Either "and" xor "or"')
         sys.exit(1)
+    elif not (('or' in string) or ('and' in string)):
+        outstr = string
     else:
         if 'or' in string:
             substrs = re.split('or', string)
             npopstr = 'np.logical_or('
-        elif 'and' in string:
+        else:
             substrs = re.split('and', string)
             npopstr = 'np.logical_and('
 
