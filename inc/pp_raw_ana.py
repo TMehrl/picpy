@@ -3,6 +3,7 @@
 
 import os
 import sys
+import re
 import numpy as np
 from numba import jit
 import gc
@@ -387,6 +388,33 @@ class Slices:
 
 
 
+
+def bool_str_to_np_ops(string):
+    outstr = string
+    if (('or' in string) and ('and' in string)):
+        print(string)
+        print('Error: Currtently, only one type of boolean operator supported!')
+        print('Either "and" xor "or"')
+        sys.exit(1)
+    else:
+        if 'or' in string:
+            substrs = re.split('or', string)
+            npopstr = 'np.logical_or('
+        elif 'and' in string:
+            substrs = re.split('and', string)
+            npopstr = 'np.logical_and('
+
+        outstr = ''
+        for i in range(0,len(substrs)-1):
+            outstr += npopstr + substrs[i] + ','
+        outstr += substrs[-1]
+        
+        for i in range(0,len(substrs)-1):
+            outstr += ')'
+
+    return outstr
+
+
 # Class for particle selection and tag management
 class TagSelect:
     def __init__(self):
@@ -453,7 +481,9 @@ class TagSelect:
 
                 q = self.raw.get('q')
 
-                idx_sel = np.nonzero( eval(selection_criterion) )
+                bool_np_str = bool_str_to_np_ops(selection_criterion)
+
+                idx_sel = np.nonzero( eval(bool_np_str) )
                 ipart_sel = self.raw.get('ipart')[idx_sel]
                 iproc_sel = self.raw.get('iproc')[idx_sel]
 
