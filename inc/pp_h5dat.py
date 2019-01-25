@@ -367,7 +367,7 @@ class HiRAW(HiFile):
         if not self.__data_is_read:
             self.read_data()
         if zeta_range != [] and len(zeta_range) == 2:
-            idx = np.nonzero((self.get('x1') >= zeta_range[0]) & (self.get('x1') < zeta_range[1]))
+            idx = np.nonzero((self.get('x1') >= zeta_range[0]) & (self.get('x1') < zeta_range[1]))[0]
             self.__npart = np.size(idx)
             if verbose:
                 print('%i particles in selected range [%0.2f, %0.2f]' \
