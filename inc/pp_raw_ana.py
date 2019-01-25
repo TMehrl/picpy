@@ -566,7 +566,9 @@ class TagSelect:
             iunique_sel = self.iproc_sel * (ipartmax+1) + self.ipart_sel
             iunique_ext = iproc_ext_in * (ipartmax+1) + ipart_ext_in
 
-            _, idx, _ = np.intersect1d(iunique_ext,iunique_sel,assume_unique=True,return_indices=True)
+            idx = np.nonzero( np.in1d(  iunique_ext,\
+                                        iunique_sel,\
+                                        assume_unique=True) )[0]
 
         return idx       
 
