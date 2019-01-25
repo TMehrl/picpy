@@ -66,7 +66,7 @@ def raw2hist_parser():
                           action="store",
                           default='',
                           type=str,
-                          help = "Particle selection criterion (e.g. 'x**2 + y**2 < 0.1', default: %(default)s).")
+                          help = "Particle selection criterion (e.g. 'x**2 + y**2 < 0.1').")
     parser.add_argument(  "--tfout",
                           dest = "tagfile_out",
                           action="store",
@@ -234,6 +234,8 @@ def get_zeta_range_str(zeta_range):
 
 def oneD(raw, args):
 
+    appstr = ''
+
     psv, xlabel, savename = get_props(raw,args.psv)
 
     if args.nbins == None:
@@ -267,10 +269,15 @@ def oneD(raw, args):
     ax = plt.gca()    
     ax.set_xlabel(xlabel, fontsize=14)
     plt.gcf().subplots_adjust(left=0.15, bottom=0.15)   
+
+    if args.part_selection_criterion != '' or args.tagfile_in != None:
+        appstr += '_sel'
     
     raw.read_attrs()
     timestamp = '_%08.1f' % (raw.get_time()) 
-    savename += get_zeta_range_str(args.zeta_range)  + timestamp
+    savename += get_zeta_range_str(args.zeta_range)  \
+                + appstr \
+                + timestamp
     
     if args.file_format == 'png':
         saveas_png(fig, args.savepath, savename, verbose=True)
@@ -280,6 +287,8 @@ def oneD(raw, args):
 
 
 def twoD(raw, args):
+
+    appstr = ''
 
     varx, xlabel, savenamex = get_props(raw,args.psv[0])
     vary, ylabel, savenamey = get_props(raw,args.psv[1])
@@ -316,9 +325,17 @@ def twoD(raw, args):
     ax.set_xlabel(xlabel, fontsize=14)
     cbar = fig.colorbar(cax)
     
+    if args.part_selection_criterion != '' or args.tagfile_in != None:
+        appstr += '_sel'
+
     raw.read_attrs()
     timestamp = '_%08.1f' % (raw.get_time()) 
-    savename = savenamex + '_' + savenamey + get_zeta_range_str(args.zeta_range) + timestamp
+    savename = savenamex \
+                + '_' \
+                + savenamey \
+                + get_zeta_range_str(args.zeta_range) \
+                + appstr \
+                + timestamp
 
     saveas_png(fig, args.savepath, savename, verbose=True)
 
