@@ -78,7 +78,13 @@ def raw2hist_parser():
                           action="store",
                           default=None,
                           type=str,
-                          help = "Particle selection from specified tag file (Default: %(default)s).")                                                                                
+                          help = "Particle selection from specified tag file (Default: %(default)s).")
+    parser.add_argument(  "--stride",
+                          dest = "stride",
+                          action="store",
+                          default=1,
+                          type=int,
+                          help = "For a selected filelist, process every 'stride' file (Default: %(default)s).")                                                                                                          
     return parser
 
 
@@ -366,7 +372,7 @@ def main():
         plt.rc('font', family='serif') 
 
     h5flist = H5FList(args.path, h5ftype='raw')
-    flist = h5flist.get()
+    flist = h5flist.get(stride=args.stride)
 
     for file in flist:
         raw = HiRAW(file)

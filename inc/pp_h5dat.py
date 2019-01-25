@@ -1540,7 +1540,7 @@ class H5FList():
         self.__h5ftype = h5ftype
         self.__flist = None
 
-    def get(self, verbose=True):
+    def get(self, verbose=True, stride=1):
         if not self.__paths:
             print('Error: No file provided!')
             sys.exit(1)
@@ -1557,7 +1557,7 @@ class H5FList():
 
         # Alphabetically sorting list
         self.__flist = sorted(flist)
-        return self.__flist
+        return self.__flist[0::stride]
 
     def __get_individ(self, path, verbose):
         flist = []
