@@ -151,7 +151,8 @@ def main():
             print('Saving: ' + args.savepath + '/' + savename + '.eps')
 
             fig.savefig( args.savepath + '/' + savename + '.eps',
-                    format='eps')    
+                    format='eps')
+            plt.close(fig) 
 
 if __name__ == "__main__":
     main()  

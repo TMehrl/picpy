@@ -152,6 +152,7 @@ class Blowout():
         fig.savefig( savepath + '/' + savename,
           format=saveformat,
           dpi=600)
+        plt.close(fig) 
 
         if self.args.verbose: print('Saved "' + savename + '" at: ' + self.args.savepath)
 
@@ -184,7 +185,8 @@ class Blowout():
 
         fig.savefig(  savepath + '/' + savename,
                           format=saveformat)
-        
+        plt.close(fig) 
+
         if self.args.h5plot: 
             h5lp = H5Plot()
             h5lp.inherit_matplotlib_line_plots(ax)
@@ -228,7 +230,7 @@ class Blowout():
         ax.set_ylabel('slope', fontsize=14)
         ax.set_xlabel(r'$k_p \zeta$', fontsize=14)           
         plt.show()
-
+        plt.close(fig) 
         #self.rb = rb * (1.0 - np.exp(-0.5* np.power(slope/0.05,6))) 
         self.rb = rb 
         self.rb_maxrho = self.r_array[idx_max]       
@@ -262,6 +264,7 @@ class Blowout():
             h5lp.write(savepath + '/' + fileprefix + filesuffix + '.h5')
 
         if self.args.verbose: print('Saved "' + savename + '" at: ' + self.args.savepath)
+        plt.close(fig) 
 
     def calc_deltarho_rhomax_sheathcharge(self,zeta_avg_region=[-3.0, 0.0]):
 
@@ -434,7 +437,7 @@ class Blowout():
         fig.savefig( savepath + '/' + savename,
           format=saveformat,
           dpi=600)
-
+        plt.close(fig) 
         if self.args.verbose: print('Saved "' + savename + '" at: ' + self.args.savepath)
 
 
@@ -460,7 +463,7 @@ class Blowout():
         fig.savefig( savepath + '/' + savename,
           format=saveformat,
           dpi=600)
-
+        plt.close(fig) 
         if self.args.verbose: print('Saved "' + savename + '" at: ' + self.args.savepath)
 
 def main():

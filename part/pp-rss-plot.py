@@ -175,7 +175,7 @@ def plot_save_slice_rms(slm, savepath, verbose=True, t_is_z=True):
     cbar = fig_sx.colorbar( cax )
     cbar.ax.set_ylabel(r'$k_p \sigma_x$', fontsize=14)
     saveas_png(fig_sx, savepath, 'sigma_x')
-
+    plt.close(fig_sx)
 
     sigma_px = np.sqrt( np.absolute( slm.get(px=2) ) )
     fig_spx = plt.figure()
@@ -190,9 +190,10 @@ def plot_save_slice_rms(slm, savepath, verbose=True, t_is_z=True):
     cbar = fig_spx.colorbar( cax )
     cbar.ax.set_ylabel(r'$k_p \sigma_{p_x}$', fontsize=14)  
     saveas_png(fig_spx, savepath, 'sigma_px')
+    plt.close(fig_spx)
 
     xpx = slm.get(x=1,px=1)
-    fig_e = plt.figure()
+    fig_xpx = plt.figure()
     cax = plt.pcolormesh( x,
                           y,
                           xpx,
@@ -201,10 +202,10 @@ def plot_save_slice_rms(slm, savepath, verbose=True, t_is_z=True):
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(xlabel_str, fontsize=14)    
-    cbar = fig_e.colorbar( cax )
+    cbar = fig_xpx.colorbar( cax )
     cbar.ax.set_ylabel(r'$k_p \left\langle x p_x\right\rangle$', fontsize=14)
-    saveas_png(fig_e, savepath, 'xpx')
-
+    saveas_png(fig_xpx, savepath, 'xpx')
+    plt.close(fig_xpx)
 
     emittance = np.sqrt( np.multiply(slm.get(x=2), slm.get(px=2)) 
                          - np.power(slm.get(x=1,px=1),2) )
@@ -220,7 +221,7 @@ def plot_save_slice_rms(slm, savepath, verbose=True, t_is_z=True):
     cbar = fig_e.colorbar( cax )
     cbar.ax.set_ylabel(r'$k_p \epsilon_x$', fontsize=14)
     saveas_png(fig_e, savepath, 'slice_emittance_x')
-
+    plt.close(fig_e)
 
 def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is_z=True):
     

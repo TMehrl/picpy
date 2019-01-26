@@ -195,6 +195,7 @@ def density_inversion(r_nb, nb, r_psi, psi, zeta_pos, savepath = './plots/equili
         ax.set_xlabel(r'$k_p r$', fontsize=14)
         ax.set_ylabel(r'$n_b/n_0$', fontsize=14)   
         saveas_eps_pdf(fig, savepath, 'nb_zeta_%0.2f' % zeta_pos)
+        plt.close(fig) 
 
         fig = plt.figure()
         plt.plot(r_nb[:-1], np.divide(dnb,np.diff(r_nb)))
@@ -202,6 +203,7 @@ def density_inversion(r_nb, nb, r_psi, psi, zeta_pos, savepath = './plots/equili
         ax.set_xlabel(r'$k_p r$', fontsize=14)
         ax.set_ylabel(r'$d(n_b/n_0)/(k_p dr)$', fontsize=14)   
         saveas_eps_pdf(fig, savepath, 'dnb_dr_zeta_%0.2f' % zeta_pos)
+        plt.close(fig) 
 
         fig = plt.figure()
         plt.plot(r_nb[:-1], np.divide(dpsi,np.diff(r_nb)))
@@ -209,7 +211,7 @@ def density_inversion(r_nb, nb, r_psi, psi, zeta_pos, savepath = './plots/equili
         ax.set_xlabel(r'$k_p r$', fontsize=14)
         ax.set_ylabel(r'$d(e\psi/mc^2)/(k_p dr)$', fontsize=14)    
         saveas_eps_pdf(fig, savepath, 'dpsi_dr_zeta_%0.2f' % zeta_pos)
-
+        plt.close(fig) 
 
         fig = plt.figure()
         plt.plot(psi_norm, r_nb)
@@ -217,7 +219,7 @@ def density_inversion(r_nb, nb, r_psi, psi, zeta_pos, savepath = './plots/equili
         ax.set_ylabel(r'$k_p r$', fontsize=14)
         ax.set_xlabel(r'$e\psi/mc^2$', fontsize=14) 
         saveas_eps_pdf(fig, savepath, 'r_vs_psi_zeta_%0.2f' % zeta_pos)
-
+        plt.close(fig) 
 
         fig = plt.figure()
         plt.plot(r_nb, psi_norm)
@@ -225,6 +227,7 @@ def density_inversion(r_nb, nb, r_psi, psi, zeta_pos, savepath = './plots/equili
         ax.set_xlabel(r'$k_p r$', fontsize=14)
         ax.set_ylabel(r'$e\psi/mc^2$', fontsize=14) 
         saveas_eps_pdf(fig, savepath, 'psi_zeta_%0.2f' % zeta_pos)
+        plt.close(fig) 
 
         fig = plt.figure()
         plt.plot(x, F, '-', label=r'F(x)')
@@ -234,7 +237,7 @@ def density_inversion(r_nb, nb, r_psi, psi, zeta_pos, savepath = './plots/equili
         ax.set_ylabel(r'$F$', fontsize=14) 
         plt.legend(frameon=False)
         saveas_eps_pdf(fig, savepath, 'F_zeta_%0.2f' % zeta_pos)        
-
+        plt.close(fig) 
     return x, F
 
 
@@ -261,6 +264,7 @@ def main():
         ax.set_ylabel(r'$y$', fontsize=14)
         cbar = fig.colorbar(cax)
         saveas_png(fig, args.savepath, 'nb_%0.2f' % zeta_pos)
+        plt.close(fig) 
 
         fig = plt.figure()
         cax = plt.pcolor(nb_abs_filtered)
@@ -269,6 +273,7 @@ def main():
         ax.set_ylabel(r'$y$', fontsize=14) 
         cbar = fig.colorbar(cax)
         saveas_png(fig, args.savepath, 'nb_filtered_%0.2f' % zeta_pos)
+        plt.close(fig) 
 
         fig = plt.figure()
         cax = plt.pcolor(np.abs(nb_xy) - nb_abs_filtered)
@@ -277,7 +282,8 @@ def main():
         ax.set_ylabel(r'$y$', fontsize=14) 
         cbar = fig.colorbar(cax)
         saveas_png(fig, args.savepath, 'nb_diff_%0.2f' % zeta_pos)
-
+        plt.close(fig) 
+        
         r_n, nbr = cart_to_r_transform(x_n, y_n, nb_abs_filtered, rlim=args.rlim)
 
         if (args.mpsi_path != None):

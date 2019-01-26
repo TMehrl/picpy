@@ -289,7 +289,7 @@ def oneD(raw, args):
         saveas_png(fig, args.savepath, savename, verbose=True)
     else:
         saveas_eps_pdf(fig, args.savepath, savename, h5plot=True, verbose=True, fformat=args.file_format)
-
+    plt.close(fig)
 
 
 def twoD(raw, args):
@@ -344,7 +344,7 @@ def twoD(raw, args):
                 + timestamp
 
     saveas_png(fig, args.savepath, savename, verbose=True)
-
+    plt.close(fig)
 
 def main():
     parser = argparse.ArgumentParser()
