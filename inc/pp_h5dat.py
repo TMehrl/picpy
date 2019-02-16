@@ -966,7 +966,64 @@ class SliceMoms(H5File):
             sys.exit(1)   
         return self.__time_array
 
+    def __coord_orders_to_idx_deprecated(self, x1, x2, x3, p1, p2, p3, err_ignore=False):  
+
+        coords = np.asarray([x1,x2,x3,p1,p2,p3])
+        coords_nz = np.heaviside(coords,0)
+        n6 = np.linspace(1,6,6)
+
+        # print(coords)
+        # idx = np.argsort(np.sum(np.power(n6,coords)))
+        # print(idx)
+        # six_powers = np.power(6,np.linspace(0,4,5))
+
+        n6mod = n6 + np.asarray([0,0,0,2,2,2])
+        idx=0
+        if np.sum(coords) == 0:
+            idx = 0
+        elif np.sum(coords) == 1:
+            idx =  np.dot(coords,n6)
+        elif np.sum(coords) == 2 and np.sum(coords_nz) == 1:
+            idx =  6 + np.dot(coords_nz,n6)
+        elif np.sum(coords) == 2 and np.sum(coords_nz) == 2:
+            idx =  11 + math.floor(np.dot(coords_nz,n6)/2)
+        elif np.sum(coords) == 3 and np.sum(coords_nz) == 1:
+            idx =  15 + np.dot(coords_nz,n6)
+        elif np.sum(coords) == 3 and np.sum(coords_nz) == 2:
+            idx =  18 + math.floor(np.dot(coords,n6mod)/2)
+        elif np.sum(coords) == 4 and np.sum(coords_nz) == 1:
+            idx =  27 + np.dot(coords_nz,n6)
+        elif np.sum(coords) == 4 and np.sum(coords_nz) == 2:
+            idx =  32 + math.floor(np.dot(coords_nz,n6)/2)             
+        else:
+            if not err_ignore:
+                print('ERROR: Moment not yet implemented!')
+                sys.exit(1)
+            else:
+                idx = -1
+        return int(idx)
+
     def __coord_orders_to_idx(self, x1, x2, x3, p1, p2, p3, err_ignore=False):  
+
+        coords_str = '%d%d%d%d%d%d' % (x1,x2,x3,p1,p2,p3)
+
+        coods2idx_dict = {  '000000' : 0,
+                            '100000' : 1,
+                            '010000' : 2,
+                            '001000' : 3,
+                            '000100' : 4,
+                            '000010' : 5,
+                            '000001' : 6,
+                            '200000' : 7,
+                            '020000' : 8,
+                            '002000' : 9, 
+                            '000200' : 10,
+                            '000020' : 11,
+                            '000002' : 12,
+                            '100100' : 13,
+                            '010010' : 14,
+                            '001001' : 15                                                                                                                                                                                                                               
+                         }
 
         coords = np.asarray([x1,x2,x3,p1,p2,p3])
         coords_nz = np.heaviside(coords,0)
