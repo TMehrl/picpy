@@ -331,14 +331,14 @@ def main():
                 if args.clim:
                     cbarmap.set_clim(args.clim[0], args.clim[1])
                     cbar1= plt.colorbar(cbarmap, boundaries=np.arange(args.clim[0],args.clim[1]+0.0002,0.0001), extend=extend, fraction=0.046, pad=0.1)
-                    ticks = MaxNLocator().tick_values(vmin, vmax)
+                    ticks = MaxNLocator(5).tick_values(vmin, vmax)
                     cbar1.set_ticks ( ticks )
                     plot1.set_clim([args.clim[0], args.clim[1]])
 
                 else:
                     cbarmap.set_clim([0, max_density])
                     cbar1= plt.colorbar(cbarmap, boundaries=np.arange(0,max_density+0.0002,0.0001), extend=extend, fraction=0.046, pad=0.1)
-                    ticks = MaxNLocator().tick_values(vmin, vmax)
+                    ticks = MaxNLocator(5).tick_values(vmin, vmax)
                     cbar1.set_ticks ( ticks )
                     plot1.set_clim([0, max_density])
 
