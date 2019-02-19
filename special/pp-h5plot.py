@@ -40,7 +40,7 @@ def h5plot_parser():
     parser.add_argument(  "-q", "--quiet",
                           dest = "verbose",
                           action = "store_false",
-                          help = "Don't print info.")    
+                          help = "Don't print info.")
     parser.add_argument(  "-s", "--save-path",
                           action="store",
                           dest="savepath",
@@ -54,7 +54,7 @@ def h5plot_parser():
                           metavar="PATH",
                           default=None,
                           help = """Name of saved file.
-                              (Default: %(default)s)""")    
+                              (Default: %(default)s)""")
     parser.add_argument(  "-f", "--format",
                           action='store',
                           dest="file_format",
@@ -64,17 +64,22 @@ def h5plot_parser():
                                     'png'],
                           default='pdf',
                           help= """Format of output file (Default: %(default)s).""")
+    parser.add_argument(  "--savenumpy",
+                          dest = "savenumpy",
+                          action = "store_true",
+                          default=False,
+                          help = "Saves x and y array of plots to numpy file (default: %(default)s).")
     parser.add_argument(  "--dpi",
                           action='store',
                           dest="dpi",
                           default=600,
                           type=int,
-                          help= """Dots per inch for png output (default: %(default)s).""")  
+                          help= """Dots per inch for png output (default: %(default)s).""")
     parser.add_argument(  "-l", "--line-no",
                           action='store',
                           dest="line_no",
                           metavar="LINE-NUMBERS",
-                          type=int,                      
+                          type=int,
                           default=None,
                           nargs='+',
                           help= """Selected line number for each provided file.""")
@@ -82,7 +87,7 @@ def h5plot_parser():
                           action='store',
                           dest="labels",
                           metavar="LABELS",
-                          type=str,                      
+                          type=str,
                           default=None,
                           nargs='+',
                           help= """Labels for each selected line.""")
@@ -90,7 +95,7 @@ def h5plot_parser():
                           action='store',
                           dest="cno",
                           metavar="CNUMBERS",
-                          type=int,                      
+                          type=int,
                           default=None,
                           nargs='+',
                           help= """Color number for each selected line.""")
@@ -98,7 +103,7 @@ def h5plot_parser():
                           action='store',
                           dest="cna",
                           metavar="CNAMES",
-                          type=str,                      
+                          type=str,
                           default=None,
                           nargs='+',
                           help= """Color names for each line (choose amongst: %s)""" % colors.get_names_alpha_sorted())
@@ -106,12 +111,12 @@ def h5plot_parser():
                           dest = "showpalette",
                           action="store_true",
                           default=False,
-                          help = "Show color palette and exit.")     
+                          help = "Show color palette and exit.")
     parser.add_argument(  "--lstyle", "--line-style",
                           action='store',
                           dest="lstyle",
                           metavar="LINE-STYLE-NUMBER",
-                          type=int,                      
+                          type=int,
                           default=None,
                           nargs='+',
                           help= """Line style number for each selected line. 0: '-', 1: '--', 2: '-.',  3: ':'""")
@@ -138,24 +143,24 @@ def h5plot_parser():
                           metavar=('WIDTH', 'HEIGHT'),
                           nargs=2,
                           type=float,
-                          default=None)    
+                          default=None)
     parser.add_argument(  '--xlab',
                           help='Set x label.',
                           action='store',
                           dest="xlab",
                           metavar='XLAB',
-                          default=None)  
+                          default=None)
     parser.add_argument(  '--ylab',
                           help='Set y label.',
                           action='store',
                           dest="ylab",
                           metavar='YLAB',
-                          default=None)                                                         
+                          default=None)
     parser.add_argument(  "--ylog",
                           dest = "absylog",
                           action="store_true",
                           default=False,
-                          help = "Plot abs log of y-data (default: %(default)s).") 
+                          help = "Plot abs log of y-data (default: %(default)s).")
     parser.add_argument(  "--diff",
                           dest = "diff",
                           action="store_true",
@@ -165,7 +170,7 @@ def h5plot_parser():
                           dest = "abs",
                           action="store_true",
                           default=False,
-                          help = "Plot absolute values of line plots (default: %(default)s).")    
+                          help = "Plot absolute values of line plots (default: %(default)s).")
     parser.add_argument(  "--latexon",
                           dest = "latexon",
                           action="store_true",
@@ -174,13 +179,13 @@ def h5plot_parser():
     parser.add_argument(  "--xfac",
                           dest = "xfac",
                           action="store",
-                          type=float,                          
+                          type=float,
                           default=1.0,
-                          help = "Multiply y-values with specified factor (Default: %(default)s).")   
+                          help = "Multiply y-values with specified factor (Default: %(default)s).")
     parser.add_argument(  "--yfac",
                           dest = "yfac",
                           action="store",
-                          type=float,                          
+                          type=float,
                           default=1.0,
                           help = "Multiply y-values with specified factor (Default: %(default)s).")
     parser.add_argument(  "--noleg",
@@ -195,25 +200,25 @@ def h5plot_parser():
                           help = "Flip legend entries (Default: %(default)s).")
     parser.add_argument(  "--legorder",
                           dest = "legorder",
-                          type=int,                      
+                          type=int,
                           default=None,
                           nargs='+',
-                          help= """Order of how the the legend entries should appear. E.g. '1 0 2' for three curves.""")  
+                          help= """Order of how the the legend entries should appear. E.g. '1 0 2' for three curves.""")
     parser.add_argument(  "--adj-left",
                           dest = "adjleft",
                           action="store",
-                          type=float,                          
+                          type=float,
                           default=0.19,
                           help = "Adjust left plot margin (Default: %(default)s).")
     parser.add_argument(  "--adj-bottom",
                           dest = "adjbottom",
                           action="store",
-                          type=float,                          
+                          type=float,
                           default=0.19,
-                          help = "Adjust bottom plot margin (Default: %(default)s).")                                                                                                                          
+                          help = "Adjust bottom plot margin (Default: %(default)s).")
     return parser
 
- 
+
 
 def main():
 
@@ -237,12 +242,12 @@ def main():
 
     if (args.line_no != None) and (len(args.line_no) != len(args.paths)):
         print('ERROR: number of selected lines must be equal to the number of provided hdf5 files!')
-        sys.exit(1)        
+        sys.exit(1)
 
     if (args.labels != None) and (len(args.labels) != len(args.paths)):
         print('ERROR: number of prepend labels must be equal to the number of provided hdf5 files!')
-        sys.exit(1)  
-    
+        sys.exit(1)
+
     h5lp = []
 
     linestyles = ['-', '--', '-.', ':']
@@ -251,7 +256,7 @@ def main():
 
     if args.latexon:
         plt.rc('text', usetex=True)
-        plt.rc('font', family='serif') 
+        plt.rc('font', family='serif')
 
     j = 0
     if args.diff:
@@ -260,7 +265,7 @@ def main():
         type_str = 'diff'
         for (x, y, label, linestyle, color) in h5firstlp.get_line_plots():
             if j == 0:
-                x0 = x 
+                x0 = x
                 y0 = y
             j += 1
 
@@ -268,7 +273,7 @@ def main():
     for path in args.paths:
         if not os.path.isfile(path):
             print('ERROR: File %s does not exist!' % path)
-            sys.exit(1)          
+            sys.exit(1)
 
         h5lp.append(H5Plot())
         h5lp[i].read(path)
@@ -279,10 +284,10 @@ def main():
             argcolor = colors.get(args.cno[i])
         elif (args.cna != None):
             argcolor = colors.get(args.cna[i])
-        
+
         j = 0
         for (x, y, label, linestyle, color) in h5lp[i].get_line_plots():
-            
+
             # For normalizations etc.:
             x = args.xfac * x
             y = args.yfac * y
@@ -300,7 +305,7 @@ def main():
                 else:
                     label = r'%s' % label
 
-            if args.diff: 
+            if args.diff:
                 if (j == 0 and i == 0):
                     continue
                 else:
@@ -317,15 +322,15 @@ def main():
             if (args.line_no != None):
                 if args.line_no[i] == j:
                     if args.absylog:
-                        plt.semilogy( x, y, label=label, linestyle=linestyle_code, color=argcolor)                        
+                        plt.semilogy( x, y, label=label, linestyle=linestyle_code, color=argcolor)
                     else:
                         plt.plot(x, y, label=label, linestyle=linestyle_code, color=argcolor)
             else:
                 if args.absylog:
                     plt.semilogy( x, y, label=label, linestyle=linestyle_code, color=argcolor)
-                else:    
+                else:
                     #plt.plot(x, y, label=label, linestyle=linestyle, color=color)
-                    plt.plot(x, y, label=label, linestyle=linestyle_code, color=argcolor)      
+                    plt.plot(x, y, label=label, linestyle=linestyle_code, color=argcolor)
             j += 1
         i += 1
 
@@ -355,7 +360,7 @@ def main():
                     ylab = r'$' + ylab + '$'
 
     ax.set_xlabel(xlab, fontsize=14)
-    ax.set_ylabel(ylab, fontsize=14)   
+    ax.set_ylabel(ylab, fontsize=14)
     handles, labels = ax.get_legend_handles_labels()
     if args.noleg != True:
         if args.flipleg == True:
@@ -367,10 +372,10 @@ def main():
             plt.legend(handles_reordered, labels_reordered,frameon=False)
         else:
             plt.legend(frameon=False)
-    plt.gcf().subplots_adjust(left=args.adjleft, bottom=args.adjbottom)       
+    plt.gcf().subplots_adjust(left=args.adjleft, bottom=args.adjbottom)
     if np.max(np.abs(y)) > 0.0:
         if not (-3.0 < math.log(np.max(np.abs(y)),10) < 3.0):
-            ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))     
+            ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
     plt.show()
 
     spath, fname  = os.path.split(args.paths[0])
@@ -382,6 +387,9 @@ def main():
         save_name = args.savename
     else:
         save_name = fname + save_append_str + '_' + type_str
+
+    if args.savenumpy == True:
+        np.save(spath + save_name, [x,y])
 
     if args.file_format == 'png':
         saveas_png(fig, savepath=spath, savename=save_name, dpi=args.dpi)
