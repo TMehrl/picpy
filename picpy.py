@@ -15,7 +15,7 @@ if found_argcomplete:
 # get picpy package root path
 pp_path = os.path.dirname(os.path.abspath( __file__ ))
 
-# set absolute paths of directories 
+# set absolute paths of directories
 # with the different types of scripts
 part_path = pp_path + '/part/'
 grid_path = pp_path + '/grid/'
@@ -41,13 +41,15 @@ scripts = {
   "ex_ioniz_dens_lineout" : special_path + "pp-ex_ioniz_dens_lineout.py",
   "gauss_fit" : special_path + "pp-gauss_fit.py",
   "h5plot" : special_path + "pp-h5plot.py",
+  "h5multiplot" : special_path + "pp-h5multiplot.py",
   "ionization" : special_path + "pp-ionization.py",
   "lvt" : special_path + "pp-lvt.py",
   "mkmov" : special_path + "pp-mkmov.py",
   "raw-test" : special_path + "pp-raw-test.py",
   "tracking" : special_path + "pp-tracking.py",
   "tracking3d" : special_path + "pp-tracking3d.py",
-  "trackingbin" : special_path + "pp-trackingbin.py"
+  "trackingbin" : special_path + "pp-trackingbin.py",
+  "inferno_bin_to_h5" : special_path + "pp-inferno_bin_to_h5.py"
 }
 
 def main(**args):
@@ -61,10 +63,10 @@ def main(**args):
     args : dict
         args contains the information which script
         (keyword 'script') is to be called with what
-        arguments (keyword 'args'). 
+        arguments (keyword 'args').
         If args['bkg'] == True, the script is called
-        in background with the POSIX command 'nohup'. 
-    """  
+        in background with the POSIX command 'nohup'.
+    """
     exelist = [scripts[args['script']]] + args['args']
     if args['bkg']:
         stdout_fname = "%s.out" % args['script']
@@ -80,15 +82,15 @@ def main(**args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('script', 
+    parser.add_argument('script',
                         choices=list(scripts.keys()))
     parser.add_argument('-b', '--bkg',
                         dest="bkg",
                         action="store_true",
                         default=False,
-                        help="Run script in background" 
+                        help="Run script in background"
                             "(Default: %(default)s).")
-    parser.add_argument('args', 
+    parser.add_argument('args',
                         nargs=argparse.REMAINDER )
     if found_argcomplete:
         argcomplete.autocomplete(parser)
