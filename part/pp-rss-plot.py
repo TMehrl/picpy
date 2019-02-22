@@ -139,10 +139,10 @@ def ps_parseopts():
                         action="store_true",
                         default=True,
                         help = "Save plot as hdf5 file (Default: %(default)s).") 
-    parser.add_argument("--latexoff",
-                        dest = "latexoff",
-                        action="store_false",
-                        default=True,
+    parser.add_argument("--latexon",
+                        dest = "latexon",
+                        action="store_true",
+                        default=False,
                         help = "Use LaTeX font (Default: %(default)s).")
     return parser
 
@@ -891,7 +891,7 @@ def main():
 
     mkdirs_if_nexist(args.savepath)
 
-    if not args.latexoff:
+    if args.latexon:
         plt.rc('text', usetex=True)
         plt.rc('font', family='serif') 
 
