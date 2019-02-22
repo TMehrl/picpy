@@ -1021,16 +1021,96 @@ class SliceMoms(H5File):
         for i in range(0,len(idx_list)):
             print(coord_list[sortidx[i]] + ': %i' % idx_list[sortidx[i]])      
 
-    def get(self, x=0, y=0, z=0, px=0, py=0, pz=0):
+    def get(self, x=0, y=0, z=0, px=0, py=0, pz=0, orders = None):
         if not self.__data_is_read:
             print('Error:\tArrays have not been read!')
             sys.exit(1)
+
+        if orders != None:
+            if len(orders) == 6:
+                # Overwriting single orders
+                x = orders[0]
+                y = orders[1]
+                z = orders[2]
+                px = orders[3]
+                py = orders[4]
+                pz = orders[5]
+            else:
+                print('Error:\tProvided coordinates must have length 6!')
+                sys.exit(1)                
+
         idx = self.__coord_orders_to_idx(x1=z, x2=x, x3=y, \
                 p1=pz, p2=px, p3=py)
+
         return self.__mom[idx,:,:]
 
     def get_charge(self):
         return self.get()       
+
+    def get_noncentral(self, x=0, y=0, z=0, px=0, py=0, pz=0):
+
+        centralization = np.ones(self.get().shape)
+
+        orders = [x,y,z,px,py,pz]
+        if sum(orders) == 2:    
+            for i in range(len(orders)):
+                uniorders = [0,0,0,0,0,0]
+                uniorders[i] = 1
+                centralization = np.multiply(centralization,\
+                    np.power(self.get(orders = uniorders),orders[i]))
+
+            noncentral = self.get(x=x, y=y, z=z, px=px, py=py, pz=pz) + centralization
+                    
+        else:
+            print('Error:\tCalculation of noncentral '
+                    'moments with order > 2 not yet implemented!')
+            sys.exit(1)            
+
+        return noncentral
+
+
+    def project(self,quantity):
+        beam_charge = np.sum(self.get_charge(), axis=1)
+        return np.divide(
+                np.sum( \
+                    np.multiply(quantity,
+                                self.get_charge()),\
+                    axis=1),\
+                beam_charge)        
+
+
+    def get_proj(self, x=0, y=0, z=0, px=0, py=0, pz=0):
+        noncentral_proj = self.project(
+            self.get_noncentral(x=x, \
+                                y=y, \
+                                z=z, \
+                                px=px, \
+                                py=py, \
+                                pz=pz) )
+
+        proj_centralization = np.ones(noncentral_proj.shape)
+
+        orders = [x,y,z,px,py,pz]
+
+        if sum(orders) == 2:    
+            for i in range(len(orders)):
+                uniorders = [0,0,0,0,0,0]
+                uniorders[i] = 1
+                proj_centralization = \
+                    np.multiply(proj_centralization,\
+                        np.power(\
+                                self.project(\
+                                    self.get(orders = uniorders)),\
+                                orders[i]))
+
+            central_proj = noncentral_proj - proj_centralization
+                    
+        else:
+            print('Error:\tCalculation of noncentral '
+                    'moments with order > 2 not yet implemented!')
+            sys.exit(1)  
+
+        return central_proj
 
     def set_time(self,time,nt):
         if not self.__arrays_allocated:

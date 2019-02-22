@@ -234,14 +234,11 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
         xlabel_str = r'$\omega_p t$'
 
     if axdir == 'x':
-        xavg = np.divide(np.sum(np.multiply(slm.get(x=1), slm.get_charge()), axis=1),tot_charge)
-        pavg = np.divide(np.sum(np.multiply(slm.get(px=1), slm.get_charge()), axis=1),tot_charge)
-
-        xsq_noncentral = np.divide(np.sum(np.multiply(slm.get(x=2) + np.power(slm.get(x=1),2), slm.get_charge()), axis=1),tot_charge)
-        psq_noncentral = np.divide(np.sum(np.multiply(slm.get(px=2) + np.power(slm.get(px=1),2), slm.get_charge()), axis=1),tot_charge)
-        xp_noncentral = np.divide(np.sum(np.multiply(slm.get(x=1,px=1) + np.multiply(slm.get(x=1),slm.get(px=1)), slm.get_charge()), axis=1),tot_charge)
+        xsq = slm.get_proj(x=2)
+        psq = slm.get_proj(px=2)
+        xp = slm.get_proj(x=1,px=1)
+        
         emittance_all_slices = np.sqrt( np.multiply(slm.get(x=2), slm.get(px=2)) - np.power(slm.get(x=1,px=1),2) )
-        emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.get_charge()), axis=1),tot_charge)
         
         sigma_xyr_lab = r'$k_p\sigma_x$'
         sigma_xyr_savename = 'sigma_x_proj'
@@ -260,14 +257,11 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
 
 
     elif axdir == 'y':
-        xavg = np.divide(np.sum(np.multiply(slm.get(y=1), slm.get_charge()), axis=1),tot_charge)
-        pavg = np.divide(np.sum(np.multiply(slm.get(py=1), slm.get_charge()), axis=1),tot_charge)
-
-        xsq_noncentral = np.divide(np.sum(np.multiply(slm.get(y=2) + np.power(slm.get(y=1),2), slm.get_charge()), axis=1),tot_charge)
-        psq_noncentral = np.divide(np.sum(np.multiply(slm.get(py=2) + np.power(slm.get(py=1),2), slm.get_charge()), axis=1),tot_charge)
-        xp_noncentral = np.divide(np.sum(np.multiply(slm.get(y=1,py=1) + np.multiply(slm.get(y=1),slm.get(py=1)), slm.get_charge()), axis=1),tot_charge)
+        xsq = slm.get_proj(y=2)
+        psq = slm.get_proj(py=2)
+        xp = slm.get_proj(y=1,py=1)
+        
         emittance_all_slices = np.sqrt( np.multiply(slm.get(y=2), slm.get(py=2)) - np.power(slm.get(y=1,py=1),2) )
-        emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.get_charge()), axis=1),tot_charge)
         
         sigma_xyr_lab = r'$k_p\sigma_y$'
         sigma_xyr_savename = 'sigma_y_proj'                
@@ -285,19 +279,22 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
         epsilon_xy_sl_savename = 'emittance_y_sliced'         
 
     elif axdir == 'r':
-        xavg = np.divide(np.sum(np.multiply(slm.get(x=1) + slm.get(y=1), slm.get_charge()), axis=1),tot_charge)
-        pavg = np.divide(np.sum(np.multiply(slm.get(px=1) + slm.get(py=1), slm.get_charge()), axis=1),tot_charge)
+        xavg = slm.project(slm.get(x=1) + slm.get(y=1))
+        pavg = slm.project(slm.get(px=1) + slm.get(py=1))
 
-        xsq_noncentral = np.divide(np.sum(np.multiply(slm.get(x=2) + slm.get(y=2) \
-            + np.power(slm.get(x=1),2) + np.power(slm.get(y=1),2), slm.get_charge()), axis=1),tot_charge)
-        psq_noncentral = np.divide(np.sum(np.multiply(slm.get(px=2) \
-            + slm.get(py=2) + np.power(slm.get(px=1),2) + np.power(slm.get(py=1),2), slm.get_charge()), axis=1),tot_charge)
-        xp_noncentral = np.divide(np.sum(np.multiply(slm.get(x=1,px=1) + slm.get(y=1,py=1) \
-            + np.multiply(slm.get(x=1),slm.get(px=1)) + np.multiply(slm.get(y=1),slm.get(py=1)), slm.get_charge()), axis=1),tot_charge)
+        xsq_noncentral = slm.project(slm.get(x=2) + slm.get(y=2) \
+            + np.power(slm.get(x=1),2) + np.power(slm.get(y=1),2))
+        psq_noncentral = slm.project(slm.get(px=2) \
+            + slm.get(py=2) + np.power(slm.get(px=1),2) + np.power(slm.get(py=1),2))
+        xp_noncentral = slm.project(slm.get(x=1,px=1) + slm.get(y=1,py=1) \
+            + np.multiply(slm.get(x=1),slm.get(px=1)) + np.multiply(slm.get(y=1),slm.get(py=1)))
+
+        xsq = xsq_noncentral - np.pow(xavg,2)
+        psq = psq_noncentral - np.pow(pavg,2)
+        xp = xp_noncentral = np.multiply(xavg,pavg)
 
         emittance_all_slices = np.sqrt( np.multiply(slm.get(x=2), slm.get(px=2)) - np.power(slm.get(x=1,px=1),2) + \
                 np.multiply(slm.get(y=2), slm.get(py=2)) - np.power(slm.get(y=1,py=1),2) )
-        emittance_sliced = np.divide(np.sum(np.multiply(emittance_all_slices, slm.get_charge()), axis=1),tot_charge)
         
         sigma_xyr_lab = r'$k_p\sigma_r$'
         sigma_xyr_savename = 'sigma_r_proj'                
@@ -314,9 +311,8 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
         epsilon_xy_sl_lab = r'$k_p \epsilon_{r,\mathrm{sliced}}$'
         epsilon_xy_sl_savename = 'emittance_r_sliced' 
 
-    xsq = xsq_noncentral - np.power(xavg,2)
-    psq = psq_noncentral - np.power(pavg,2)
-    xp = xp_noncentral - np.multiply(xavg,pavg)
+
+    emittance_sliced = slm.project(emittance_all_slices)
 
     fig_sx = plt.figure()    
     plt.plot(t, np.sqrt(xsq))
@@ -810,7 +806,7 @@ def plot_save_ene_ene_spread(slm, savepath, h5plot=True, t_is_z=True):
     else:
         plt.gcf().subplots_adjust(left=0.15)     
     ax.set_xlabel(xlabel_str, fontsize=14) 
-    ax.set_ylabel(r'$\sigma_\gamma$', fontsize=14)  
+    ax.set_ylabel(r'$\sigma_\gamma/\gamma$', fontsize=14)  
     saveas_eps_pdf(fig_sg, savepath, 'sigma_gamma', h5plot=h5plot)                  
     plt.close(fig_sg)
 
