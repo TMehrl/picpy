@@ -888,6 +888,82 @@ class SliceMoms(H5File):
         self.__Nt = None
         self.__arrays_allocated = False
         self.__data_is_read = False
+        self.__with_2nd_order_xterms = False
+
+        self.__set_mom2idx_dict()
+
+    def __set_mom2idx_dict(self):
+        self.__mom2idx_dict = {}
+
+        self.__mom2idx_dict['0'] = {}
+        self.__mom2idx_dict['0']['000000'] = 0
+        
+        self.__mom2idx_dict['1'] = {}
+        self.__mom2idx_dict['1']['100000'] = 0
+        self.__mom2idx_dict['1']['010000'] = 1
+        self.__mom2idx_dict['1']['001000'] = 2
+        self.__mom2idx_dict['1']['000100'] = 3
+        self.__mom2idx_dict['1']['000010'] = 4
+        self.__mom2idx_dict['1']['000001'] = 5
+
+        self.__mom2idx_dict['2'] = {}
+        self.__mom2idx_dict['2']['200000'] = 0
+        self.__mom2idx_dict['2']['020000'] = 1
+        self.__mom2idx_dict['2']['002000'] = 2
+        self.__mom2idx_dict['2']['000200'] = 3
+        self.__mom2idx_dict['2']['000020'] = 4
+        self.__mom2idx_dict['2']['000002'] = 5
+        self.__mom2idx_dict['2']['100100'] = 6
+        self.__mom2idx_dict['2']['010010'] = 7
+        self.__mom2idx_dict['2']['001001'] = 8
+
+        self.__mom2idx_dict['2x'] = {}
+        self.__mom2idx_dict['2x']['200000'] = 0
+        self.__mom2idx_dict['2x']['020000'] = 1
+        self.__mom2idx_dict['2x']['002000'] = 2
+        self.__mom2idx_dict['2x']['000200'] = 3
+        self.__mom2idx_dict['2x']['000020'] = 4
+        self.__mom2idx_dict['2x']['000002'] = 5
+        self.__mom2idx_dict['2x']['110000'] = 6
+        self.__mom2idx_dict['2x']['101000'] = 7
+        self.__mom2idx_dict['2x']['100100'] = 8
+        self.__mom2idx_dict['2x']['100010'] = 9
+        self.__mom2idx_dict['2x']['100001'] = 10
+        self.__mom2idx_dict['2x']['011000'] = 11
+        self.__mom2idx_dict['2x']['010100'] = 12
+        self.__mom2idx_dict['2x']['010010'] = 13
+        self.__mom2idx_dict['2x']['010001'] = 14
+        self.__mom2idx_dict['2x']['001100'] = 15
+        self.__mom2idx_dict['2x']['001010'] = 16
+        self.__mom2idx_dict['2x']['001001'] = 17
+        self.__mom2idx_dict['2x']['000110'] = 18
+        self.__mom2idx_dict['2x']['000101'] = 19
+        self.__mom2idx_dict['2x']['000011'] = 20
+
+        self.__mom2idx_dict['3'] = {}
+        self.__mom2idx_dict['3']['300000'] = 0
+        self.__mom2idx_dict['3']['030000'] = 1
+        self.__mom2idx_dict['3']['003000'] = 2
+        self.__mom2idx_dict['3']['000300'] = 3
+        self.__mom2idx_dict['3']['000030'] = 4
+        self.__mom2idx_dict['3']['000003'] = 5
+        self.__mom2idx_dict['3']['200100'] = 6
+        self.__mom2idx_dict['3']['100200'] = 7
+        self.__mom2idx_dict['3']['020010'] = 8
+        self.__mom2idx_dict['3']['010020'] = 9
+        self.__mom2idx_dict['3']['002001'] = 10
+        self.__mom2idx_dict['3']['001002'] = 11
+
+        self.__mom2idx_dict['4'] = {}
+        self.__mom2idx_dict['4']['400000'] = 0
+        self.__mom2idx_dict['4']['040000'] = 1
+        self.__mom2idx_dict['4']['004000'] = 2
+        self.__mom2idx_dict['4']['000400'] = 3
+        self.__mom2idx_dict['4']['000040'] = 4
+        self.__mom2idx_dict['4']['000004'] = 5
+        self.__mom2idx_dict['4']['200200'] = 6
+        self.__mom2idx_dict['4']['020020'] = 7
+        self.__mom2idx_dict['4']['002002'] = 8   
 
     def get_h5order(self, file):
         with h5py.File(file,'r') as hf:
@@ -897,27 +973,31 @@ class SliceMoms(H5File):
                 h5order = 2
         return h5order
 
+    def __get_n_moments(self, order, with_2nd_order_xterms = False):
+        n_moments = 0
+        for i in range(order+1):
+            if order == 2 and with_2nd_order_xterms == True:
+                key = '2x'
+            else:
+                key = '%d' % i
+            n_moments += len(self.__mom2idx_dict[key])
+        return n_moments
 
-    def alloc(self, Nzeta, Nt, order = 2):
+    def alloc(self, Nzeta, Nt, order = 2, with_2nd_order_xterms = False):
         self.__order = order
-
+        self.__with_2nd_order_xterms = with_2nd_order_xterms
         self.__Nzeta = Nzeta
         self.__Nt = Nt
 
         self.__zeta_array = np.zeros(Nt, dtype=np.float32)   
         self.__time_array = np.zeros(Nt, dtype=np.float32)
 
-        if order == 0:
-            self.__mom = np.zeros((1, Nt, Nzeta), dtype=np.float32)
-        elif order==1:
-            self.__mom = np.zeros((7, Nt, Nzeta), dtype=np.float32)
-        elif order==2:
-            self.__mom = np.zeros((16, Nt, Nzeta), dtype=np.float32)
-            # # if crossterms:
-        elif order==3:
-            self.__mom = np.zeros((28, Nt, Nzeta), dtype=np.float32)
-        elif order==4:
-            self.__mom = np.zeros((37, Nt, Nzeta), dtype=np.float32)
+        n_moments = self.__get_n_moments(order, with_2nd_order_xterms)
+
+        print('n_moments: %d' % n_moments)
+
+        if order <= 4:
+            self.__mom = np.zeros((n_moments, Nt, Nzeta), dtype=np.float32)
         else:
             print('Error:\tOnly moment orders up to 4 implemented!')
             sys.exit(1)              
@@ -966,123 +1046,30 @@ class SliceMoms(H5File):
             sys.exit(1)   
         return self.__time_array
 
-    def __coord_orders_to_idx_deprecated(self, x1, x2, x3, p1, p2, p3, err_ignore=False):  
 
-        coords = np.asarray([x1,x2,x3,p1,p2,p3])
-        coords_nz = np.heaviside(coords,0)
-        n6 = np.linspace(1,6,6)
+    def __orders_to_idx(self, x1, x2, x3, p1, p2, p3, err_ignore=False):  
 
-        # print(coords)
-        # idx = np.argsort(np.sum(np.power(n6,coords)))
-        # print(idx)
-        # six_powers = np.power(6,np.linspace(0,4,5))
+        mom_str = '%d%d%d%d%d%d' % (x1,x2,x3,p1,p2,p3)
 
-        n6mod = n6 + np.asarray([0,0,0,2,2,2])
-        idx=0
-        if np.sum(coords) == 0:
-            idx = 0
-        elif np.sum(coords) == 1:
-            idx =  np.dot(coords,n6)
-        elif np.sum(coords) == 2 and np.sum(coords_nz) == 1:
-            idx =  6 + np.dot(coords_nz,n6)
-        elif np.sum(coords) == 2 and np.sum(coords_nz) == 2:
-            idx =  11 + math.floor(np.dot(coords_nz,n6)/2)
-        elif np.sum(coords) == 3 and np.sum(coords_nz) == 1:
-            idx =  15 + np.dot(coords_nz,n6)
-        elif np.sum(coords) == 3 and np.sum(coords_nz) == 2:
-            idx =  18 + math.floor(np.dot(coords,n6mod)/2)
-        elif np.sum(coords) == 4 and np.sum(coords_nz) == 1:
-            idx =  27 + np.dot(coords_nz,n6)
-        elif np.sum(coords) == 4 and np.sum(coords_nz) == 2:
-            idx =  32 + math.floor(np.dot(coords_nz,n6)/2)             
+        order = sum([x1,x2,x3,p1,p2,p3])
+
+        offset = self.__get_n_moments(order-1, self.__with_2nd_order_xterms)
+
+        if order == 2 and self.__with_2nd_order_xterms == True:
+            key = '2x'
         else:
-            if not err_ignore:
-                print('ERROR: Moment not yet implemented!')
-                sys.exit(1)
-            else:
-                idx = -1
-        return int(idx)
+            key = '%d' % order        
 
-    def __coord_orders_to_idx(self, x1, x2, x3, p1, p2, p3, err_ignore=False):  
+        idx = offset + self.__mom2idx_dict[key][mom_str]
 
-        coords_str = '%d%d%d%d%d%d' % (x1,x2,x3,p1,p2,p3)
-
-        coods2idx_dict = {  '000000' : 0,
-                            '100000' : 1,
-                            '010000' : 2,
-                            '001000' : 3,
-                            '000100' : 4,
-                            '000010' : 5,
-                            '000001' : 6,
-                            '200000' : 7,
-                            '020000' : 8,
-                            '002000' : 9, 
-                            '000200' : 10,
-                            '000020' : 11,
-                            '000002' : 12,
-                            '100100' : 13,
-                            '010010' : 14,
-                            '001001' : 15                                                                                                                                                                                                                               
-                         }
-
-        coords = np.asarray([x1,x2,x3,p1,p2,p3])
-        coords_nz = np.heaviside(coords,0)
-        n6 = np.linspace(1,6,6)
-
-        # print(coords)
-        # idx = np.argsort(np.sum(np.power(n6,coords)))
-        # print(idx)
-        # six_powers = np.power(6,np.linspace(0,4,5))
-
-        n6mod = n6 + np.asarray([0,0,0,2,2,2])
-        idx=0
-        if np.sum(coords) == 0:
-            idx = 0
-        elif np.sum(coords) == 1:
-            idx =  np.dot(coords,n6)
-        elif np.sum(coords) == 2 and np.sum(coords_nz) == 1:
-            idx =  6 + np.dot(coords_nz,n6)
-        elif np.sum(coords) == 2 and np.sum(coords_nz) == 2:
-            idx =  11 + math.floor(np.dot(coords_nz,n6)/2)
-        elif np.sum(coords) == 3 and np.sum(coords_nz) == 1:
-            idx =  15 + np.dot(coords_nz,n6)
-        elif np.sum(coords) == 3 and np.sum(coords_nz) == 2:
-            idx =  18 + math.floor(np.dot(coords,n6mod)/2)
-        elif np.sum(coords) == 4 and np.sum(coords_nz) == 1:
-            idx =  27 + np.dot(coords_nz,n6)
-        elif np.sum(coords) == 4 and np.sum(coords_nz) == 2:
-            idx =  32 + math.floor(np.dot(coords_nz,n6)/2)             
-        else:
-            if not err_ignore:
-                print('ERROR: Moment not yet implemented!')
-                sys.exit(1)
-            else:
-                idx = -1
-        return int(idx)
-
-    def _test_coords_orders_to_idx(self):
-        idx_list = []
-        coord_list = []
-        for x1 in range(0,4):
-            for p1 in range(0,4):
-                for x2 in range(0,4):
-                    for p2 in range(0,4):
-                        for x3 in range(0,4):
-                            for p3 in range(0,4):
-                                idx = self.__coord_orders_to_idx(x1,x2,x3,p1,p2,p3,err_ignore=True)
-                                if idx != -1:
-                                    idx_list.append(idx)                 
-                                    coord_list.append('x1=%i, x2=%i, x3=%i, '
-                                    'p1=%i, p2=%i, p3=%i' % (x1,x2,x3,p1,p2,p3))
-        sortidx = np.argsort(idx_list)
-        for i in range(0,len(idx_list)):
-            print(coord_list[sortidx[i]] + ': %i' % idx_list[sortidx[i]])      
+        return idx
+  
 
     def get(self, x=0, y=0, z=0, px=0, py=0, pz=0):
         if not self.__data_is_read:
             print('Error:\tArrays have not been read!')
             sys.exit(1)
-        idx = self.__coord_orders_to_idx(x1=z, x2=x, x3=y, \
+        idx = self.__orders_to_idx(x1=z, x2=x, x3=y, \
                 p1=pz, p2=px, p3=py)
         return self.__mom[idx,:,:]
 
@@ -1126,7 +1113,7 @@ class SliceMoms(H5File):
                 'higher than expected (%i vs. %i)!' % (x1+x2+x3+p1+p2+p3,self.__order))
             sys.exit(1)
 
-        idx = self.__coord_orders_to_idx(x1,x2,x3,p1,p2,p3)
+        idx = self.__orders_to_idx(x1,x2,x3,p1,p2,p3)
 
         self.__mom[idx,nt,:] = nparray       
 
@@ -1165,6 +1152,9 @@ class SliceMoms(H5File):
 
         self.__zeta_array = self.__zeta_array[idx]
         self.__mom = self.__mom[:,:,idx]
+
+
+
 
 
 class SliceMoms_outdated(H5File):
