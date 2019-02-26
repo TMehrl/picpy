@@ -6,6 +6,8 @@ import importlib
 import subprocess
 import argparse
 
+from distutils import util
+
 argcomplete_spec = importlib.util.find_spec("argcomplete")
 found_argcomplete = argcomplete_spec is not None
 if found_argcomplete:
