@@ -172,6 +172,11 @@ def binSlab_parser():
                           dest="ptype",
                           choices=[ "pcolormesh", "contourf"],
                           help= "Plot color type (default: %(default)s).")
+    parser.add_argument(  "--latexfont",
+                          dest = "latexfont",
+                          action="store_true",
+                          default=False,
+                          help = "Use LaTeX font (Default: %(default)s).")
 
     return parser
 
@@ -214,7 +219,10 @@ def main():
     parser = binSlab_parser()
     args = parser.parse_args()
 
-
+    if args.latexfont:
+        plt.rc('text', usetex=True)
+        plt.rc('font', family='serif')
+        
     modnum = args.modlines
     density_path = args.dens_data
 
