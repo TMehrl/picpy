@@ -356,7 +356,7 @@ def main():
                     plt.ylim(args.ylim[0], args.ylim[1])
 
 
-                cbar1.ax.set_title(r'$n_p/n_0$')
+                cbar1.ax.set_title(r'$n_p/n_0$', fontsize=16)
 
                 if args.beam_data:
                     max_density = np.max(np.abs(beam_density))
@@ -523,10 +523,10 @@ def main():
                     elif args.track_color == "beta_y":
                         cbar.ax.set_title(r'$\beta_y$')
                     else:
-                        cbar.ax.set_title(r'$k_p\,x_0$')
+                        cbar.ax.set_title(r'$k_p\,X_0$', fontsize=16)
 
-                ax.set_xlabel(r'$k_p\,\zeta$', fontsize=14)
-                ax.set_ylabel(r'$k_p\,x$', fontsize=14)
+                ax.set_xlabel(r'$k_p\,\zeta$', fontsize=16)
+                ax.set_ylabel(r'$k_p\,x$', fontsize=16)
 
 
                 savepath = 'plots/g3d-slice'
