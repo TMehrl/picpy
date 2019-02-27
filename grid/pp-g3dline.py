@@ -138,7 +138,7 @@ def g3d_parser():
                           help = "Use LaTeX font (Default: %(default)s).")
     parser.add_argument(  "--fontsize",
                           dest = "fontsize",
-                          action="store_true",
+                          action="store",
                           default=14,
                           help = "Set fontsize of axis labels (Default: %(default)s).")
     parser.add_argument(  "--dpi",
