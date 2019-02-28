@@ -1302,10 +1302,10 @@ class SliceMoms_outdated(H5File):
 
             # crossterms:
             self.avgx1x2 = np.zeros((Nt, Nzeta), dtype=np.float32)
-            self.avgx3x1 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgx1x3 = np.zeros((Nt, Nzeta), dtype=np.float32)
             self.avgx2x3 = np.zeros((Nt, Nzeta), dtype=np.float32)
             self.avgp1p2 = np.zeros((Nt, Nzeta), dtype=np.float32)
-            self.avgp3p1 = np.zeros((Nt, Nzeta), dtype=np.float32)
+            self.avgp1p3 = np.zeros((Nt, Nzeta), dtype=np.float32)
             self.avgp2p3 = np.zeros((Nt, Nzeta), dtype=np.float32)
             self.avgx1p2 = np.zeros((Nt, Nzeta), dtype=np.float32)
             self.avgx1p3 = np.zeros((Nt, Nzeta), dtype=np.float32)
@@ -1467,10 +1467,10 @@ class SliceMoms_outdated(H5File):
 
             # crossterms:
             dset_avgx1x2 = secor.create_dataset(  "avgx1x2", data = self.avgx1x2 )
-            dset_avgx3x1 = secor.create_dataset(  "avgx3x1", data = self.avgx3x1 )
+            dset_avgx1x3 = secor.create_dataset(  "avgx1x3", data = self.avgx1x3 )
             dset_avgx2x3 = secor.create_dataset(  "avgx2x3", data = self.avgx2x3 )
             dset_avgp1p2 = secor.create_dataset(  "avgp1p2", data = self.avgp1p2 )
-            dset_avgp3p1 = secor.create_dataset(  "avgp3p1", data = self.avgp3p1 )
+            dset_avgp1p3 = secor.create_dataset(  "avgp1p3", data = self.avgp1p3 )
             dset_avgp2p3 = secor.create_dataset(  "avgp2p3", data = self.avgp2p3 )
             dset_avgx1p2 = secor.create_dataset(  "avgx1p2", data = self.avgx1p2 )
             dset_avgx1p3 = secor.create_dataset(  "avgx1p3", data = self.avgx1p3 )
@@ -1539,10 +1539,10 @@ class SliceMoms_outdated(H5File):
 
             if crossterms:
                 self.avgx1x2 = self.avgx1x2[:,idx]
-                self.avgx3x1 = self.avgx1x2[:,idx]
+                self.avgx1x3 = self.avgx1x2[:,idx]
                 self.avgx2x3 = self.avgx1x2[:,idx]
                 self.avgp1p2 = self.avgp1p2[:,idx]
-                self.avgp3p1 = self.avgp3p1[:,idx]
+                self.avgp1p3 = self.avgp1p3[:,idx]
                 self.avgp2p3 = self.avgp2p3[:,idx]
                 self.avgx1p2 = self.avgx1p2[:,idx]
                 self.avgx1p3 = self.avgx1p3[:,idx]

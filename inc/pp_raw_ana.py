@@ -165,11 +165,11 @@ class Slices:
         self.avgx3p3 = np.zeros((nbins), dtype=np.float32)
 
         self.avgx1x2 = np.zeros((nbins), dtype=np.float32)
-        self.avgx3x1 = np.zeros((nbins), dtype=np.float32)
+        self.avgx1x3 = np.zeros((nbins), dtype=np.float32)
         self.avgx2x3 = np.zeros((nbins), dtype=np.float32)
 
         self.avgp1p2 = np.zeros((nbins), dtype=np.float32)
-        self.avgp3p1 = np.zeros((nbins), dtype=np.float32)
+        self.avgp1p3 = np.zeros((nbins), dtype=np.float32)
         self.avgp2p3 = np.zeros((nbins), dtype=np.float32)
 
         self.avgx1p2 = np.zeros((nbins), dtype=np.float32)
@@ -311,11 +311,11 @@ class Slices:
 
             if crossterms:
                 self.avgx1x2 = sl_mom2(x1,x2,q,i1,i2)
-                self.avgx3x1 = sl_mom2(x3,x1,q,i1,i2)
+                self.avgx1x3 = sl_mom2(x3,x1,q,i1,i2)
                 self.avgx2x3 = sl_mom2(x2,x3,q,i1,i2)
 
                 self.avgp1p2 = sl_mom2(p1,p2,q,i1,i2)
-                self.avgp3p1 = sl_mom2(p3,p1,q,i1,i2)
+                self.avgp1p3 = sl_mom2(p3,p1,q,i1,i2)
                 self.avgp2p3 = sl_mom2(p2,p3,q,i1,i2)
 
                 self.avgx1p2 = sl_mom2(x1,p2,q,i1,i2)

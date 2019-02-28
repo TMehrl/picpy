@@ -229,20 +229,20 @@ def main():
 
             sm.set_at_nt(slices.avgx1p1,i,x1=1,p1=1)
             sm.set_at_nt(slices.avgx2p2,i,x2=1,p2=1)
-            sm.set_at_nt(slices.avgx2p2,i,x3=1,p3=1)
+            sm.set_at_nt(slices.avgx3p3,i,x3=1,p3=1)
 
             if crossterms:
                 sm.set_at_nt(slices.avgx1x2,i,x1=1,x2=1)
-                sm.set_at_nt(slices.avgx3x1,i,x1=1,x3=1)
-                sm.set_at_nt(slices.avgx3x1,i,x1=1,p2=1)
-                sm.set_at_nt(slices.avgx3x1,i,x1=1,p3=1)
+                sm.set_at_nt(slices.avgx1x3,i,x1=1,x3=1)
+                sm.set_at_nt(slices.avgx1p2,i,x1=1,p2=1)
+                sm.set_at_nt(slices.avgx1p3,i,x1=1,p3=1)
 
                 sm.set_at_nt(slices.avgx2x3,i,x2=1,x3=1)
-                sm.set_at_nt(slices.avgx2x3,i,x2=1,p1=1)
-                sm.set_at_nt(slices.avgx2x3,i,x2=1,p3=1)
+                sm.set_at_nt(slices.avgx2p1,i,x2=1,p1=1)
+                sm.set_at_nt(slices.avgx2p3,i,x2=1,p3=1)
 
                 sm.set_at_nt(slices.avgp1p2,i,p1=1,p2=1)
-                sm.set_at_nt(slices.avgp3p1,i,p1=1,p3=1)
+                sm.set_at_nt(slices.avgp1p3,i,p1=1,p3=1)
                 
                 sm.set_at_nt(slices.avgp2p3,i,p2=1,p3=1)
 

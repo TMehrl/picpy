@@ -222,10 +222,10 @@ def main():
 
             if crossterms:
                 sm.avgx1x2[i,:] = slices.avgx1x2
-                sm.avgx3x1[i,:] = slices.avgx3x1
+                sm.avgx1x3[i,:] = slices.avgx1x3
                 sm.avgx2x3[i,:] = slices.avgx2x3
                 sm.avgp1p2[i,:] = slices.avgp1p2
-                sm.avgp3p1[i,:] = slices.avgp3p1
+                sm.avgp1p3[i,:] = slices.avgp1p3
                 sm.avgp2p3[i,:] = slices.avgp2p3
                 sm.avgx1p2[i,:] = slices.avgx1p2
                 sm.avgx1p3[i,:] = slices.avgx1p3
