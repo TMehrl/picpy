@@ -172,6 +172,11 @@ def binSlab_parser():
                           dest="ptype",
                           choices=[ "pcolormesh", "contourf"],
                           help= "Plot color type (default: %(default)s).")
+    parser.add_argument(  "--latexfont",
+                          dest = "latexfont",
+                          action="store_true",
+                          default=False,
+                          help = "Use LaTeX font (Default: %(default)s).")
 
     return parser
 
@@ -214,7 +219,10 @@ def main():
     parser = binSlab_parser()
     args = parser.parse_args()
 
-
+    if args.latexfont:
+        plt.rc('text', usetex=True)
+        plt.rc('font', family='serif')
+        
     modnum = args.modlines
     density_path = args.dens_data
 
@@ -348,7 +356,7 @@ def main():
                     plt.ylim(args.ylim[0], args.ylim[1])
 
 
-                cbar1.ax.set_title(r'$n_p/n_0$')
+                cbar1.ax.set_title(r'$n_p/n_0$', fontsize=16)
 
                 if args.beam_data:
                     max_density = np.max(np.abs(beam_density))
@@ -515,10 +523,10 @@ def main():
                     elif args.track_color == "beta_y":
                         cbar.ax.set_title(r'$\beta_y$')
                     else:
-                        cbar.ax.set_title(r'$k_p\,x_0$')
+                        cbar.ax.set_title(r'$k_p\,X_0$', fontsize=16)
 
-                ax.set_xlabel(r'$k_p\,\zeta$', fontsize=14)
-                ax.set_ylabel(r'$k_p\,x$', fontsize=14)
+                ax.set_xlabel(r'$k_p\,\zeta$', fontsize=16)
+                ax.set_ylabel(r'$k_p\,x$', fontsize=16)
 
 
                 savepath = 'plots/g3d-slice'

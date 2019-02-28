@@ -136,6 +136,11 @@ def g3d_parser():
                           action="store_true",
                           default=False,
                           help = "Use LaTeX font (Default: %(default)s).")
+    parser.add_argument(  "--fontsize",
+                          dest = "fontsize",
+                          action="store",
+                          default=14,
+                          help = "Set fontsize of axis labels (Default: %(default)s).")
     parser.add_argument(  "--dpi",
                           action='store',
                           dest="dpi",
@@ -811,10 +816,10 @@ class G3d_plot_slice(G3d_plot):
             cax.norm = matplotlib.colors.LogNorm(vmin=self.clim[0], vmax=self.clim[1])
 
         ax = plt.gca()
-        ax.set_ylabel(self.ylabel, fontsize=14)
-        ax.set_xlabel(self.xlabel, fontsize=14)
+        ax.set_ylabel(self.ylabel, fontsize=self.args.fontsize)
+        ax.set_xlabel(self.xlabel, fontsize=self.args.fontsize)
         cbar = fig.colorbar(cax)
-        cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.get_name() ), fontsize=14 )
+        cbar.ax.set_ylabel( gen_pretty_grid_name( self.g3d.get_name() ), fontsize=self.args.fontsize )
         
         #manually setting cbar ticks to avoid cutoff of the last tick
         ticks = MaxNLocator().tick_values(self.clim[0], self.clim[1])
@@ -951,10 +956,10 @@ class G3d_plot_slice(G3d_plot):
             cax.norm = matplotlib.colors.LogNorm(vmin=self.clim[0], vmax=self.clim[1])
 
         ax = plt.gca()
-        ax.set_ylabel(self.ylabel, fontsize=14)
-        ax.set_xlabel(self.xlabel, fontsize=14)
+        ax.set_ylabel(self.ylabel, fontsize=self.args.fontsize)
+        ax.set_xlabel(self.xlabel, fontsize=self.args.fontsize)
         #cbar = fig.colorbar(cax)
-        cbar.ax.set_title( gen_pretty_grid_name( self.g3d.get_name() ), fontsize=14 )
+        cbar.ax.set_title( gen_pretty_grid_name( self.g3d.get_name() ), fontsize=self.args.fontsize )
         
         #manually setting cbar ticks to avoid cutoff of the last tick
         ticks = MaxNLocator().tick_values(self.clim[0], self.clim[1])
@@ -1218,9 +1223,9 @@ class G3d_plot_line(G3d_plot):
             ax = ax.twinx()
             ax.set_xlim(min(self.x_array), max(self.x_array))
         else:
-            ax.set_xlabel(self.xlabel, fontsize=14)
+            ax.set_xlabel(self.xlabel, fontsize=self.args.fontsize)
             
-        ax.set_ylabel(self.ylabel, fontsize=14)
+        ax.set_ylabel(self.ylabel, fontsize=self.args.fontsize)
         
         
         if self.args.absylog:
