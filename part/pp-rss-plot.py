@@ -115,6 +115,12 @@ def ps_parseopts():
                         nargs=1,
                         type=float,
                         default=None)
+    parser.add_argument('--time-offset',
+                        action='store',
+                        dest="time_offset",
+                        type=float,
+                        default=0.0,
+                        help='Shift generated plots by specified time (Default: %(default)s).')  
     parser.add_argument('--zeta-pos',
                         help='zeta position for which rms plots are to be generated',
                         action='store',
@@ -125,7 +131,12 @@ def ps_parseopts():
                         action="store_false",
                         dest="t_is_z",
                         default=True,                          
-                        help = "Use time 't' for axes labels (instead of z).")                           
+                        help = "Use time 't' for axes labels (instead of z).")
+    parser.add_argument("--vs-gamma", "--versus-gamma",
+                        action="store_true",
+                        dest="versus_gamma",
+                        default=False,                          
+                        help = "Plot rms properties vs. gamma instead of z/t")                                                   
     parser.add_argument('--zeta-range',
                         help='zeta range',
                         action='store',
@@ -223,15 +234,9 @@ def plot_save_slice_rms(slm, savepath, verbose=True, t_is_z=True):
     saveas_png(fig_e, savepath, 'slice_emittance_x')
     plt.close(fig_e)
 
-def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is_z=True):
+def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is_z=True, versus_gamma=False):
     
-    t = slm.get_time_array()
     tot_charge = np.sum(slm.get_charge(), axis=1)
-
-    if t_is_z:
-        xlabel_str = r'$k_p z$'
-    else:
-        xlabel_str = r'$\omega_p t$'
 
     if axdir == 'x':
         xsq = slm.get_proj(x=2)
@@ -312,10 +317,20 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
         epsilon_xy_sl_savename = 'emittance_r_sliced' 
 
 
+    if versus_gamma:
+        x_axis_array = slm.get_proj(pz=1)
+        xlabel_str = r'$\overline{\gamma}$'
+    else:
+        x_axis_array = slm.get_time_array() 
+        if t_is_z:
+            xlabel_str = r'$k_p z$'
+        else:
+            xlabel_str = r'$\omega_p t$'
+
     emittance_sliced = slm.project(emittance_all_slices)
 
     fig_sx = plt.figure()    
-    plt.plot(t, np.sqrt(xsq))
+    plt.plot(x_axis_array, np.sqrt(xsq))
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14) 
     ax.set_ylabel(sigma_xyr_lab, fontsize=14)
@@ -329,7 +344,7 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
     plt.close(fig_sx)
 
     fig_sp = plt.figure()    
-    plt.plot(t, np.sqrt(psq))
+    plt.plot(x_axis_array, np.sqrt(psq))
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14) 
     ax.set_ylabel(sigma_pxyr_lab, fontsize=14)
@@ -344,7 +359,7 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
 
 
     fig_xp = plt.figure()    
-    plt.plot(t, xp)
+    plt.plot(x_axis_array, xp)
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14) 
     ax.set_ylabel(corr_xy_lab, fontsize=14)
@@ -360,7 +375,7 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
 
     emittance_proj = np.sqrt(np.multiply(xsq,psq)-np.power(xp,2))
     fig_e = plt.figure()    
-    plt.plot(t, emittance_proj, label='projected emittance') 
+    plt.plot(x_axis_array, emittance_proj, label='projected emittance') 
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14) 
     ax.set_ylabel(epsilon_xy_proj_lab, fontsize=14)
@@ -374,7 +389,7 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
     plt.close(fig_e)
 
     fig_esl = plt.figure()    
-    plt.plot(t, emittance_sliced, label='sliced emittance') 
+    plt.plot(x_axis_array, emittance_sliced, label='sliced emittance') 
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14) 
     ax.set_ylabel(epsilon_xy_sl_lab, fontsize=14)
@@ -388,8 +403,8 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
     plt.close(fig_esl)
 
     fig_e_slpr = plt.figure()    
-    epp = plt.plot(t, emittance_proj, label='projected')
-    esp = plt.plot(t, emittance_sliced, color = epp[0].get_color(), linestyle='--', label='sliced')    
+    epp = plt.plot(x_axis_array, emittance_proj, label='projected')
+    esp = plt.plot(x_axis_array, emittance_sliced, color = epp[0].get_color(), linestyle='--', label='sliced')    
     ax = plt.gca()
     ax.set_xlabel(xlabel_str, fontsize=14) 
     ax.set_ylabel(epsilon_xy_proj_lab, fontsize=14)
@@ -558,7 +573,6 @@ def plot_save_slice_centroids(slm, savepath, h5plot=True, time=None, zeta_pos=No
         xlabel_str = r'$k_p z$'
     else:
         xlabel_str = r'$\omega_p t$'
-
 
     Xb0_for_norm = np.ones(slm.get(x=1)[0,:].shape)
     Yb0_for_norm = np.ones(slm.get(y=1)[0,:].shape)
@@ -793,21 +807,21 @@ def plot_save_ene_ene_spread(slm, savepath, h5plot=True, t_is_z=True):
     t = slm.get_time_array()
     tot_charge = np.sum(slm.get_charge(), axis=1)
     
-    avg_gamma = np.divide(np.sum( np.multiply( slm.get(pz=1), slm.get_charge()), axis=1),tot_charge)
-    sigma_gamma = np.divide(np.sqrt( np.abs( np.divide(np.sum( np.multiply( slm.get(pz=2) \
-        + np.power(slm.get(pz=1),2), slm.get_charge()), axis=1),tot_charge) - np.power(avg_gamma,2))),avg_gamma)
+    avg_gamma = slm.get_proj(pz=1)
+    sigma_gamma = np.sqrt(slm.get_proj(pz=2))
+    sigma_gamma_per_gamma = np.divide( sigma_gamma, avg_gamma)
 
     fig_sg = plt.figure()    
-    plt.plot(t, sigma_gamma)
+    plt.plot(t, sigma_gamma_per_gamma)
     ax = plt.gca()
-    if magn_check(sigma_gamma):
+    if magn_check(sigma_gamma_per_gamma):
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
         plt.gcf().subplots_adjust(left=0.18)
     else:
         plt.gcf().subplots_adjust(left=0.15)     
     ax.set_xlabel(xlabel_str, fontsize=14) 
-    ax.set_ylabel(r'$\sigma_\gamma/\gamma$', fontsize=14)  
-    saveas_eps_pdf(fig_sg, savepath, 'sigma_gamma', h5plot=h5plot)                  
+    ax.set_ylabel(r'$\sigma_\gamma/\gamma$', fontsize=14) 
+    saveas_eps_pdf(fig_sg, savepath, 'sigma_gamma_per_gamma', h5plot=h5plot)                  
     plt.close(fig_sg)
 
 
@@ -915,6 +929,8 @@ def main():
     if args.zeta_range != None:
         slm.truncate_zeta_region(args.zeta_range[0], args.zeta_range[1])
 
+    slm.shift_time(args.time_offset)
+
     mkdirs_if_nexist(args.savepath)
 
     if args.latexon:
@@ -929,7 +945,11 @@ def main():
     
     if mom_order > 1:
         plot_save_slice_rms(slm, args.savepath)
-        plot_save_proj_rms(slm, args.savepath, axdir=args.axis, h5plot=args.h5plot)        
+        plot_save_proj_rms( slm, \
+                            args.savepath, \
+                            axdir=args.axis, \
+                            h5plot=args.h5plot,\
+                            versus_gamma=args.versus_gamma)        
         plot_save_slice_rms_lines(slm, args.savepath, time = args.time, axdir=args.axis, h5plot=args.h5plot)
         plot_save_ene_ene_spread(slm, args.savepath, t_is_z=args.t_is_z)
 

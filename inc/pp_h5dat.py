@@ -1147,19 +1147,31 @@ class SliceMoms(H5File):
 
 
     def get_proj(self, x=0, y=0, z=0, px=0, py=0, pz=0):
-        noncentral_proj = self.project(
-            self.get_noncentral(x=x, \
+
+        orders = [x,y,z,px,py,pz]
+
+        if sum(orders) == 1:
+
+            # Compute simple projection of first order moment
+            proj = self.project(
+                    self.get(   x=x, \
                                 y=y, \
                                 z=z, \
                                 px=px, \
                                 py=py, \
-                                pz=pz) )
+                                pz=pz))
+        elif sum(orders) == 2:
+            
+            noncentral_proj = self.project(
+                self.get_noncentral(x=x, \
+                                    y=y, \
+                                    z=z, \
+                                    px=px, \
+                                    py=py, \
+                                    pz=pz) )
 
-        proj_centralization = np.ones(noncentral_proj.shape)
+            proj_centralization = np.ones(noncentral_proj.shape)
 
-        orders = [x,y,z,px,py,pz]
-
-        if sum(orders) == 2:    
             for i in range(len(orders)):
                 uniorders = [0,0,0,0,0,0]
                 uniorders[i] = 1
@@ -1170,14 +1182,23 @@ class SliceMoms(H5File):
                                     self.get(orders = uniorders)),\
                                 orders[i]))
 
+            # Compute 2nd order central moment
+            # according to <(x-<x>)^2> = <x^2> - <x>^2
+            # where <*> is the non-central average
             central_proj = noncentral_proj - proj_centralization
+
+            # To be returned projected moment is 
+            #  central 2nd order moment
+            # Use abs to make sure floating point errors don't 
+            #  lead to negative central 2nd order moments
+            proj = np.abs(central_proj)
                     
         else:
             print('Error:\tCalculation of noncentral '
                     'moments with order > 2 not yet implemented!')
             sys.exit(1)  
 
-        return central_proj
+        return proj
 
     def set_time(self,time,nt):
         if not self.__arrays_allocated:
@@ -1255,7 +1276,10 @@ class SliceMoms(H5File):
         self.__zeta_array = self.__zeta_array[idx]
         self.__mom = self.__mom[:,:,idx]
 
-
+    def shift_time(self, time_offset):
+        if time_offset != 0.0:
+            print('Shifting time array by: %f' % time_offset)
+        self.__time_array += time_offset 
 
 
 class SliceMoms_outdated(H5File):
