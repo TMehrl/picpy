@@ -192,7 +192,7 @@ def main():
     Ntimesteps = int( math.ceil(Nfiles/args.Nskip) )
 
     sm = SliceMoms()
-    sm.alloc(Nzeta = Nbins, Nt = Ntimesteps, order = mom_order)
+    sm.alloc(Nzeta = Nbins, Nt = Ntimesteps, order = mom_order, with_2nd_order_xterms = crossterms)
 
     for i in range(0, Ntimesteps):
         file = flist[i * args.Nskip]
@@ -231,21 +231,21 @@ def main():
             sm.set_at_nt(slices.avgx2p2,i,x2=1,p2=1)
             sm.set_at_nt(slices.avgx2p2,i,x3=1,p3=1)
 
-            # if crossterms:
-            #     sm.set_at_nt(slices.avgx1x2,i,x1=1,x2=1)
-            #     sm.set_at_nt(slices.avgx3x1,i,x1=1,x3=1)
-            #     sm.set_at_nt(slices.avgx2x3,i,x2=1,x3=1)
-            #     sm.set_at_nt(slices.avgp1p2,i,p1=1,p2=1)
-            #     sm.set_at_nt(slices.avgp3p1,i,p1=1,p3=1)
-            #     sm.set_at_nt(slices.avgp2p3,i,p2=1,p3=1)
+            if crossterms:
+                sm.set_at_nt(slices.avgx1x2,i,x1=1,x2=1)
+                sm.set_at_nt(slices.avgx3x1,i,x1=1,x3=1)
+                sm.set_at_nt(slices.avgx3x1,i,x1=1,p2=1)
+                sm.set_at_nt(slices.avgx3x1,i,x1=1,p3=1)
 
+                sm.set_at_nt(slices.avgx2x3,i,x2=1,x3=1)
+                sm.set_at_nt(slices.avgx2x3,i,x2=1,p1=1)
+                sm.set_at_nt(slices.avgx2x3,i,x2=1,p3=1)
 
-            #     sm.avgx1p2[i,:] = slices.avgx1p2
-            #     sm.avgx1p3[i,:] = slices.avgx1p3
-            #     sm.avgx2p1[i,:] = slices.avgx2p1
-            #     sm.avgx2p3[i,:] = slices.avgx2p3
-            #     sm.avgx3p1[i,:] = slices.avgx3p1
-            #     sm.avgx3p2[i,:] = slices.avgx3p2
+                sm.set_at_nt(slices.avgp1p2,i,p1=1,p2=1)
+                sm.set_at_nt(slices.avgp3p1,i,p1=1,p3=1)
+                
+                sm.set_at_nt(slices.avgp2p3,i,p2=1,p3=1)
+
 
         if mom_order>2:
             sm.set_at_nt(slices.avgx1cube,i,x1=3)

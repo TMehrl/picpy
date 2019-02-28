@@ -866,6 +866,32 @@ def plot_curr_profile(slm, savepath, time = None, h5plot=True, t_is_z=True):
     saveas_png(figIb, savepath, 'Ib')
     plt.close(figIb)
 
+
+def plot_xterms(slm, savepath, time = None, h5plot=True, t_is_z=True):
+    dzeta = abs(slm.get_zeta_array()[1] - slm.get_zeta_array()[0]);
+    curr = slm.get_charge() / dzeta
+
+    if t_is_z:
+        xlabel_str = r'$k_p z$'
+    else:
+        xlabel_str = r'$\omega_p t$'
+
+    if time == None:
+        tidx = [0,-1];
+    else:
+        tidx = [(np.abs(slm.get_time_array() - time)).argmin()]
+
+    for i in tidx:
+        fig = plt.figure()
+        plt.plot(slm.get_zeta_array(), slm.get(x=1,y=1)[i,:])
+        ax = plt.gca()
+        ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
+        ax.set_ylabel(r'$<xy>$', fontsize=14)
+        saveas_eps_pdf(fig, savepath, ('xy_%0.1f' % (slm.get_time_array()[i])), h5plot=h5plot)
+        plt.close(fig)    
+
+
+
 def main():
 
     parser = ps_parseopts()
@@ -906,6 +932,9 @@ def main():
         plot_save_proj_rms(slm, args.savepath, axdir=args.axis, h5plot=args.h5plot)        
         plot_save_slice_rms_lines(slm, args.savepath, time = args.time, axdir=args.axis, h5plot=args.h5plot)
         plot_save_ene_ene_spread(slm, args.savepath, t_is_z=args.t_is_z)
+
+    if slm.get_if_xterms():
+        plot_xterms(slm, args.savepath, time = args.time, h5plot=args.h5plot)
 
     if mom_order > 3:
         plot_save_slice_exkurtosis_lines(slm, args.savepath, time = args.time, axdir=args.axis, h5plot=args.h5plot)

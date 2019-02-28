@@ -883,6 +883,10 @@ class SliceMoms(H5File):
     def __init__(self):
         self.__time_array_name = 'time_array'
         self.__zeta_array_name = 'zeta_array'
+
+        self.__mom_order_h5key = 'mom_order'
+        self.__xterms_h5key = 'xterms'
+
         self.__order = 2
         self.__Nzeta = None
         self.__Nt = None
@@ -967,11 +971,26 @@ class SliceMoms(H5File):
 
     def get_h5order(self, file):
         with h5py.File(file,'r') as hf:
-            if 'mom_order' in hf.attrs.keys():
-                h5order  = hf.attrs['mom_order']
+            if self.__mom_order_h5key in hf.attrs.keys():
+                h5order  = hf.attrs[self.__mom_order_h5key]
             else:
                 h5order = 2
         return h5order
+
+    def get_if_xterms(self):
+        return self.__with_2nd_order_xterms
+
+    def get_if_h5xterms(self, file):
+        with h5py.File(file,'r') as hf:
+            if self.__xterms_h5key in hf.attrs.keys():
+                xterms  = hf.attrs[self.__xterms_h5key]
+            else:
+                xterms = False
+
+        if xterms:
+            print('With x-terms!')            
+
+        return xterms
 
     def __get_n_moments(self, order, with_2nd_order_xterms = False):
         n_moments = 0
@@ -991,6 +1010,9 @@ class SliceMoms(H5File):
 
         self.__zeta_array = np.zeros(Nt, dtype=np.float32)   
         self.__time_array = np.zeros(Nt, dtype=np.float32)
+
+        if with_2nd_order_xterms:
+            print('With x-terms!')          
 
         n_moments = self.__get_n_moments(order, with_2nd_order_xterms)
 
@@ -1014,6 +1036,7 @@ class SliceMoms(H5File):
             print('Reading %s ...' % file)
 
         h5order = self.get_h5order(file)
+        self.__with_2nd_order_xterms = self.get_if_h5xterms(file)
 
         with h5py.File(self.get_file(),'r') as hf:
             if order == None:
@@ -1083,8 +1106,8 @@ class SliceMoms(H5File):
                 print('Error:\tProvided coordinates must have length 6!')
                 sys.exit(1)                
 
-        idx = self.__coord_orders_to_idx(   x1=z, x2=x, x3=y, \
-                                            p1=pz, p2=px, p3=py)
+        idx = self.__orders_to_idx( x1=z, x2=x, x3=y, \
+                                    p1=pz, p2=px, p3=py)
 
         return self.__mom[idx,:,:]
 
@@ -1206,11 +1229,10 @@ class SliceMoms(H5File):
             print('Error:\tFile name does not have an hdf5 ending!')
             sys.exit(1) 
 
-        # TODO: write order of moments and if crossterms into attributes!!!
-
         h5f = h5py.File(file, "w")
 
-        h5f.attrs['mom_order'] = order
+        h5f.attrs[self.__mom_order_h5key] = order
+        h5f.attrs[self.__xterms_h5key] = self.__with_2nd_order_xterms
 
         if not self.__arrays_allocated:
             print('Error:\tArrays do not exist!')
@@ -1232,7 +1254,6 @@ class SliceMoms(H5File):
 
         self.__zeta_array = self.__zeta_array[idx]
         self.__mom = self.__mom[:,:,idx]
-
 
 
 
