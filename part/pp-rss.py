@@ -5,8 +5,10 @@
 import os
 import sys
 import math
+from functools import partial
 import argparse
 import numpy as np
+from multiprocessing import Pool
 import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
@@ -97,6 +99,13 @@ def ps_parseargs():
                           metavar="Nbins",
                           default=None,
                           help= 'Number of bins.')
+    parser.add_argument(  "-p", "--Nproc",
+                          type=int,
+                          action='store',
+                          dest="Nproc",
+                          metavar="NPROC",
+                          default=1,
+                          help= 'Number parallel processes/threads (Default: %s).')    
     parser.add_argument(  "--xterms",
                           action="store_true",
                           dest="crossterms",
@@ -141,6 +150,10 @@ def ps_parseargs():
 
 
 def comp_slices(file, Nbins, zeta_range, cellvol, order, crossterms, showtimings):
+    
+    sys.stdout.write('Processing: %s\n' % file)
+    sys.stdout.flush()  
+
     raw = HiRAW(file)
     raw.read_attrs()
     raw.read_data(verbose=False)
@@ -203,116 +216,103 @@ def main():
     sys.stdout.write('There are %i raw files to process...\n' % Nfiles)
     sys.stdout.flush()
 
+    if args.Nproc > 1:
+        sys.stdout.write('Launching parallel pool with %d processes\n' % args.Nproc)
+        sys.stdout.flush()
+
+    pool = Pool(processes=args.Nproc)
+
+    func = partial(comp_slices, Nbins=Nbins, \
+                                zeta_range=zeta_range, \
+                                cellvol=cellvol, \
+                                order=mom_order, \
+                                crossterms=crossterms, \
+                                showtimings=args.timings)
+
+    result = [pool.apply(func, args=(file,)) for file in flist]
+
     sm = SliceMoms()
-    sm.alloc(Nzeta = Nbins, Nt = Nfiles, order = mom_order, with_2nd_order_xterms = crossterms)
+    sm.alloc(   Nzeta = Nbins, \
+                Nt = Nfiles, \
+                order = mom_order, \
+                with_2nd_order_xterms = crossterms)
 
-    Nworkers = 2
+    for j in range(0,Nfiles):
 
-    print('Nfiles = %d' % Nfiles)
+        time = result[j][0]
+        slices = result[j][1]
 
-    for i in range(0, Nfiles, Nworkers):
-        ltime = []
-        lslices = []
+        sm.set_time(time,j)
 
-        if (i + Nworkers < Nfiles):
-            Nsubloops = Nworkers
-        else:
-            Nsubloops = Nfiles - i
+        sm.set_at_nt(slices.charge,j)
 
-        for j in range(0,Nsubloops):          
-            idx = i+j
+        sm.set_at_nt(slices.avgx1,j,x1=1)
+        sm.set_at_nt(slices.avgx2,j,x2=1)
+        sm.set_at_nt(slices.avgx3,j,x3=1)
 
-            print('idx = %d' % idx)
+        sm.set_at_nt(slices.avgp1,j,p1=1)
+        sm.set_at_nt(slices.avgp2,j,p2=1)
+        sm.set_at_nt(slices.avgp3,j,p3=1)
 
-            file = flist[idx]
+        if mom_order>1:
+            sm.set_at_nt(slices.avgx1sq,j,x1=2)
+            sm.set_at_nt(slices.avgx2sq,j,x2=2)
+            sm.set_at_nt(slices.avgx3sq,j,x3=2)
+            
+            sm.set_at_nt(slices.avgp1sq,j,p1=2)
+            sm.set_at_nt(slices.avgp2sq,j,p2=2)
+            sm.set_at_nt(slices.avgp3sq,j,p3=2)
 
-            sys.stdout.write('Processing: %s\t(%i/%i)\n' % (file, (idx+1), Nfiles))
-            sys.stdout.flush()  
+            sm.set_at_nt(slices.avgx1p1,j,x1=1,p1=1)
+            sm.set_at_nt(slices.avgx2p2,j,x2=1,p2=1)
+            sm.set_at_nt(slices.avgx3p3,j,x3=1,p3=1)
 
-            time, slices = comp_slices( file=file, \
-                                        Nbins=Nbins, \
-                                        zeta_range=zeta_range, \
-                                        cellvol=cellvol, \
-                                        order=mom_order, \
-                                        crossterms=crossterms, \
-                                        showtimings=args.timings)
-            ltime.append(time)
-            lslices.append(slices)
+            if crossterms:
+                sm.set_at_nt(slices.avgx1x2,j,x1=1,x2=1)
+                sm.set_at_nt(slices.avgx1x3,j,x1=1,x3=1)
+                sm.set_at_nt(slices.avgx1p2,j,x1=1,p2=1)
+                sm.set_at_nt(slices.avgx1p3,j,x1=1,p3=1)
 
+                sm.set_at_nt(slices.avgx2x3,j,x2=1,x3=1)
+                sm.set_at_nt(slices.avgx2p1,j,x2=1,p1=1)
+                sm.set_at_nt(slices.avgx2p3,j,x2=1,p3=1)
 
-        for j in range(0,Nsubloops):
-            idx = i+j
-            sm.set_time(time,idx)
-
-            sm.set_at_nt(lslices[j].charge,idx)
-
-            sm.set_at_nt(lslices[j].avgx1,idx,x1=1)
-            sm.set_at_nt(lslices[j].avgx2,idx,x2=1)
-            sm.set_at_nt(lslices[j].avgx3,idx,x3=1)
-
-            sm.set_at_nt(lslices[j].avgp1,idx,p1=1)
-            sm.set_at_nt(lslices[j].avgp2,idx,p2=1)
-            sm.set_at_nt(lslices[j].avgp3,idx,p3=1)
-
-            if mom_order>1:
-                sm.set_at_nt(lslices[j].avgx1sq,idx,x1=2)
-                sm.set_at_nt(lslices[j].avgx2sq,idx,x2=2)
-                sm.set_at_nt(lslices[j].avgx3sq,idx,x3=2)
+                sm.set_at_nt(slices.avgp1p2,j,p1=1,p2=1)
+                sm.set_at_nt(slices.avgp1p3,j,p1=1,p3=1)
                 
-                sm.set_at_nt(lslices[j].avgp1sq,idx,p1=2)
-                sm.set_at_nt(lslices[j].avgp2sq,idx,p2=2)
-                sm.set_at_nt(lslices[j].avgp3sq,idx,p3=2)
+                sm.set_at_nt(slices.avgp2p3,j,p2=1,p3=1)
 
-                sm.set_at_nt(lslices[j].avgx1p1,idx,x1=1,p1=1)
-                sm.set_at_nt(lslices[j].avgx2p2,idx,x2=1,p2=1)
-                sm.set_at_nt(lslices[j].avgx3p3,idx,x3=1,p3=1)
+        if mom_order>2:
+            sm.set_at_nt(slices.avgx1cube,j,x1=3)
+            sm.set_at_nt(slices.avgx2cube,j,x2=3)
+            sm.set_at_nt(slices.avgx3cube,j,x3=3)
 
-                if crossterms:
-                    sm.set_at_nt(lslices[j].avgx1x2,idx,x1=1,x2=1)
-                    sm.set_at_nt(lslices[j].avgx1x3,idx,x1=1,x3=1)
-                    sm.set_at_nt(lslices[j].avgx1p2,idx,x1=1,p2=1)
-                    sm.set_at_nt(lslices[j].avgx1p3,idx,x1=1,p3=1)
+            sm.set_at_nt(slices.avgp1cube,j,p1=3)
+            sm.set_at_nt(slices.avgp2cube,j,p2=3)
+            sm.set_at_nt(slices.avgp3cube,j,p3=3)
 
-                    sm.set_at_nt(lslices[j].avgx2x3,idx,x2=1,x3=1)
-                    sm.set_at_nt(lslices[j].avgx2p1,idx,x2=1,p1=1)
-                    sm.set_at_nt(lslices[j].avgx2p3,idx,x2=1,p3=1)
+            sm.set_at_nt(slices.avgx1sqp1,j,x1=2,p1=1)
+            sm.set_at_nt(slices.avgx2sqp2,j,x2=2,p2=1)
+            sm.set_at_nt(slices.avgx3sqp3,j,x3=2,p3=1)
 
-                    sm.set_at_nt(lslices[j].avgp1p2,idx,p1=1,p2=1)
-                    sm.set_at_nt(lslices[j].avgp1p3,idx,p1=1,p3=1)
-                    
-                    sm.set_at_nt(lslices[j].avgp2p3,idx,p2=1,p3=1)
+            sm.set_at_nt(slices.avgx1p1sq,j,x1=1,p1=2)
+            sm.set_at_nt(slices.avgx2p2sq,j,x2=1,p2=2)
+            sm.set_at_nt(slices.avgx3p3sq,j,x3=1,p3=2)
 
-            if mom_order>2:
-                sm.set_at_nt(lslices[j].avgx1cube,idx,x1=3)
-                sm.set_at_nt(lslices[j].avgx2cube,idx,x2=3)
-                sm.set_at_nt(lslices[j].avgx3cube,idx,x3=3)
+        if mom_order>3:
+            sm.set_at_nt(slices.avgx1quar,j,x1=4)
+            sm.set_at_nt(slices.avgx2quar,j,x2=4)
+            sm.set_at_nt(slices.avgx3quar,j,x3=4)
 
-                sm.set_at_nt(lslices[j].avgp1cube,idx,p1=3)
-                sm.set_at_nt(lslices[j].avgp2cube,idx,p2=3)
-                sm.set_at_nt(lslices[j].avgp3cube,idx,p3=3)
+            sm.set_at_nt(slices.avgp1quar,j,p1=4)
+            sm.set_at_nt(slices.avgp2quar,j,p2=4)
+            sm.set_at_nt(slices.avgp3quar,j,p3=4)
 
-                sm.set_at_nt(lslices[j].avgx1sqp1,idx,x1=2,p1=1)
-                sm.set_at_nt(lslices[j].avgx2sqp2,idx,x2=2,p2=1)
-                sm.set_at_nt(lslices[j].avgx3sqp3,idx,x3=2,p3=1)
+            sm.set_at_nt(slices.avgx1sqp1sq,j,x1=2,p1=2)
+            sm.set_at_nt(slices.avgx2sqp2sq,j,x2=2,p2=2)
+            sm.set_at_nt(slices.avgx3sqp3sq,j,x3=2,p3=2)
 
-                sm.set_at_nt(lslices[j].avgx1p1sq,idx,x1=1,p1=2)
-                sm.set_at_nt(lslices[j].avgx2p2sq,idx,x2=1,p2=2)
-                sm.set_at_nt(lslices[j].avgx3p3sq,idx,x3=1,p3=2)
-
-            if mom_order>3:
-                sm.set_at_nt(lslices[j].avgx1quar,idx,x1=4)
-                sm.set_at_nt(lslices[j].avgx2quar,idx,x2=4)
-                sm.set_at_nt(lslices[j].avgx3quar,idx,x3=4)
-
-                sm.set_at_nt(lslices[j].avgp1quar,idx,p1=4)
-                sm.set_at_nt(lslices[j].avgp2quar,idx,p2=4)
-                sm.set_at_nt(lslices[j].avgp3quar,idx,p3=4)
-
-                sm.set_at_nt(lslices[j].avgx1sqp1sq,idx,x1=2,p1=2)
-                sm.set_at_nt(lslices[j].avgx2sqp2sq,idx,x2=2,p2=2)
-                sm.set_at_nt(lslices[j].avgx3sqp3sq,idx,x3=2,p3=2)
-
-    sm.set_zeta_array(lslices[-1].centers)
+    sm.set_zeta_array(slices.centers)
 
     savepath = mkdirs_if_nexist(args.savepath)
 
