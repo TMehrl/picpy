@@ -321,16 +321,9 @@ def main():
 
             if (args.line_no != None):
                 if args.line_no[i] == j:
-                    if args.absylog:
-                        plt.semilogy( x, y, label=label, linestyle=linestyle_code, color=argcolor)
-                    else:
-                        plt.plot(x, y, label=label, linestyle=linestyle_code, color=argcolor)
-            else:
-                if args.absylog:
-                    plt.semilogy( x, y, label=label, linestyle=linestyle_code, color=argcolor)
-                else:
-                    #plt.plot(x, y, label=label, linestyle=linestyle, color=color)
                     plt.plot(x, y, label=label, linestyle=linestyle_code, color=argcolor)
+            else:
+                plt.plot(x, y, label=label, linestyle=linestyle_code, color=argcolor)
             j += 1
         i += 1
 
@@ -341,6 +334,9 @@ def main():
     if args.ylim != None:
         ax.set_ylim(args.ylim[0],args.ylim[1])
 
+    if args.absylog:
+        ax.set_yscale('log')
+        ax.get_yaxis().get_major_formatter().labelOnlyBase = False
     if args.xlab != None:
         xlab = args.xlab
     else:
