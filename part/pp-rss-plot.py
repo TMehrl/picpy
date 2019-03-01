@@ -234,6 +234,32 @@ def plot_save_slice_rms(slm, savepath, verbose=True, t_is_z=True):
     saveas_png(fig_e, savepath, 'slice_emittance_x')
     plt.close(fig_e)
 
+def adiabatic_matching_plots(savepath, z_array, emittance, gamma):
+    log_rel_emittance = np.log(emittance/emittance[0])
+    kbeta0 = np.power(2*gamma,-1/2)
+
+    dz_per_dgamma = np.divide(np.gradient(z_array),np.gradient(gamma))
+    dlog_rel_emittance_per_dgamma = np.divide(np.gradient(log_rel_emittance),np.gradient(gamma))
+
+    eta = np.multiply( np.divide(dz_per_dgamma,kbeta0), dlog_rel_emittance_per_dgamma)
+
+    fig_eta = plt.figure()    
+    plt.plot(gamma, eta)
+    ax = plt.gca()
+    ax.set_xlabel(r'$\overline{\gamma}$', fontsize=14) 
+    ax.set_ylabel(r'$\eta$', fontsize=14)
+    #ylim = ax.get_ylim()
+    ax.set_ylim([0, 1e-2])
+    if magn_check(eta):
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
+        plt.gcf().subplots_adjust(left=0.18)
+    else:
+        plt.gcf().subplots_adjust(left=0.15)  
+    
+    saveas_eps_pdf(fig_eta, savepath, 'eta', h5plot=True)                  
+    plt.close(fig_eta)
+
+
 def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is_z=True, versus_gamma=False):
     
     tot_charge = np.sum(slm.get_charge(), axis=1)
@@ -316,18 +342,20 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
         epsilon_xy_sl_lab = r'$k_p \epsilon_{r,\mathrm{sliced}}$'
         epsilon_xy_sl_savename = 'emittance_r_sliced' 
 
+    # Calculate emittance
+    emittance_sliced = slm.project(emittance_all_slices)
+    emittance_proj = np.sqrt(np.multiply(xsq,psq)-np.power(xp,2))
 
     if versus_gamma:
         x_axis_array = slm.get_proj(pz=1)
         xlabel_str = r'$\overline{\gamma}$'
+        adiabatic_matching_plots(savepath, slm.get_time_array(), emittance_proj, slm.get_proj(pz=1))
     else:
         x_axis_array = slm.get_time_array() 
         if t_is_z:
             xlabel_str = r'$k_p z$'
         else:
             xlabel_str = r'$\omega_p t$'
-
-    emittance_sliced = slm.project(emittance_all_slices)
 
     fig_sx = plt.figure()    
     plt.plot(x_axis_array, np.sqrt(xsq))
@@ -373,7 +401,6 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
     plt.close(fig_xp)
 
 
-    emittance_proj = np.sqrt(np.multiply(xsq,psq)-np.power(xp,2))
     fig_e = plt.figure()    
     plt.plot(x_axis_array, emittance_proj, label='projected emittance') 
     ax = plt.gca()
@@ -903,7 +930,6 @@ def plot_xterms(slm, savepath, time = None, h5plot=True, t_is_z=True):
         ax.set_ylabel(r'$<xy>$', fontsize=14)
         saveas_eps_pdf(fig, savepath, ('xy_%0.1f' % (slm.get_time_array()[i])), h5plot=h5plot)
         plt.close(fig)    
-
 
 
 def main():

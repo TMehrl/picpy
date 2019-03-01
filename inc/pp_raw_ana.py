@@ -91,7 +91,7 @@ def sort_part_bin(x1,x2,x3,p1,p2,p3,q,ibinpart):
 
 # Class for slice analysis
 class Slices:
-    def __init__(self, raw, edges=[], nbins=0, zrange=None, cellvol=1.0):
+    def __init__(self, raw, edges=[], nbins=0, zeta_range=None, cellvol=1.0):
 
         self.max_order = 4
         self.edges = edges
@@ -102,19 +102,19 @@ class Slices:
         self.raw = raw
         dx0 = self.raw.get_dx(0)        
         if nbins == 0:
-            if (edges==[]) and (zrange == None):
+            if (edges==[]) and (zeta_range == None):
                 self.edges = np.linspace(raw.get_xmin(0)-dx0/2, raw.get_xmax(0)+dx0/2, num=(raw.get_nx(0)+1))
                 self.if_edges_eq_spaced = True
-            elif (edges==[]) and (zrange != None):
-                self.edges = np.arange(start=zrange[0]-dx0/2,stop=zrange[1]+dx0/2,step=dx0,dtype=np.float32)
+            elif (edges==[]) and (zeta_range != None):
+                self.edges = np.arange(start=zeta_range[0]-dx0/2,stop=zeta_range[1]+dx0/2,step=dx0,dtype=np.float32)
                 self.if_edges_eq_spaced = True
         elif nbins != 0:
-            if zrange==None:
+            if zeta_range==None:
                 self.edges = np.linspace(raw.get_xmin(0)-dx0/2, raw.get_xmax(0)+dx0/2, num=(nbins+1))
                 self.if_edges_eq_spaced = True
             else:
-                dx0_step = (zrange[1] - zrange[0])/nbins
-                self.edges = np.linspace(zrange[0]-dx0_step/2, zrange[1]+dx0_step/2, num=(nbins+1))
+                dx0_step = (zeta_range[1] - zeta_range[0])/nbins
+                self.edges = np.linspace(zeta_range[0]-dx0_step/2, zeta_range[1]+dx0_step/2, num=(nbins+1))
                 self.if_edges_eq_spaced = True
         else:
             self.edges = edges

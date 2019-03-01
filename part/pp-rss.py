@@ -83,13 +83,13 @@ def ps_parseargs():
                           metavar="NFILES",
                           default=None,
                           help='Number of files to analyze.')
-    parser.add_argument(  "--Nskip",
+    parser.add_argument(  "--Nstride",
                           type=int,
                           action='store',
-                          dest="Nskip",
-                          metavar="NSKIP",
+                          dest="Nstride",
+                          metavar="NSTRIDE",
                           default=1,
-                          help='Skipping every nth file.')    
+                          help='Processing only every nth file.')    
     parser.add_argument(  "--Nbins",
                           type=int,
                           action='store',
@@ -140,6 +140,20 @@ def ps_parseargs():
 
 
 
+def comp_slices(file, Nbins, zeta_range, cellvol, order, crossterms, showtimings):
+    raw = HiRAW(file)
+    raw.read_attrs()
+    raw.read_data(verbose=False)
+
+    time = raw.get_time()
+
+    slices = pp_raw_ana.Slices(raw, nbins=Nbins, zeta_range=zeta_range, cellvol=cellvol)
+
+    slices.calc_moments(order=order, crossterms=crossterms, showtimings=showtimings)
+
+    return time, slices
+
+
 def main():
 
     parser = ps_parseargs()
@@ -150,7 +164,7 @@ def main():
     crossterms = args.crossterms
 
     h5fl = H5FList(args.path, h5ftype='raw')
-    flist = h5fl.get(verbose=False)
+    flist = h5fl.get(verbose=False, stride=args.Nstride)
     if len(h5fl.get_uniques()) > 1:
         print('ERROR: Processing of multiple beams is not implemented yet!')
         print(h5fl.split_by_uniques())
@@ -180,7 +194,7 @@ def main():
         zeta_range = None
     elif args.Nbins == None and args.zeta_range != None:
         zeta_range = args.zeta_range
-        slices = pp_raw_ana.Slices(raw, zrange=zeta_range)          
+        slices = pp_raw_ana.Slices(raw, zeta_range=zeta_range)          
         Nbins = slices.nbins
     else:
         Nbins = args.Nbins
@@ -189,95 +203,116 @@ def main():
     sys.stdout.write('There are %i raw files to process...\n' % Nfiles)
     sys.stdout.flush()
 
-    Ntimesteps = int( math.ceil(Nfiles/args.Nskip) )
-
     sm = SliceMoms()
-    sm.alloc(Nzeta = Nbins, Nt = Ntimesteps, order = mom_order, with_2nd_order_xterms = crossterms)
+    sm.alloc(Nzeta = Nbins, Nt = Nfiles, order = mom_order, with_2nd_order_xterms = crossterms)
 
-    for i in range(0, Ntimesteps):
-        file = flist[i * args.Nskip]
-        sys.stdout.write('Processing: %s\t(%i/%i)\n' % (file, (i+1)*args.Nskip, Nfiles))
-        sys.stdout.flush()
+    Nworkers = 2
 
-        raw = HiRAW(file)
-        raw.read_attrs()
-        raw.read_data(verbose=False)
+    print('Nfiles = %d' % Nfiles)
 
-        sm.set_time(raw.get_time(),i)
-        slices = pp_raw_ana.Slices(raw, nbins=Nbins, zrange=zeta_range, cellvol=cellvol)
+    for i in range(0, Nfiles, Nworkers):
+        ltime = []
+        lslices = []
 
-        slices.calc_moments(order = mom_order, crossterms=crossterms, showtimings=args.timings )
+        if (i + Nworkers < Nfiles):
+            Nsubloops = Nworkers
+        else:
+            Nsubloops = Nfiles - i
 
-        sm.set_at_nt(slices.charge,i)
+        for j in range(0,Nsubloops):          
+            idx = i+j
 
-        sm.set_at_nt(slices.avgx1,i,x1=1)
-        sm.set_at_nt(slices.avgx2,i,x2=1)
-        sm.set_at_nt(slices.avgx3,i,x3=1)
+            print('idx = %d' % idx)
 
-        sm.set_at_nt(slices.avgp1,i,p1=1)
-        sm.set_at_nt(slices.avgp2,i,p2=1)
-        sm.set_at_nt(slices.avgp3,i,p3=1)
+            file = flist[idx]
 
-        if mom_order>1:
-            sm.set_at_nt(slices.avgx1sq,i,x1=2)
-            sm.set_at_nt(slices.avgx2sq,i,x2=2)
-            sm.set_at_nt(slices.avgx3sq,i,x3=2)
-            
-            sm.set_at_nt(slices.avgp1sq,i,p1=2)
-            sm.set_at_nt(slices.avgp2sq,i,p2=2)
-            sm.set_at_nt(slices.avgp3sq,i,p3=2)
+            sys.stdout.write('Processing: %s\t(%i/%i)\n' % (file, (idx+1), Nfiles))
+            sys.stdout.flush()  
 
-            sm.set_at_nt(slices.avgx1p1,i,x1=1,p1=1)
-            sm.set_at_nt(slices.avgx2p2,i,x2=1,p2=1)
-            sm.set_at_nt(slices.avgx3p3,i,x3=1,p3=1)
+            time, slices = comp_slices( file=file, \
+                                        Nbins=Nbins, \
+                                        zeta_range=zeta_range, \
+                                        cellvol=cellvol, \
+                                        order=mom_order, \
+                                        crossterms=crossterms, \
+                                        showtimings=args.timings)
+            ltime.append(time)
+            lslices.append(slices)
 
-            if crossterms:
-                sm.set_at_nt(slices.avgx1x2,i,x1=1,x2=1)
-                sm.set_at_nt(slices.avgx1x3,i,x1=1,x3=1)
-                sm.set_at_nt(slices.avgx1p2,i,x1=1,p2=1)
-                sm.set_at_nt(slices.avgx1p3,i,x1=1,p3=1)
 
-                sm.set_at_nt(slices.avgx2x3,i,x2=1,x3=1)
-                sm.set_at_nt(slices.avgx2p1,i,x2=1,p1=1)
-                sm.set_at_nt(slices.avgx2p3,i,x2=1,p3=1)
+        for j in range(0,Nsubloops):
+            idx = i+j
+            sm.set_time(time,idx)
 
-                sm.set_at_nt(slices.avgp1p2,i,p1=1,p2=1)
-                sm.set_at_nt(slices.avgp1p3,i,p1=1,p3=1)
+            sm.set_at_nt(lslices[j].charge,idx)
+
+            sm.set_at_nt(lslices[j].avgx1,idx,x1=1)
+            sm.set_at_nt(lslices[j].avgx2,idx,x2=1)
+            sm.set_at_nt(lslices[j].avgx3,idx,x3=1)
+
+            sm.set_at_nt(lslices[j].avgp1,idx,p1=1)
+            sm.set_at_nt(lslices[j].avgp2,idx,p2=1)
+            sm.set_at_nt(lslices[j].avgp3,idx,p3=1)
+
+            if mom_order>1:
+                sm.set_at_nt(lslices[j].avgx1sq,idx,x1=2)
+                sm.set_at_nt(lslices[j].avgx2sq,idx,x2=2)
+                sm.set_at_nt(lslices[j].avgx3sq,idx,x3=2)
                 
-                sm.set_at_nt(slices.avgp2p3,i,p2=1,p3=1)
+                sm.set_at_nt(lslices[j].avgp1sq,idx,p1=2)
+                sm.set_at_nt(lslices[j].avgp2sq,idx,p2=2)
+                sm.set_at_nt(lslices[j].avgp3sq,idx,p3=2)
 
+                sm.set_at_nt(lslices[j].avgx1p1,idx,x1=1,p1=1)
+                sm.set_at_nt(lslices[j].avgx2p2,idx,x2=1,p2=1)
+                sm.set_at_nt(lslices[j].avgx3p3,idx,x3=1,p3=1)
 
-        if mom_order>2:
-            sm.set_at_nt(slices.avgx1cube,i,x1=3)
-            sm.set_at_nt(slices.avgx2cube,i,x2=3)
-            sm.set_at_nt(slices.avgx3cube,i,x3=3)
+                if crossterms:
+                    sm.set_at_nt(lslices[j].avgx1x2,idx,x1=1,x2=1)
+                    sm.set_at_nt(lslices[j].avgx1x3,idx,x1=1,x3=1)
+                    sm.set_at_nt(lslices[j].avgx1p2,idx,x1=1,p2=1)
+                    sm.set_at_nt(lslices[j].avgx1p3,idx,x1=1,p3=1)
 
-            sm.set_at_nt(slices.avgp1cube,i,p1=3)
-            sm.set_at_nt(slices.avgp2cube,i,p2=3)
-            sm.set_at_nt(slices.avgp3cube,i,p3=3)
+                    sm.set_at_nt(lslices[j].avgx2x3,idx,x2=1,x3=1)
+                    sm.set_at_nt(lslices[j].avgx2p1,idx,x2=1,p1=1)
+                    sm.set_at_nt(lslices[j].avgx2p3,idx,x2=1,p3=1)
 
-            sm.set_at_nt(slices.avgx1sqp1,i,x1=2,p1=1)
-            sm.set_at_nt(slices.avgx2sqp2,i,x2=2,p2=1)
-            sm.set_at_nt(slices.avgx3sqp3,i,x3=2,p3=1)
+                    sm.set_at_nt(lslices[j].avgp1p2,idx,p1=1,p2=1)
+                    sm.set_at_nt(lslices[j].avgp1p3,idx,p1=1,p3=1)
+                    
+                    sm.set_at_nt(lslices[j].avgp2p3,idx,p2=1,p3=1)
 
-            sm.set_at_nt(slices.avgx1p1sq,i,x1=1,p1=2)
-            sm.set_at_nt(slices.avgx2p2sq,i,x2=1,p2=2)
-            sm.set_at_nt(slices.avgx3p3sq,i,x3=1,p3=2)
+            if mom_order>2:
+                sm.set_at_nt(lslices[j].avgx1cube,idx,x1=3)
+                sm.set_at_nt(lslices[j].avgx2cube,idx,x2=3)
+                sm.set_at_nt(lslices[j].avgx3cube,idx,x3=3)
 
-        if mom_order>3:
-            sm.set_at_nt(slices.avgx1quar,i,x1=4)
-            sm.set_at_nt(slices.avgx2quar,i,x2=4)
-            sm.set_at_nt(slices.avgx3quar,i,x3=4)
+                sm.set_at_nt(lslices[j].avgp1cube,idx,p1=3)
+                sm.set_at_nt(lslices[j].avgp2cube,idx,p2=3)
+                sm.set_at_nt(lslices[j].avgp3cube,idx,p3=3)
 
-            sm.set_at_nt(slices.avgp1quar,i,p1=4)
-            sm.set_at_nt(slices.avgp2quar,i,p2=4)
-            sm.set_at_nt(slices.avgp3quar,i,p3=4)
+                sm.set_at_nt(lslices[j].avgx1sqp1,idx,x1=2,p1=1)
+                sm.set_at_nt(lslices[j].avgx2sqp2,idx,x2=2,p2=1)
+                sm.set_at_nt(lslices[j].avgx3sqp3,idx,x3=2,p3=1)
 
-            sm.set_at_nt(slices.avgx1sqp1sq,i,x1=2,p1=2)
-            sm.set_at_nt(slices.avgx2sqp2sq,i,x2=2,p2=2)
-            sm.set_at_nt(slices.avgx3sqp3sq,i,x3=2,p3=2)
+                sm.set_at_nt(lslices[j].avgx1p1sq,idx,x1=1,p1=2)
+                sm.set_at_nt(lslices[j].avgx2p2sq,idx,x2=1,p2=2)
+                sm.set_at_nt(lslices[j].avgx3p3sq,idx,x3=1,p3=2)
 
-    sm.set_zeta_array(slices.centers)
+            if mom_order>3:
+                sm.set_at_nt(lslices[j].avgx1quar,idx,x1=4)
+                sm.set_at_nt(lslices[j].avgx2quar,idx,x2=4)
+                sm.set_at_nt(lslices[j].avgx3quar,idx,x3=4)
+
+                sm.set_at_nt(lslices[j].avgp1quar,idx,p1=4)
+                sm.set_at_nt(lslices[j].avgp2quar,idx,p2=4)
+                sm.set_at_nt(lslices[j].avgp3quar,idx,p3=4)
+
+                sm.set_at_nt(lslices[j].avgx1sqp1sq,idx,x1=2,p1=2)
+                sm.set_at_nt(lslices[j].avgx2sqp2sq,idx,x2=2,p2=2)
+                sm.set_at_nt(lslices[j].avgx3sqp3sq,idx,x3=2,p3=2)
+
+    sm.set_zeta_array(lslices[-1].centers)
 
     savepath = mkdirs_if_nexist(args.savepath)
 
