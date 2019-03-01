@@ -1016,7 +1016,7 @@ class SliceMoms(H5File):
 
         n_moments = self.__get_n_moments(order, with_2nd_order_xterms)
 
-        print('n_moments: %d' % n_moments)
+        print('Number of moments: %d' % n_moments)
 
         if order <= 4:
             self.__mom = np.zeros((n_moments, Nt, Nzeta), dtype=np.float32)
@@ -1187,11 +1187,12 @@ class SliceMoms(H5File):
             # where <*> is the non-central average
             central_proj = noncentral_proj - proj_centralization
 
-            # To be returned projected moment is 
-            #  central 2nd order moment
-            # Use abs to make sure floating point errors don't 
-            #  lead to negative central 2nd order moments
-            proj = np.abs(central_proj)
+            if np.count_nonzero(orders) == 1:
+                # Use abs to make sure floating point errors don't 
+                #  lead to negative central squared moments
+                proj = np.abs(central_proj)
+            else:
+                proj = central_proj
                     
         else:
             print('Error:\tCalculation of noncentral '
