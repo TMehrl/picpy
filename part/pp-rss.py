@@ -169,6 +169,12 @@ def comp_slices(file, Nbins, zeta_range, cellvol, order, crossterms, showtimings
 
 def main():
 
+    results = []
+    def log_result(result):
+        # This is called whenever foo_pool(i) returns a result.
+        # result_list is modified only by the main process, not the pool workers.
+        results.append(result)
+
     parser = ps_parseargs()
 
     args = parser.parse_args()
@@ -217,7 +223,7 @@ def main():
     sys.stdout.flush()
 
     if args.Nproc > 1:
-        sys.stdout.write('Launching parallel pool with %d processes\n' % args.Nproc)
+        sys.stdout.write('Starting parallel pool with %d processes\n' % args.Nproc)
         sys.stdout.flush()
 
     pool = Pool(processes=args.Nproc)
@@ -229,7 +235,11 @@ def main():
                                 crossterms=crossterms, \
                                 showtimings=args.timings)
 
-    result = [pool.apply(func, args=(file,)) for file in flist]
+    #results = [pool.apply(func, args=(file,)) for file in flist]
+    [pool.apply_async(func, args = (file, ), callback = log_result) for file in flist]
+
+    pool.close()
+    pool.join()
 
     sm = SliceMoms()
     sm.alloc(   Nzeta = Nbins, \
@@ -239,8 +249,8 @@ def main():
 
     for j in range(0,Nfiles):
 
-        time = result[j][0]
-        slices = result[j][1]
+        time = results[j][0]
+        slices = results[j][1]
 
         sm.set_time(time,j)
 
