@@ -149,10 +149,12 @@ def ps_parseargs():
     return parser
 
 
-def comp_slices(file, Nbins, zeta_range, cellvol, order, crossterms, showtimings):
+def process_slices(i, flist, Nfiles, Nbins, zeta_range, cellvol, order, crossterms, showtimings):
+
+    sys.stdout.write('Processing: %s\t(%i/%i)\n' % (flist[i], (i+1), Nfiles))
+    sys.stdout.flush() 
     
-    sys.stdout.write('Processing: %s\n' % file)
-    sys.stdout.flush()  
+    file = flist[i]
 
     raw = HiRAW(file)
     raw.read_attrs()
@@ -164,6 +166,7 @@ def comp_slices(file, Nbins, zeta_range, cellvol, order, crossterms, showtimings
 
     slices.calc_moments(order=order, crossterms=crossterms, showtimings=showtimings)
 
+    # explicitly releasing memory
     del raw
     gc.collect()
 
@@ -231,7 +234,10 @@ def main():
 
     pool = Pool(processes=args.Nproc)
 
-    func = partial(comp_slices, Nbins=Nbins, \
+    process_slices_part = partial(process_slices, \
+                                flist=flist, \
+                                Nfiles=Nfiles, \
+                                Nbins=Nbins, \
                                 zeta_range=zeta_range, \
                                 cellvol=cellvol, \
                                 order=mom_order, \
@@ -239,8 +245,9 @@ def main():
                                 showtimings=args.timings)
 
     #results = [pool.apply(func, args=(file,)) for file in flist]
-    [pool.apply_async(func, args = (file, ), callback = log_result) for file in flist]
-
+    for i in range(0,len(flist)): 
+        pool.apply_async(process_slices_part, args = (i, ), callback = log_result)
+     
     pool.close()
     pool.join()
 

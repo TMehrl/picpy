@@ -233,7 +233,7 @@ class Slices:
         p3 = self.raw.get('p3')
         q = np.abs(self.raw.get('q')) * self.cellvol
 
-        # releasing memory
+        # explicitly releasing memory
         del self.raw
         self.raw = None
         gc.collect()
@@ -372,14 +372,13 @@ class Slices:
             self.avgx3sqp3sq = sl_mom4(x3,x3,p3,p3,q,i1,i2)
 
 
-        # releasing memory
+        # explicitly releasing memory
         del x1, x2, x3, p1, p2, p3, q
         gc.collect()
             
         if showtimings: 
             timings.avg4 = time.time()
      
-
         if showtimings:
             timings.endcm = time.time() 
             # Timing stuff
