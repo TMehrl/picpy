@@ -4,9 +4,9 @@
 import os
 import sys
 import re
+import gc
 import numpy as np
 from numba import jit
-import gc
 import h5py
 import time
 import pp_defs
@@ -100,6 +100,7 @@ class Slices:
         self.cellvol = cellvol
 
         self.raw = raw
+
         dx0 = self.raw.get_dx(0)        
         if nbins == 0:
             if (edges==[]) and (zeta_range == None):
@@ -231,6 +232,11 @@ class Slices:
         p2 = self.raw.get('p2')
         p3 = self.raw.get('p3')
         q = np.abs(self.raw.get('q')) * self.cellvol
+
+        # releasing memory
+        del self.raw
+        self.raw = None
+        gc.collect()
 
         # Assign each particle the index of the bin it is located in
         if self.if_edges_eq_spaced:
@@ -364,6 +370,11 @@ class Slices:
             self.avgx1sqp1sq = sl_mom4(x1,x1,p1,p1,q,i1,i2)
             self.avgx2sqp2sq = sl_mom4(x2,x2,p2,p2,q,i1,i2)
             self.avgx3sqp3sq = sl_mom4(x3,x3,p3,p3,q,i1,i2)
+
+
+        # releasing memory
+        del x1, x2, x3, p1, p2, p3, q
+        gc.collect()
             
         if showtimings: 
             timings.avg4 = time.time()
@@ -385,7 +396,6 @@ class Slices:
             if order > 3:
                 print('Calc. 4th order moms:\t%0.2e %s' % ((timings.avg4-timings.avg3), 's'))
         self.if_moms_calc = True
-
 
 
 
