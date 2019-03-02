@@ -99,9 +99,7 @@ class Slices:
         self.if_moms_calc = False
         self.cellvol = cellvol
 
-        self.raw = raw
-
-        dx0 = self.raw.get_dx(0)        
+        dx0 = raw.get_dx(0)        
         if nbins == 0:
             if (edges==[]) and (zeta_range == None):
                 self.edges = np.linspace(raw.get_xmin(0)-dx0/2, raw.get_xmax(0)+dx0/2, num=(raw.get_nx(0)+1))
@@ -213,29 +211,28 @@ class Slices:
         self.avgx3sqp3sq = np.zeros((nbins), dtype=np.float32)
 
 
-    def calc_moments(self, order=2, central=True, crossterms=False, showtimings=False, reshape_method=False):
+    def calc_moments(self, raw, order=2, central=True, crossterms=False, showtimings=False, reshape_method=False):
 
         if showtimings: 
             timings = self.timings(self.max_order)
             timings.startcm = time.time()
 
         # Select subset of particles which are in range
-        idx_part_in_range = np.logical_and(self.raw.get('x1') > self.edges[0], 
-                                           self.raw.get('x1') <= self.edges[-1])
+        idx_part_in_range = np.logical_and(raw.get('x1') > self.edges[0], 
+                                           raw.get('x1') <= self.edges[-1])
 
-        self.raw.select_by_idx(idx_part_in_range)
+        raw.select_by_idx(idx_part_in_range)
 
-        x1 = self.raw.get('x1')
-        x2 = self.raw.get('x2')
-        x3 = self.raw.get('x3')
-        p1 = self.raw.get('p1')
-        p2 = self.raw.get('p2')
-        p3 = self.raw.get('p3')
-        q = np.abs(self.raw.get('q')) * self.cellvol
+        x1 = raw.get('x1')
+        x2 = raw.get('x2')
+        x3 = raw.get('x3')
+        p1 = raw.get('p1')
+        p2 = raw.get('p2')
+        p3 = raw.get('p3')
+        q = np.abs(raw.get('q')) * self.cellvol
 
-        # explicitly releasing memory
-        del self.raw
-        self.raw = None
+        # explicitly releasing memory (may not be needed)
+        del raw
         gc.collect()
 
         # Assign each particle the index of the bin it is located in
@@ -372,7 +369,7 @@ class Slices:
             self.avgx3sqp3sq = sl_mom4(x3,x3,p3,p3,q,i1,i2)
 
 
-        # explicitly releasing memory
+        # explicitly releasing memory (may not be needed)
         del x1, x2, x3, p1, p2, p3, q
         gc.collect()
             

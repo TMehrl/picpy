@@ -164,7 +164,7 @@ def process_slices(i, flist, Nfiles, Nbins, zeta_range, cellvol, order, crosster
 
     slices = pp_raw_ana.Slices(raw, nbins=Nbins, zeta_range=zeta_range, cellvol=cellvol)
 
-    slices.calc_moments(order=order, crossterms=crossterms, showtimings=showtimings)
+    slices.calc_moments(raw, order=order, crossterms=crossterms, showtimings=showtimings)
 
     # explicitly releasing memory
     del raw
