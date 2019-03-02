@@ -4,6 +4,7 @@
 
 import os
 import sys
+import gc
 import math
 from functools import partial
 import argparse
@@ -148,7 +149,6 @@ def ps_parseargs():
     return parser
 
 
-
 def comp_slices(file, Nbins, zeta_range, cellvol, order, crossterms, showtimings):
     
     sys.stdout.write('Processing: %s\n' % file)
@@ -163,6 +163,9 @@ def comp_slices(file, Nbins, zeta_range, cellvol, order, crossterms, showtimings
     slices = pp_raw_ana.Slices(raw, nbins=Nbins, zeta_range=zeta_range, cellvol=cellvol)
 
     slices.calc_moments(order=order, crossterms=crossterms, showtimings=showtimings)
+
+    del raw
+    gc.collect()
 
     return time, slices
 
@@ -240,6 +243,8 @@ def main():
 
     pool.close()
     pool.join()
+
+    gc.collect()
 
     sm = SliceMoms()
     sm.alloc(   Nzeta = Nbins, \
@@ -333,8 +338,12 @@ def main():
 
     sm.write(h5savepathname)
 
+    del sm
+    gc.collect()
+
     sys.stdout.write('Done!\n')
     sys.stdout.flush()
+
 
 if __name__ == "__main__":
     main()
