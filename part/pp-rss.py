@@ -4,7 +4,6 @@
 
 import os
 import sys
-import gc
 import math
 from functools import partial
 import argparse
@@ -160,15 +159,14 @@ def process_slices(i, flist, Nfiles, Nbins, zeta_range, cellvol, order, crosster
     raw.read_attrs()
     raw.read_data(verbose=False)
 
-    time = raw.get_time()
+    if raw.file_integrity_ok():
+        time = raw.get_time()
+        slices = pp_raw_ana.Slices(raw, nbins=Nbins, zeta_range=zeta_range, cellvol=cellvol)
+        slices.calc_moments(raw, order=order, crossterms=crossterms, showtimings=showtimings)
 
-    slices = pp_raw_ana.Slices(raw, nbins=Nbins, zeta_range=zeta_range, cellvol=cellvol)
-
-    slices.calc_moments(raw, order=order, crossterms=crossterms, showtimings=showtimings)
-
-    # explicitly releasing memory
-    del raw
-    gc.collect()
+    else:
+        time = None
+        slices = None
 
     return time, slices
 
@@ -251,18 +249,23 @@ def main():
     pool.close()
     pool.join()
 
-    gc.collect()
-
     sm = SliceMoms()
     sm.alloc(   Nzeta = Nbins, \
                 Nt = Nfiles, \
                 order = mom_order, \
                 with_2nd_order_xterms = crossterms)
 
-    for j in range(0,Nfiles):
+    for j in range(0,len(results)):
 
-        time = results[j][0]
-        slices = results[j][1]
+        if results[j][0] != None:
+            # if file integrity is ok:
+            time = results[j][0]
+            slices = results[j][1]
+        else:
+            # if file integrity is NOT ok:
+            print('None case!')
+            time = results[0][0]
+            slices = results[0][1]            
 
         sm.set_time(time,j)
 
@@ -335,6 +338,7 @@ def main():
             sm.set_at_nt(slices.avgx3sqp3sq,j,x3=2,p3=2)
 
     sm.set_zeta_array(slices.centers)
+    sm.sort()
 
     savepath = mkdirs_if_nexist(args.savepath)
 
@@ -344,9 +348,6 @@ def main():
     sys.stdout.flush()
 
     sm.write(h5savepathname)
-
-    del sm
-    gc.collect()
 
     sys.stdout.write('Done!\n')
     sys.stdout.flush()

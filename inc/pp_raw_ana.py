@@ -4,7 +4,6 @@
 import os
 import sys
 import re
-import gc
 import numpy as np
 from numba import jit
 import h5py
@@ -231,10 +230,6 @@ class Slices:
         p3 = raw.get('p3')
         q = np.abs(raw.get('q')) * self.cellvol
 
-        # explicitly releasing memory (may not be needed)
-        del raw
-        gc.collect()
-
         # Assign each particle the index of the bin it is located in
         if self.if_edges_eq_spaced:
             # If edges are equally spaced:
@@ -368,10 +363,6 @@ class Slices:
             self.avgx2sqp2sq = sl_mom4(x2,x2,p2,p2,q,i1,i2)
             self.avgx3sqp3sq = sl_mom4(x3,x3,p3,p3,q,i1,i2)
 
-
-        # explicitly releasing memory (may not be needed)
-        del x1, x2, x3, p1, p2, p3, q
-        gc.collect()
             
         if showtimings: 
             timings.avg4 = time.time()

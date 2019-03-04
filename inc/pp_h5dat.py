@@ -168,7 +168,7 @@ class H5Keys:
                                 'time':'TIME',
                                 'dt':'DT',
                                 'type':'TYPE',
-                                'name':'NAME',
+                                'name':'NAME'
                               }
         # HiPACE
         elif piccode == piccodes['hipace']:
@@ -204,6 +204,7 @@ class H5Keys:
                                 'dt':'DT',
                                 'type':'TYPE',
                                 'name':'NAME',
+                                'nullcheck':'NULLCHECK'
                               }
 
     def get_g3dkey(self,key):
@@ -226,12 +227,11 @@ class H5Keys:
     def print_attrkeys(self):
         for key in self.__attrkeys: print(key)
 
-
-
 class HiFile(H5Keys, H5PICFile):
     def __init__(self, file):
         H5Keys.__init__(self, 'hipace')
         H5PICFile.__init__(self, file)
+        self.__nullcheck = -1
         self.__nx = []
         self.__xmin = []
         self.__xmax = []
@@ -243,6 +243,14 @@ class HiFile(H5Keys, H5PICFile):
     def read_attrs(self):
         # Reading attributes
         with h5py.File(self.get_file(),'r') as hf:
+
+            if self.get_attrkey('nullcheck') in hf.attrs.keys():
+                # If nullcheck exists, read value
+                self.__nullcheck = hf.attrs[ self.get_attrkey('nullcheck') ]             
+            else:
+                # If nullcheck doeas not exist, assume file is ok
+                self.__nullcheck = 0
+
             self.__nx = hf.attrs[   self.get_attrkey('nx') ]
             self.__xmin = hf.attrs[ self.get_attrkey('xmin') ]
             self.__xmax = hf.attrs[ self.get_attrkey('xmax') ]
@@ -259,6 +267,16 @@ class HiFile(H5Keys, H5PICFile):
                 self.__name = name_bytes
             else:
                 self.__name = name_bytes[0].decode('UTF-8')
+
+    def file_integrity_ok(self):
+        if self.__nullcheck == 0:
+            is_ok = True
+        else:
+            is_ok = False
+            sys.stdout.write('Warning! File: %s is corrupted!\n' \
+                    % self.get_filename())
+            sys.stdout.flush()          
+        return is_ok
 
     def get_x_arr(self,dim):
         return np.linspace(self.__xmin[dim],self.__xmax[dim],self.__nx[dim])
@@ -1247,6 +1265,12 @@ class SliceMoms(H5File):
         idx = self.__orders_to_idx(x1,x2,x3,p1,p2,p3)
 
         self.__mom[idx,nt,:] = nparray       
+
+
+    def sort(self):
+        idx = np.argsort(self.__time_array)
+        self.__time_array = self.__time_array[idx]
+        self.__mom = self.__mom[:,idx,:]
 
     def write(self, file, order = None):
         H5File.__init__(self, file, 'w')
