@@ -230,6 +230,9 @@ def main():
         sys.stdout.write('Starting parallel pool with %d processes\n' % args.Nproc)
         sys.stdout.flush()
 
+    savepath = mkdirs_if_nexist(args.savepath)
+    h5savepathname = savepath + '/' + args.save_name
+
     pool = Pool(processes=args.Nproc)
 
     process_slices_part = partial(process_slices, \
@@ -263,7 +266,6 @@ def main():
             slices = results[j][1]
         else:
             # if file integrity is NOT ok:
-            print('None case!')
             time = results[0][0]
             slices = results[0][1]            
 
@@ -339,14 +341,6 @@ def main():
 
     sm.set_zeta_array(slices.centers)
     sm.sort()
-
-    savepath = mkdirs_if_nexist(args.savepath)
-
-    h5savepathname = savepath + '/' + args.save_name
-
-    sys.stdout.write('Saving to file: %s\n' % (h5savepathname))
-    sys.stdout.flush()
-
     sm.write(h5savepathname)
 
     sys.stdout.write('Done!\n')

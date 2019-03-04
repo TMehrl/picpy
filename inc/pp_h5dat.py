@@ -1272,7 +1272,11 @@ class SliceMoms(H5File):
         self.__time_array = self.__time_array[idx]
         self.__mom = self.__mom[:,idx,:]
 
-    def write(self, file, order = None):
+    def write(self, file, order = None, verbose=True):
+        if verbose:
+            sys.stdout.write('Saving to file: %s\n' % (file))
+            sys.stdout.flush()            
+
         H5File.__init__(self, file, 'w')
         if order == None:
             order = self.__order
