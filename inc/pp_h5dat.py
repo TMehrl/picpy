@@ -232,6 +232,12 @@ class HiFile(H5Keys, H5PICFile):
     def __init__(self, file):
         H5Keys.__init__(self, 'hipace')
         H5PICFile.__init__(self, file)
+        self.__nx = []
+        self.__xmin = []
+        self.__xmax = []
+        self.__time = 0
+        self.__dt = 0
+        self.__name = ''
         self.read_attrs()
 
     def read_attrs(self):
