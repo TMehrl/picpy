@@ -541,7 +541,7 @@ def main():
                 ax.set_ylabel(r'$k_p\,x$', fontsize=16, labelpad=-5)
                 ax.tick_params(labelsize=args.axticklabelsize)
                 cbar.ax.tick_params(labelsize=args.axticklabelsize)
-                fig.subplots_adjust(bottom=0.2)
+                fig.subplots_adjust(bottom=0.01)
                 savepath = 'plots/g3d-slice'
                 mkdirs_if_nexist(savepath)
                 if not args.tracksoff:
