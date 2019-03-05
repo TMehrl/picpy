@@ -975,9 +975,9 @@ class G3d_plot_slice(G3d_plot):
         ax.set_xlabel(self.xlabel, fontsize=self.args.fontsize)
         #cbar = fig.colorbar(cax)
         cbar.ax.set_title( gen_pretty_grid_name( self.g3d.get_name() ), fontsize=self.args.fontsize, pad=self.args.cbarpad )
-        
+        cbar.ax.tick_params(labelsize=self.args.axticklabelsize)
         #manually setting cbar ticks to avoid cutoff of the last tick
-        ticks = MaxNLocator().tick_values(self.clim[0], self.clim[1])
+        ticks = MaxNLocator(9).tick_values(self.clim[0], self.clim[1])
         cbar.set_ticks ( ticks )
         
         if self.args.xlim != None:
