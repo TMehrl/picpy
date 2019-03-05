@@ -142,6 +142,12 @@ def g3d_parser():
                           default=14,
                           type=int,
                           help = "Set fontsize of axis labels (Default: %(default)s).")
+    parser.add_argument(  "--axticklabelsize",
+                        dest = "axticklabelsize",
+                        action="store",
+                        default=11,
+                        type=int,
+                        help = "Set fontsize of axis tick labels (Default: %(default)s).")
     parser.add_argument(  "--dpi",
                           action='store',
                           dest="dpi",
@@ -817,6 +823,7 @@ class G3d_plot_slice(G3d_plot):
             cax.norm = matplotlib.colors.LogNorm(vmin=self.clim[0], vmax=self.clim[1])
 
         ax = plt.gca()
+        ax.tick_params(labelsize=axticklabelsize)
         ax.set_ylabel(self.ylabel, fontsize=self.args.fontsize)
         ax.set_xlabel(self.xlabel, fontsize=self.args.fontsize)
         cbar = fig.colorbar(cax)
@@ -957,6 +964,7 @@ class G3d_plot_slice(G3d_plot):
             cax.norm = matplotlib.colors.LogNorm(vmin=self.clim[0], vmax=self.clim[1])
 
         ax = plt.gca()
+        ax.tick_params(labelsize=axticklabelsize)
         ax.set_ylabel(self.ylabel, fontsize=self.args.fontsize)
         ax.set_xlabel(self.xlabel, fontsize=self.args.fontsize)
         #cbar = fig.colorbar(cax)
@@ -1225,7 +1233,7 @@ class G3d_plot_line(G3d_plot):
             ax.set_xlim(min(self.x_array), max(self.x_array))
         else:
             ax.set_xlabel(self.xlabel, fontsize=self.args.fontsize)
-            
+        ax.tick_params(labelsize=axticklabelsize)    
         ax.set_ylabel(self.ylabel, fontsize=self.args.fontsize)
         
         
