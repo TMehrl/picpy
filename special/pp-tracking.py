@@ -368,8 +368,8 @@ def main():
                     plt.ylim(args.ylim[0], args.ylim[1])
 
 
-                cbar1.ax.set_title(r'$n_p/n_0$', fontsize=16, pad=self.args.cbarpad)
-                cbar1.ax.tick_params(labelsize=self.args.axticklabelsize)
+                cbar1.ax.set_title(r'$n_p/n_0$', fontsize=16, pad=args.cbarpad)
+                cbar1.ax.tick_params(labelsize=args.axticklabelsize)
                 if args.beam_data:
                     max_density = np.max(np.abs(beam_density))
 
@@ -431,8 +431,8 @@ def main():
                         cbar2.set_ticks ( ticks )
                         cbar2.set_clim([0, max_density])
 
-                    cbar2.ax.set_title(r'$n_b/n_0$', pad=self.args.cbarpad)
-                    cbar2.ax.tick_params(labelsize=self.args.axticklabelsize)
+                    cbar2.ax.set_title(r'$n_b/n_0$', pad=args.cbarpad)
+                    cbar2.ax.tick_params(labelsize=args.axticklabelsize)
 
                 if not args.tracksoff:
 
@@ -529,18 +529,18 @@ def main():
                         cbar = plt.colorbar(s_m, fraction=0.052, pad=0.06)
 
                     if args.track_color == "u_tot":
-                        cbar.ax.set_title(r'$|u|$', pad=self.args.cbarpad)
+                        cbar.ax.set_title(r'$|u|$', pad=args.cbarpad)
                     elif args.track_color == "beta_z":
-                        cbar.ax.set_title(r'$\beta_z$', pad=self.args.cbarpad)
+                        cbar.ax.set_title(r'$\beta_z$', pad=args.cbarpad)
                     elif args.track_color == "beta_y":
-                        cbar.ax.set_title(r'$\beta_y$', pad=self.args.cbarpad)
+                        cbar.ax.set_title(r'$\beta_y$', pad=args.cbarpad)
                     else:
-                        cbar.ax.set_title(r'$k_p\,X_0$', fontsize=16, pad=self.args.cbarpad)
+                        cbar.ax.set_title(r'$k_p\,X_0$', fontsize=16, pad=args.cbarpad)
 
                 ax.set_xlabel(r'$k_p\,\zeta$', fontsize=16)
                 ax.set_ylabel(r'$k_p\,x$', fontsize=16)
-                ax.tick_params(labelsize=self.args.axticklabelsize)
-                cbar.ax.tick_params(labelsize=self.args.axticklabelsize)
+                ax.tick_params(labelsize=args.axticklabelsize)
+                cbar.ax.tick_params(labelsize=args.axticklabelsize)
                 
                 savepath = 'plots/g3d-slice'
                 mkdirs_if_nexist(savepath)
