@@ -537,11 +537,11 @@ def main():
                     else:
                         cbar.ax.set_title(r'$k_p\,X_0$', fontsize=16, pad=args.cbarpad)
 
-                ax.set_xlabel(r'$k_p\,\zeta$', fontsize=16, labelpad=-2)
+                ax.set_xlabel(r'$k_p\,\zeta$', fontsize=16)
                 ax.set_ylabel(r'$k_p\,x$', fontsize=16, labelpad=-5)
                 ax.tick_params(labelsize=args.axticklabelsize)
                 cbar.ax.tick_params(labelsize=args.axticklabelsize)
-                
+                fig.subplots_adjust(bottom=0.2)
                 savepath = 'plots/g3d-slice'
                 mkdirs_if_nexist(savepath)
                 if not args.tracksoff:
