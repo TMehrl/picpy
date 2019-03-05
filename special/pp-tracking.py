@@ -195,6 +195,12 @@ def binSlab_parser():
                         default=11,
                         type=int,
                         help = "Set fontsize of axis tick labels (Default: %(default)s).")
+    parser.add_argument(  "--dpi",
+                          action='store',
+                          dest="dpi",
+                          default=800,
+                          type=int,
+                          help= """Dots per inch for png output (default: %(default)s).""")  
 
     return parser
 
@@ -561,7 +567,7 @@ def main():
                     savename = '/ionized_electron_density_'
                 save_path_name = savepath + savename + tracked + timestamp + '.png'
                 print('Saving figure...')
-                fig.savefig(save_path_name, format='png', dpi=1200)
+                fig.savefig(save_path_name, format='png', dpi=args.dpi)
                 print('Writing file...')
 
                 if args.verbose:
