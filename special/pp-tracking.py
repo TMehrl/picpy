@@ -177,6 +177,18 @@ def binSlab_parser():
                           action="store_true",
                           default=False,
                           help = "Use LaTeX font (Default: %(default)s).")
+    parser.add_argument(  "--cbarpad",
+                          dest = "cbarpad",
+                          action="store",
+                          default=None,
+                          type=int,
+                          help = "Set distance of title from cbar (Default: %(default)s).")
+    parser.add_argument(  "--axticklabelsize",
+                        dest = "axticklabelsize",
+                        action="store",
+                        default=11,
+                        type=int,
+                        help = "Set fontsize of axis tick labels (Default: %(default)s).")
 
     return parser
 
@@ -356,8 +368,8 @@ def main():
                     plt.ylim(args.ylim[0], args.ylim[1])
 
 
-                cbar1.ax.set_title(r'$n_p/n_0$', fontsize=16)
-
+                cbar1.ax.set_title(r'$n_p/n_0$', fontsize=16, pad=self.args.cbarpad)
+                cbar1.ax.tick_params(labelsize=self.args.axticklabelsize)
                 if args.beam_data:
                     max_density = np.max(np.abs(beam_density))
 
@@ -419,8 +431,8 @@ def main():
                         cbar2.set_ticks ( ticks )
                         cbar2.set_clim([0, max_density])
 
-                    cbar2.ax.set_title(r'$n_b/n_0$')
-
+                    cbar2.ax.set_title(r'$n_b/n_0$', pad=self.args.cbarpad)
+                    cbar2.ax.tick_params(labelsize=self.args.axticklabelsize)
 
                 if not args.tracksoff:
 
@@ -517,18 +529,19 @@ def main():
                         cbar = plt.colorbar(s_m, fraction=0.052, pad=0.06)
 
                     if args.track_color == "u_tot":
-                        cbar.ax.set_title(r'$|u|$')
+                        cbar.ax.set_title(r'$|u|$', pad=self.args.cbarpad)
                     elif args.track_color == "beta_z":
-                        cbar.ax.set_title(r'$\beta_z$')
+                        cbar.ax.set_title(r'$\beta_z$', pad=self.args.cbarpad)
                     elif args.track_color == "beta_y":
-                        cbar.ax.set_title(r'$\beta_y$')
+                        cbar.ax.set_title(r'$\beta_y$', pad=self.args.cbarpad)
                     else:
-                        cbar.ax.set_title(r'$k_p\,X_0$', fontsize=16)
+                        cbar.ax.set_title(r'$k_p\,X_0$', fontsize=16, pad=self.args.cbarpad)
 
                 ax.set_xlabel(r'$k_p\,\zeta$', fontsize=16)
                 ax.set_ylabel(r'$k_p\,x$', fontsize=16)
-
-
+                ax.tick_params(labelsize=self.args.axticklabelsize)
+                cbar.ax.tick_params(labelsize=self.args.axticklabelsize)
+                
                 savepath = 'plots/g3d-slice'
                 mkdirs_if_nexist(savepath)
                 if not args.tracksoff:
