@@ -142,6 +142,12 @@ def g3d_parser():
                           default=14,
                           type=int,
                           help = "Set fontsize of axis labels (Default: %(default)s).")
+    parser.add_argument(  "--cbarpad",
+                          dest = "cbarpad",
+                          action="store",
+                          default=0,
+                          type=int,
+                          help = "Set distance of title from cbar (Default: %(default)s).")
     parser.add_argument(  "--axticklabelsize",
                         dest = "axticklabelsize",
                         action="store",
@@ -968,7 +974,7 @@ class G3d_plot_slice(G3d_plot):
         ax.set_ylabel(self.ylabel, fontsize=self.args.fontsize)
         ax.set_xlabel(self.xlabel, fontsize=self.args.fontsize)
         #cbar = fig.colorbar(cax)
-        cbar.ax.set_title( gen_pretty_grid_name( self.g3d.get_name() ), fontsize=self.args.fontsize )
+        cbar.ax.set_title( gen_pretty_grid_name( self.g3d.get_name() ), fontsize=self.args.fontsize, pad=self.args.cbarpad )
         
         #manually setting cbar ticks to avoid cutoff of the last tick
         ticks = MaxNLocator().tick_values(self.clim[0], self.clim[1])
