@@ -162,6 +162,12 @@ def binSlab_parser():
                         dest="linewidth",
                         type=float,
                         default=0.3)
+    parser.add_argument(  '--adjust_bottom',
+                        help='adjust bottom of the figure, as sometimes labels are cut off',
+                        action='store',
+                        dest="adjust_bottom",
+                        type=float,
+                        default=False)
     parser.add_argument(  "--tracksoff",
                           dest = "tracksoff",
                           action="store_true",
@@ -541,7 +547,8 @@ def main():
                 ax.set_ylabel(r'$k_p\,x$', fontsize=16, labelpad=-5)
                 ax.tick_params(labelsize=args.axticklabelsize)
                 cbar.ax.tick_params(labelsize=args.axticklabelsize)
-                fig.subplots_adjust(bottom=0.01)
+                if args.adjust_bottom:
+                    fig.subplots_adjust(bottom=args.adjust_bottom)
                 savepath = 'plots/g3d-slice'
                 mkdirs_if_nexist(savepath)
                 if not args.tracksoff:
