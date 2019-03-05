@@ -5,8 +5,10 @@
 import os
 import sys
 import math
+from functools import partial
 import argparse
 import numpy as np
+from multiprocessing import Pool
 import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
@@ -83,13 +85,13 @@ def ps_parseargs():
                           metavar="NFILES",
                           default=None,
                           help='Number of files to analyze.')
-    parser.add_argument(  "--Nskip",
+    parser.add_argument(  "--Nstride",
                           type=int,
                           action='store',
-                          dest="Nskip",
-                          metavar="NSKIP",
+                          dest="Nstride",
+                          metavar="NSTRIDE",
                           default=1,
-                          help='Skipping every nth file.')    
+                          help='Processing only every nth file.')    
     parser.add_argument(  "--Nbins",
                           type=int,
                           action='store',
@@ -97,6 +99,13 @@ def ps_parseargs():
                           metavar="Nbins",
                           default=None,
                           help= 'Number of bins.')
+    parser.add_argument(  "-p", "--Nproc",
+                          type=int,
+                          action='store',
+                          dest="Nproc",
+                          metavar="NPROC",
+                          default=1,
+                          help= 'Number parallel processes/threads (Default: %s).')    
     parser.add_argument(  "--xterms",
                           action="store_true",
                           dest="crossterms",
@@ -139,8 +148,36 @@ def ps_parseargs():
     return parser
 
 
+def process_slices(i, flist, Nfiles, Nbins, zeta_range, cellvol, order, crossterms, showtimings):
+
+    sys.stdout.write('Processing: %s\t(%i/%i)\n' % (flist[i], (i+1), Nfiles))
+    sys.stdout.flush() 
+    
+    file = flist[i]
+
+    raw = HiRAW(file)
+    raw.read_attrs()
+    raw.read_data(verbose=False)
+
+    if raw.file_integrity_ok():
+        time = raw.get_time()
+        slices = pp_raw_ana.Slices(raw, nbins=Nbins, zeta_range=zeta_range, cellvol=cellvol)
+        slices.calc_moments(raw, order=order, crossterms=crossterms, showtimings=showtimings)
+
+    else:
+        time = None
+        slices = None
+
+    return time, slices
+
 
 def main():
+
+    results = []
+    def log_result(result):
+        # This is called whenever foo_pool(i) returns a result.
+        # result_list is modified only by the main process, not the pool workers.
+        results.append(result)
 
     parser = ps_parseargs()
 
@@ -150,7 +187,7 @@ def main():
     crossterms = args.crossterms
 
     h5fl = H5FList(args.path, h5ftype='raw')
-    flist = h5fl.get(verbose=False)
+    flist = h5fl.get(verbose=False, stride=args.Nstride)
     if len(h5fl.get_uniques()) > 1:
         print('ERROR: Processing of multiple beams is not implemented yet!')
         print(h5fl.split_by_uniques())
@@ -180,7 +217,7 @@ def main():
         zeta_range = None
     elif args.Nbins == None and args.zeta_range != None:
         zeta_range = args.zeta_range
-        slices = pp_raw_ana.Slices(raw, zrange=zeta_range)          
+        slices = pp_raw_ana.Slices(raw, zeta_range=zeta_range)          
         Nbins = slices.nbins
     else:
         Nbins = args.Nbins
@@ -189,107 +226,126 @@ def main():
     sys.stdout.write('There are %i raw files to process...\n' % Nfiles)
     sys.stdout.flush()
 
-    Ntimesteps = int( math.ceil(Nfiles/args.Nskip) )
-
-    sm = SliceMoms()
-    sm.alloc(Nzeta = Nbins, Nt = Ntimesteps, order = mom_order, with_2nd_order_xterms = crossterms)
-
-    for i in range(0, Ntimesteps):
-        file = flist[i * args.Nskip]
-        sys.stdout.write('Processing: %s\t(%i/%i)\n' % (file, (i+1)*args.Nskip, Nfiles))
+    if args.Nproc > 1:
+        sys.stdout.write('Starting parallel pool with %d processes\n' % args.Nproc)
         sys.stdout.flush()
 
-        raw = HiRAW(file)
-        raw.read_attrs()
-        raw.read_data(verbose=False)
-
-        sm.set_time(raw.get_time(),i)
-        slices = pp_raw_ana.Slices(raw, nbins=Nbins, zrange=zeta_range, cellvol=cellvol)
-
-        slices.calc_moments(order = mom_order, crossterms=crossterms, showtimings=args.timings )
-
-        sm.set_at_nt(slices.charge,i)
-
-        sm.set_at_nt(slices.avgx1,i,x1=1)
-        sm.set_at_nt(slices.avgx2,i,x2=1)
-        sm.set_at_nt(slices.avgx3,i,x3=1)
-
-        sm.set_at_nt(slices.avgp1,i,p1=1)
-        sm.set_at_nt(slices.avgp2,i,p2=1)
-        sm.set_at_nt(slices.avgp3,i,p3=1)
-
-        if mom_order>1:
-            sm.set_at_nt(slices.avgx1sq,i,x1=2)
-            sm.set_at_nt(slices.avgx2sq,i,x2=2)
-            sm.set_at_nt(slices.avgx3sq,i,x3=2)
-            
-            sm.set_at_nt(slices.avgp1sq,i,p1=2)
-            sm.set_at_nt(slices.avgp2sq,i,p2=2)
-            sm.set_at_nt(slices.avgp3sq,i,p3=2)
-
-            sm.set_at_nt(slices.avgx1p1,i,x1=1,p1=1)
-            sm.set_at_nt(slices.avgx2p2,i,x2=1,p2=1)
-            sm.set_at_nt(slices.avgx3p3,i,x3=1,p3=1)
-
-            if crossterms:
-                sm.set_at_nt(slices.avgx1x2,i,x1=1,x2=1)
-                sm.set_at_nt(slices.avgx1x3,i,x1=1,x3=1)
-                sm.set_at_nt(slices.avgx1p2,i,x1=1,p2=1)
-                sm.set_at_nt(slices.avgx1p3,i,x1=1,p3=1)
-
-                sm.set_at_nt(slices.avgx2x3,i,x2=1,x3=1)
-                sm.set_at_nt(slices.avgx2p1,i,x2=1,p1=1)
-                sm.set_at_nt(slices.avgx2p3,i,x2=1,p3=1)
-
-                sm.set_at_nt(slices.avgp1p2,i,p1=1,p2=1)
-                sm.set_at_nt(slices.avgp1p3,i,p1=1,p3=1)
-                
-                sm.set_at_nt(slices.avgp2p3,i,p2=1,p3=1)
-
-
-        if mom_order>2:
-            sm.set_at_nt(slices.avgx1cube,i,x1=3)
-            sm.set_at_nt(slices.avgx2cube,i,x2=3)
-            sm.set_at_nt(slices.avgx3cube,i,x3=3)
-
-            sm.set_at_nt(slices.avgp1cube,i,p1=3)
-            sm.set_at_nt(slices.avgp2cube,i,p2=3)
-            sm.set_at_nt(slices.avgp3cube,i,p3=3)
-
-            sm.set_at_nt(slices.avgx1sqp1,i,x1=2,p1=1)
-            sm.set_at_nt(slices.avgx2sqp2,i,x2=2,p2=1)
-            sm.set_at_nt(slices.avgx3sqp3,i,x3=2,p3=1)
-
-            sm.set_at_nt(slices.avgx1p1sq,i,x1=1,p1=2)
-            sm.set_at_nt(slices.avgx2p2sq,i,x2=1,p2=2)
-            sm.set_at_nt(slices.avgx3p3sq,i,x3=1,p3=2)
-
-        if mom_order>3:
-            sm.set_at_nt(slices.avgx1quar,i,x1=4)
-            sm.set_at_nt(slices.avgx2quar,i,x2=4)
-            sm.set_at_nt(slices.avgx3quar,i,x3=4)
-
-            sm.set_at_nt(slices.avgp1quar,i,p1=4)
-            sm.set_at_nt(slices.avgp2quar,i,p2=4)
-            sm.set_at_nt(slices.avgp3quar,i,p3=4)
-
-            sm.set_at_nt(slices.avgx1sqp1sq,i,x1=2,p1=2)
-            sm.set_at_nt(slices.avgx2sqp2sq,i,x2=2,p2=2)
-            sm.set_at_nt(slices.avgx3sqp3sq,i,x3=2,p3=2)
-
-    sm.set_zeta_array(slices.centers)
-
     savepath = mkdirs_if_nexist(args.savepath)
-
     h5savepathname = savepath + '/' + args.save_name
 
-    sys.stdout.write('Saving to file: %s\n' % (h5savepathname))
-    sys.stdout.flush()
+    pool = Pool(processes=args.Nproc)
 
+    process_slices_part = partial(process_slices, \
+                                flist=flist, \
+                                Nfiles=Nfiles, \
+                                Nbins=Nbins, \
+                                zeta_range=zeta_range, \
+                                cellvol=cellvol, \
+                                order=mom_order, \
+                                crossterms=crossterms, \
+                                showtimings=args.timings)
+
+    #results = [pool.apply(func, args=(file,)) for file in flist]
+    for i in range(0,len(flist)): 
+        pool.apply_async(process_slices_part, args = (i, ), callback = log_result)
+     
+    pool.close()
+    pool.join()
+
+    sm = SliceMoms()
+    sm.alloc(   Nzeta = Nbins, \
+                Nt = Nfiles, \
+                order = mom_order, \
+                with_2nd_order_xterms = crossterms)
+
+    for j in range(0,len(results)):
+
+        if results[j][0] != None:
+            # if file integrity is ok:
+            time = results[j][0]
+            slices = results[j][1]
+        else:
+            # if file integrity is NOT ok:
+            time = results[0][0]
+            slices = results[0][1]            
+
+        sm.set_time(time,j)
+
+        sm.set_at_nt(slices.charge,j)
+
+        sm.set_at_nt(slices.avgx1,j,x1=1)
+        sm.set_at_nt(slices.avgx2,j,x2=1)
+        sm.set_at_nt(slices.avgx3,j,x3=1)
+
+        sm.set_at_nt(slices.avgp1,j,p1=1)
+        sm.set_at_nt(slices.avgp2,j,p2=1)
+        sm.set_at_nt(slices.avgp3,j,p3=1)
+
+        if mom_order>1:
+            sm.set_at_nt(slices.avgx1sq,j,x1=2)
+            sm.set_at_nt(slices.avgx2sq,j,x2=2)
+            sm.set_at_nt(slices.avgx3sq,j,x3=2)
+            
+            sm.set_at_nt(slices.avgp1sq,j,p1=2)
+            sm.set_at_nt(slices.avgp2sq,j,p2=2)
+            sm.set_at_nt(slices.avgp3sq,j,p3=2)
+
+            sm.set_at_nt(slices.avgx1p1,j,x1=1,p1=1)
+            sm.set_at_nt(slices.avgx2p2,j,x2=1,p2=1)
+            sm.set_at_nt(slices.avgx3p3,j,x3=1,p3=1)
+
+            if crossterms:
+                sm.set_at_nt(slices.avgx1x2,j,x1=1,x2=1)
+                sm.set_at_nt(slices.avgx1x3,j,x1=1,x3=1)
+                sm.set_at_nt(slices.avgx1p2,j,x1=1,p2=1)
+                sm.set_at_nt(slices.avgx1p3,j,x1=1,p3=1)
+
+                sm.set_at_nt(slices.avgx2x3,j,x2=1,x3=1)
+                sm.set_at_nt(slices.avgx2p1,j,x2=1,p1=1)
+                sm.set_at_nt(slices.avgx2p3,j,x2=1,p3=1)
+
+                sm.set_at_nt(slices.avgp1p2,j,p1=1,p2=1)
+                sm.set_at_nt(slices.avgp1p3,j,p1=1,p3=1)
+                
+                sm.set_at_nt(slices.avgp2p3,j,p2=1,p3=1)
+
+        if mom_order>2:
+            sm.set_at_nt(slices.avgx1cube,j,x1=3)
+            sm.set_at_nt(slices.avgx2cube,j,x2=3)
+            sm.set_at_nt(slices.avgx3cube,j,x3=3)
+
+            sm.set_at_nt(slices.avgp1cube,j,p1=3)
+            sm.set_at_nt(slices.avgp2cube,j,p2=3)
+            sm.set_at_nt(slices.avgp3cube,j,p3=3)
+
+            sm.set_at_nt(slices.avgx1sqp1,j,x1=2,p1=1)
+            sm.set_at_nt(slices.avgx2sqp2,j,x2=2,p2=1)
+            sm.set_at_nt(slices.avgx3sqp3,j,x3=2,p3=1)
+
+            sm.set_at_nt(slices.avgx1p1sq,j,x1=1,p1=2)
+            sm.set_at_nt(slices.avgx2p2sq,j,x2=1,p2=2)
+            sm.set_at_nt(slices.avgx3p3sq,j,x3=1,p3=2)
+
+        if mom_order>3:
+            sm.set_at_nt(slices.avgx1quar,j,x1=4)
+            sm.set_at_nt(slices.avgx2quar,j,x2=4)
+            sm.set_at_nt(slices.avgx3quar,j,x3=4)
+
+            sm.set_at_nt(slices.avgp1quar,j,p1=4)
+            sm.set_at_nt(slices.avgp2quar,j,p2=4)
+            sm.set_at_nt(slices.avgp3quar,j,p3=4)
+
+            sm.set_at_nt(slices.avgx1sqp1sq,j,x1=2,p1=2)
+            sm.set_at_nt(slices.avgx2sqp2sq,j,x2=2,p2=2)
+            sm.set_at_nt(slices.avgx3sqp3sq,j,x3=2,p3=2)
+
+    sm.set_zeta_array(slices.centers)
+    sm.sort()
     sm.write(h5savepathname)
 
     sys.stdout.write('Done!\n')
     sys.stdout.flush()
+
 
 if __name__ == "__main__":
     main()

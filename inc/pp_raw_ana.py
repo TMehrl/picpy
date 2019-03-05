@@ -6,7 +6,6 @@ import sys
 import re
 import numpy as np
 from numba import jit
-import gc
 import h5py
 import time
 import pp_defs
@@ -91,7 +90,7 @@ def sort_part_bin(x1,x2,x3,p1,p2,p3,q,ibinpart):
 
 # Class for slice analysis
 class Slices:
-    def __init__(self, raw, edges=[], nbins=0, zrange=None, cellvol=1.0):
+    def __init__(self, raw, edges=[], nbins=0, zeta_range=None, cellvol=1.0):
 
         self.max_order = 4
         self.edges = edges
@@ -99,22 +98,21 @@ class Slices:
         self.if_moms_calc = False
         self.cellvol = cellvol
 
-        self.raw = raw
-        dx0 = self.raw.get_dx(0)        
+        dx0 = raw.get_dx(0)        
         if nbins == 0:
-            if (edges==[]) and (zrange == None):
+            if (edges==[]) and (zeta_range == None):
                 self.edges = np.linspace(raw.get_xmin(0)-dx0/2, raw.get_xmax(0)+dx0/2, num=(raw.get_nx(0)+1))
                 self.if_edges_eq_spaced = True
-            elif (edges==[]) and (zrange != None):
-                self.edges = np.arange(start=zrange[0]-dx0/2,stop=zrange[1]+dx0/2,step=dx0,dtype=np.float32)
+            elif (edges==[]) and (zeta_range != None):
+                self.edges = np.arange(start=zeta_range[0]-dx0/2,stop=zeta_range[1]+dx0/2,step=dx0,dtype=np.float32)
                 self.if_edges_eq_spaced = True
         elif nbins != 0:
-            if zrange==None:
+            if zeta_range==None:
                 self.edges = np.linspace(raw.get_xmin(0)-dx0/2, raw.get_xmax(0)+dx0/2, num=(nbins+1))
                 self.if_edges_eq_spaced = True
             else:
-                dx0_step = (zrange[1] - zrange[0])/nbins
-                self.edges = np.linspace(zrange[0]-dx0_step/2, zrange[1]+dx0_step/2, num=(nbins+1))
+                dx0_step = (zeta_range[1] - zeta_range[0])/nbins
+                self.edges = np.linspace(zeta_range[0]-dx0_step/2, zeta_range[1]+dx0_step/2, num=(nbins+1))
                 self.if_edges_eq_spaced = True
         else:
             self.edges = edges
@@ -212,25 +210,25 @@ class Slices:
         self.avgx3sqp3sq = np.zeros((nbins), dtype=np.float32)
 
 
-    def calc_moments(self, order=2, central=True, crossterms=False, showtimings=False, reshape_method=False):
+    def calc_moments(self, raw, order=2, central=True, crossterms=False, showtimings=False, reshape_method=False):
 
         if showtimings: 
             timings = self.timings(self.max_order)
             timings.startcm = time.time()
 
         # Select subset of particles which are in range
-        idx_part_in_range = np.logical_and(self.raw.get('x1') > self.edges[0], 
-                                           self.raw.get('x1') <= self.edges[-1])
+        idx_part_in_range = np.logical_and(raw.get('x1') > self.edges[0], 
+                                           raw.get('x1') <= self.edges[-1])
 
-        self.raw.select_by_idx(idx_part_in_range)
+        raw.select_by_idx(idx_part_in_range)
 
-        x1 = self.raw.get('x1')
-        x2 = self.raw.get('x2')
-        x3 = self.raw.get('x3')
-        p1 = self.raw.get('p1')
-        p2 = self.raw.get('p2')
-        p3 = self.raw.get('p3')
-        q = np.abs(self.raw.get('q')) * self.cellvol
+        x1 = raw.get('x1')
+        x2 = raw.get('x2')
+        x3 = raw.get('x3')
+        p1 = raw.get('p1')
+        p2 = raw.get('p2')
+        p3 = raw.get('p3')
+        q = np.abs(raw.get('q')) * self.cellvol
 
         # Assign each particle the index of the bin it is located in
         if self.if_edges_eq_spaced:
@@ -364,11 +362,11 @@ class Slices:
             self.avgx1sqp1sq = sl_mom4(x1,x1,p1,p1,q,i1,i2)
             self.avgx2sqp2sq = sl_mom4(x2,x2,p2,p2,q,i1,i2)
             self.avgx3sqp3sq = sl_mom4(x3,x3,p3,p3,q,i1,i2)
+
             
         if showtimings: 
             timings.avg4 = time.time()
      
-
         if showtimings:
             timings.endcm = time.time() 
             # Timing stuff
@@ -385,7 +383,6 @@ class Slices:
             if order > 3:
                 print('Calc. 4th order moms:\t%0.2e %s' % ((timings.avg4-timings.avg3), 's'))
         self.if_moms_calc = True
-
 
 
 
