@@ -537,8 +537,8 @@ def main():
                     else:
                         cbar.ax.set_title(r'$k_p\,X_0$', fontsize=16, pad=args.cbarpad)
 
-                ax.set_xlabel(r'$k_p\,\zeta$', fontsize=16)
-                ax.set_ylabel(r'$k_p\,x$', fontsize=16)
+                ax.set_xlabel(r'$k_p\,\zeta$', fontsize=16, labelpad=-2)
+                ax.set_ylabel(r'$k_p\,x$', fontsize=16, labelpad=-5)
                 ax.tick_params(labelsize=args.axticklabelsize)
                 cbar.ax.tick_params(labelsize=args.axticklabelsize)
                 
@@ -554,7 +554,7 @@ def main():
                     savename = '/ionized_electron_density_'
                 save_path_name = savepath + savename + tracked + timestamp + '.png'
                 print('Saving figure...')
-                fig.savefig(save_path_name, format='png', dpi=400)
+                fig.savefig(save_path_name, format='png', dpi=1200)
                 print('Writing file...')
 
                 if args.verbose:
