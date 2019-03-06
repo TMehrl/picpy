@@ -200,7 +200,15 @@ def binSlab_parser():
                           dest="dpi",
                           default=800,
                           type=int,
-                          help= """Dots per inch for png output (default: %(default)s).""")  
+                          help= """Dots per inch for png output (default: %(default)s).""")
+    parser.add_argument(  "-f", "--format",
+                          action='store',
+                          dest="file_format",
+                          choices=[ 'png',
+                                    'pdf',
+                                    'eps',],
+                          default='png',
+                          help= """Format of output file (default: %(default)s).""")  
 
     return parser
 
@@ -565,10 +573,24 @@ def main():
                     savename = '/' + args.savename + '_'
                 else:
                     savename = '/ionized_electron_density_'
-                save_path_name = savepath + savename + tracked + timestamp + '.png'
-                print('Saving figure...')
-                fig.savefig(save_path_name, format='png', dpi=args.dpi)
-                print('Writing file...')
+                
+                if args.file_format=='eps':
+                    save_path_name = savepath + savename + tracked + timestamp + '.eps'
+                    print('Saving figure...')
+                    fig.savefig(save_path_name, format='eps', dpi=args.dpi)
+                    print('Writing file...')
+                elif args.file_format=='pdf':
+                    save_path_name = savepath + savename + tracked + timestamp + '.pdf'
+                    print('Saving figure...')
+                    fig.savefig(save_path_name, format='pdf', dpi=args.dpi)
+                    print('Writing file...')
+                elif args.file_format=='png':
+                    save_path_name = savepath + savename + tracked + timestamp + '.png'
+                    print('Saving figure...')
+                    fig.savefig(save_path_name, format='png', dpi=args.dpi)
+                    print('Writing file...')
+                else:
+                    print('ERROR: unknown file output format. Please choose from eps, pdf or png')
 
                 if args.verbose:
                     sys.stdout.write('Saved: %s\n' % save_path_name)
