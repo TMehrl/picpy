@@ -347,8 +347,15 @@ def plot_save_proj_rms(slm, savepath, axdir='x', h5plot=True, verbose=True, t_is
     emittance_proj = np.sqrt(np.multiply(xsq,psq)-np.power(xp,2))
 
     if versus_gamma:
+        vs_gamma_append_str = '_vs_gamma'
         x_axis_array = slm.get_proj(pz=1)
         xlabel_str = r'$\overline{\gamma}$'
+        sigma_xyr_savename += vs_gamma_append_str
+        sigma_pxyr_savename += vs_gamma_append_str
+        corr_xy_savename += vs_gamma_append_str
+        epsilon_xy_proj_savename += vs_gamma_append_str
+        epsilon_xy_sl_savename += vs_gamma_append_str
+        
         adiabatic_matching_plots(savepath, slm.get_time_array(), emittance_proj, slm.get_proj(pz=1))
     else:
         x_axis_array = slm.get_time_array() 
