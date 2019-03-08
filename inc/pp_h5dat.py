@@ -16,13 +16,19 @@ piccodes = { 'hipace':'hipace',
 
 
 class File:
-    def __init__(self, file, intent):    
+    def __init__(self, file, intent, omit_hidden=True):    
         self.__file = file
 
         if 'r' in intent:
             if not self.is_file():
-                print('Error:\tFile "%s" does not exist!' %(self.get_file()) )
+                print('Error:\tFile "%s" does not exist!' % (self.get_file()) )
                 sys.exit(1)          
+
+        if self.get_filename()[0] == '.' and self.get_filename()[1] != '/':
+            if omit_hidden:
+                print('Error:\tFile "%s" is hidden!' % (self.get_file()) )
+                print('\tUse "omit_hidden=False" to read anyway!')
+                sys.exit(1)                  
 
     def get_file(self):
         return self.__file
@@ -42,9 +48,9 @@ class File:
 # to check whether file is an HDF5 file
 # and to print keys of attributes and datasets
 class H5File(File):
-    def __init__(self, file, intent):
+    def __init__(self, file, intent, omit_hidden=True):
 
-        File.__init__(self, file, intent)
+        File.__init__(self, file, intent, omit_hidden=omit_hidden)
 
         # Allowed hdf5 extensions:
         self.__h5exts = ['.h5','.hdf5']
@@ -79,8 +85,9 @@ class H5File(File):
 
 
 class H5PICFile(H5File):
-    def __init__(self, file, h5ftype=None):
-        H5File.__init__(self, file, 'r')
+    def __init__(self, file, h5ftype=None, omit_hidden=True):
+        # initialize H5File with reading intent
+        H5File.__init__(self, file, intent='r', omit_hidden=omit_hidden)
 
         # Grid 3D types in filenames:
         self.__g3dtypes = ['density', 'field', 'current']
@@ -1051,7 +1058,7 @@ class SliceMoms(H5File):
         self.__arrays_allocated = True
 
     def read(self, file, order = None, verbose = True):
-        H5File.__init__(self, file, 'r')
+        H5File.__init__(self, file, intent='r')
         if not self.is_h5_file():
             print('Error:\tFile is not an HDF5 file!')
             sys.exit(1)      
@@ -1277,7 +1284,7 @@ class SliceMoms(H5File):
             sys.stdout.write('Saving to file: %s\n' % (file))
             sys.stdout.flush()            
 
-        H5File.__init__(self, file, 'w')
+        H5File.__init__(self, file, intent='w')
         if order == None:
             order = self.__order
 
