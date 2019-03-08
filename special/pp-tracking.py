@@ -162,6 +162,12 @@ def binSlab_parser():
                         dest="linewidth",
                         type=float,
                         default=0.3)
+    parser.add_argument(  '--adjust_bottom',
+                        help='adjust bottom of the figure, as sometimes labels are cut off',
+                        action='store',
+                        dest="adjust_bottom",
+                        type=float,
+                        default=False)
     parser.add_argument(  "--tracksoff",
                           dest = "tracksoff",
                           action="store_true",
@@ -177,6 +183,32 @@ def binSlab_parser():
                           action="store_true",
                           default=False,
                           help = "Use LaTeX font (Default: %(default)s).")
+    parser.add_argument(  "--cbarpad",
+                          dest = "cbarpad",
+                          action="store",
+                          default=None,
+                          type=int,
+                          help = "Set distance of title from cbar (Default: %(default)s).")
+    parser.add_argument(  "--axticklabelsize",
+                        dest = "axticklabelsize",
+                        action="store",
+                        default=11,
+                        type=int,
+                        help = "Set fontsize of axis tick labels (Default: %(default)s).")
+    parser.add_argument(  "--dpi",
+                          action='store',
+                          dest="dpi",
+                          default=800,
+                          type=int,
+                          help= """Dots per inch for png output (default: %(default)s).""")
+    parser.add_argument(  "-f", "--format",
+                          action='store',
+                          dest="file_format",
+                          choices=[ 'png',
+                                    'pdf',
+                                    'eps',],
+                          default='png',
+                          help= """Format of output file (default: %(default)s).""")  
 
     return parser
 
@@ -356,8 +388,8 @@ def main():
                     plt.ylim(args.ylim[0], args.ylim[1])
 
 
-                cbar1.ax.set_title(r'$n_p/n_0$', fontsize=16)
-
+                cbar1.ax.set_title(r'$n_p/n_0$', fontsize=16, pad=args.cbarpad)
+                cbar1.ax.tick_params(labelsize=args.axticklabelsize)
                 if args.beam_data:
                     max_density = np.max(np.abs(beam_density))
 
@@ -419,8 +451,8 @@ def main():
                         cbar2.set_ticks ( ticks )
                         cbar2.set_clim([0, max_density])
 
-                    cbar2.ax.set_title(r'$n_b/n_0$')
-
+                    cbar2.ax.set_title(r'$n_b/n_0$', pad=args.cbarpad)
+                    cbar2.ax.tick_params(labelsize=args.axticklabelsize)
 
                 if not args.tracksoff:
 
@@ -517,18 +549,20 @@ def main():
                         cbar = plt.colorbar(s_m, fraction=0.052, pad=0.06)
 
                     if args.track_color == "u_tot":
-                        cbar.ax.set_title(r'$|u|$')
+                        cbar.ax.set_title(r'$|u|$', pad=args.cbarpad)
                     elif args.track_color == "beta_z":
-                        cbar.ax.set_title(r'$\beta_z$')
+                        cbar.ax.set_title(r'$\beta_z$', pad=args.cbarpad)
                     elif args.track_color == "beta_y":
-                        cbar.ax.set_title(r'$\beta_y$')
+                        cbar.ax.set_title(r'$\beta_y$', pad=args.cbarpad)
                     else:
-                        cbar.ax.set_title(r'$k_p\,X_0$', fontsize=16)
+                        cbar.ax.set_title(r'$k_p\,X_0$', fontsize=16, pad=args.cbarpad)
 
                 ax.set_xlabel(r'$k_p\,\zeta$', fontsize=16)
-                ax.set_ylabel(r'$k_p\,x$', fontsize=16)
-
-
+                ax.set_ylabel(r'$k_p\,x$', fontsize=16, labelpad=-5)
+                ax.tick_params(labelsize=args.axticklabelsize)
+                cbar.ax.tick_params(labelsize=args.axticklabelsize)
+                if args.adjust_bottom:
+                    fig.subplots_adjust(bottom=args.adjust_bottom)
                 savepath = 'plots/g3d-slice'
                 mkdirs_if_nexist(savepath)
                 if not args.tracksoff:
@@ -539,10 +573,24 @@ def main():
                     savename = '/' + args.savename + '_'
                 else:
                     savename = '/ionized_electron_density_'
-                save_path_name = savepath + savename + tracked + timestamp + '.png'
-                print('Saving figure...')
-                fig.savefig(save_path_name, format='png', dpi=400)
-                print('Writing file...')
+                
+                if args.file_format=='eps':
+                    save_path_name = savepath + savename + tracked + timestamp + '.eps'
+                    print('Saving figure...')
+                    fig.savefig(save_path_name, format='eps', dpi=args.dpi)
+                    print('Writing file...')
+                elif args.file_format=='pdf':
+                    save_path_name = savepath + savename + tracked + timestamp + '.pdf'
+                    print('Saving figure...')
+                    fig.savefig(save_path_name, format='pdf', dpi=args.dpi)
+                    print('Writing file...')
+                elif args.file_format=='png':
+                    save_path_name = savepath + savename + tracked + timestamp + '.png'
+                    print('Saving figure...')
+                    fig.savefig(save_path_name, format='png', dpi=args.dpi)
+                    print('Writing file...')
+                else:
+                    print('ERROR: unknown file output format. Please choose from eps, pdf or png')
 
                 if args.verbose:
                     sys.stdout.write('Saved: %s\n' % save_path_name)

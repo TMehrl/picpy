@@ -118,7 +118,13 @@ def g3d_parser():
                           metavar=('ymin', 'ymax'),
                           type=float,
                           nargs=2,
-                          default=None)     
+                          default=None)
+    parser.add_argument(  "--ylabelpad",
+                        help='Customize the label pad for the second y-axis',
+                        action='store',
+                        dest="ylabelpad",
+                        type=int, 
+                        default=None)   
     parser.add_argument(  "--h5off",
                           dest = "h5plot_off",
                           action="store_true",
@@ -142,6 +148,18 @@ def g3d_parser():
                           default=14,
                           type=int,
                           help = "Set fontsize of axis labels (Default: %(default)s).")
+    parser.add_argument(  "--cbarpad",
+                          dest = "cbarpad",
+                          action="store",
+                          default=0,
+                          type=int,
+                          help = "Set distance of title from cbar (Default: %(default)s).")
+    parser.add_argument(  "--axticklabelsize",
+                        dest = "axticklabelsize",
+                        action="store",
+                        default=11,
+                        type=int,
+                        help = "Set fontsize of axis tick labels (Default: %(default)s).")
     parser.add_argument(  "--dpi",
                           action='store',
                           dest="dpi",
@@ -296,7 +314,13 @@ def g3d_slice_subparser(subparsers, parent_parser):
                         metavar=('ymin', 'ymax'),
                         type=float,
                         nargs=2,
-                        default=False)       
+                        default=False)
+    parser.add_argument(  "--y2labelpad",
+                        help='Customize the label pad for the second y-axis',
+                        action='store',
+                        dest="y2labelpad",
+                        type=int, 
+                        default=None)       
     return parser
 
 
@@ -817,6 +841,7 @@ class G3d_plot_slice(G3d_plot):
             cax.norm = matplotlib.colors.LogNorm(vmin=self.clim[0], vmax=self.clim[1])
 
         ax = plt.gca()
+        ax.tick_params(labelsize=self.args.axticklabelsize)
         ax.set_ylabel(self.ylabel, fontsize=self.args.fontsize)
         ax.set_xlabel(self.xlabel, fontsize=self.args.fontsize)
         cbar = fig.colorbar(cax)
@@ -957,13 +982,14 @@ class G3d_plot_slice(G3d_plot):
             cax.norm = matplotlib.colors.LogNorm(vmin=self.clim[0], vmax=self.clim[1])
 
         ax = plt.gca()
-        ax.set_ylabel(self.ylabel, fontsize=self.args.fontsize)
+        ax.tick_params(labelsize=self.args.axticklabelsize)
+        ax.set_ylabel(self.ylabel, fontsize=self.args.fontsize, labelpad=self.args.ylabelpad)
         ax.set_xlabel(self.xlabel, fontsize=self.args.fontsize)
         #cbar = fig.colorbar(cax)
-        cbar.ax.set_title( gen_pretty_grid_name( self.g3d.get_name() ), fontsize=self.args.fontsize )
-        
+        cbar.ax.set_title( gen_pretty_grid_name( self.g3d.get_name() ), fontsize=self.args.fontsize, pad=self.args.cbarpad )
+        cbar.ax.tick_params(labelsize=self.args.axticklabelsize)
         #manually setting cbar ticks to avoid cutoff of the last tick
-        ticks = MaxNLocator().tick_values(self.clim[0], self.clim[1])
+        ticks = MaxNLocator(9).tick_values(self.clim[0], self.clim[1])
         cbar.set_ticks ( ticks )
         
         if self.args.xlim != None:
@@ -1225,8 +1251,8 @@ class G3d_plot_line(G3d_plot):
             ax.set_xlim(min(self.x_array), max(self.x_array))
         else:
             ax.set_xlabel(self.xlabel, fontsize=self.args.fontsize)
-            
-        ax.set_ylabel(self.ylabel, fontsize=self.args.fontsize)
+        ax.tick_params(labelsize=self.args.axticklabelsize)    
+        ax.set_ylabel(self.ylabel, fontsize=self.args.fontsize, labelpad=self.args.y2labelpad)
         
         
         if self.args.absylog:
