@@ -868,7 +868,7 @@ def plot_save_slice_ene_spread(slm, savepath, h5plot=True, time=None, zeta_pos=N
         plt.plot(slm.get_time_array(), sigma_gamma_per_gamma[:,zetaidx])
         ax = plt.gca()
         ax.set_xlabel(xlabel_str, fontsize=14)
-        ax.set_ylabel(r'$k_p X_{b,\mathrm{tail}}$', fontsize=14)
+        ax.set_ylabel(r'$\sigma_{\gamma} / \gamma$', fontsize=14)
         if magn_check(sigma_gamma_per_gamma[:,zetaidx]):    
             ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
             plt.gcf().subplots_adjust(left=0.18)
