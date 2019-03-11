@@ -1057,7 +1057,7 @@ class SliceMoms(H5File):
 
         self.__arrays_allocated = True
 
-    def read(self, file, order = None, verbose = True):
+    def read(self, file, order=None, verbose=True):
         H5File.__init__(self, file, intent='r')
         if not self.is_h5_file():
             print('Error:\tFile is not an HDF5 file!')
@@ -1100,7 +1100,6 @@ class SliceMoms(H5File):
             sys.exit(1)   
         return self.__time_array
 
-
     def __orders_to_idx(self, x1, x2, x3, p1, p2, p3, err_ignore=False):  
 
         mom_str = '%d%d%d%d%d%d' % (x1,x2,x3,p1,p2,p3)
@@ -1117,7 +1116,9 @@ class SliceMoms(H5File):
         idx = offset + self.__mom2idx_dict[key][mom_str]
 
         return idx
-  
+    
+    def get_all(self):
+        return self.__mom      
 
     def get(self, x=0, y=0, z=0, px=0, py=0, pz=0, orders = None):
         if not self.__data_is_read:
@@ -1323,6 +1324,34 @@ class SliceMoms(H5File):
             print('Shifting time array by: %f' % time_offset)
         self.__time_array += time_offset 
 
+
+# class ListofSliceMoms(SliceMoms):
+#     """docstring for ListofSliceMoms"""
+#     def __init__(self):
+#         SliceMoms.__init__(self)
+#         self.__slmoms = []
+
+#     def read_all(self,flist):        
+#         for i in range(0,len(flist)):
+#             self.__slmoms.append(SliceMoms())
+#             self.__slmoms[i].read(flist[i])
+
+#     def merge_all(self):
+#         if self.__slmoms == []:
+#             print('Error:\tSlice moms not read yet!')
+#             sys.exit(1)            
+
+#         lof_time_arrays = []
+#         lof_zeta_arrays = []
+#         lof_moms = []
+
+#         for slmom in self.__slmoms:
+#             lof_zeta_arrays.append(slmom.get_zeta_array())
+#             lof_time_arrays.append(slmom.get_time_array())
+#             lof_moms.append(slmom.get_all())
+
+#         # merging!!!!
+            
 
 class H5Plot:
     def __init__(self):

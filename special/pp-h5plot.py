@@ -51,7 +51,7 @@ def h5plot_parser():
     parser.add_argument(  "-n", "--save-name",
                           action="store",
                           dest="savename",
-                          metavar="PATH",
+                          metavar="NAME",
                           default=None,
                           help = """Name of saved file.
                               (Default: %(default)s)""")
@@ -156,11 +156,16 @@ def h5plot_parser():
                           dest="ylab",
                           metavar='YLAB',
                           default=None)
+    parser.add_argument(  "--xlog",
+                          dest = "absxlog",
+                          action="store_true",
+                          default=False,
+                          help = "Log x-axis (default: %(default)s).")
     parser.add_argument(  "--ylog",
                           dest = "absylog",
                           action="store_true",
                           default=False,
-                          help = "Plot abs log of y-data (default: %(default)s).")
+                          help = "Log y-axis (default: %(default)s).")
     parser.add_argument(  "--diff",
                           dest = "diff",
                           action="store_true",
@@ -334,9 +339,14 @@ def main():
     if args.ylim != None:
         ax.set_ylim(args.ylim[0],args.ylim[1])
 
+    if args.absxlog:
+        ax.set_xscale('log')
+        ax.get_xaxis().get_major_formatter().labelOnlyBase = False
+
     if args.absylog:
         ax.set_yscale('log')
         ax.get_yaxis().get_major_formatter().labelOnlyBase = False
+
     if args.xlab != None:
         xlab = args.xlab
     else:
