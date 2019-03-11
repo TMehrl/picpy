@@ -859,7 +859,7 @@ def plot_save_slice_ene_spread(slm, savepath, h5plot=True, time=None, zeta_pos=N
 
     if zeta_pos != None:
         zetaidx = [(np.abs(slm.get_zeta_array() - zeta_pos)).argmin()]
-        sg_per_g_zeta_pos = 'sigma_gamma_per_gamma_zeta_%0.2f' % zeta_pos
+        sg_per_g_zeta_savename = 'sigma_gamma_per_gamma_zeta_%0.2f' % zeta_pos
     # 
         figsigma_gamma_per_gamma_zetapos = plt.figure()
         plt.plot(slm.get_time_array(), sigma_gamma_per_gamma[:,zetaidx])
@@ -871,7 +871,7 @@ def plot_save_slice_ene_spread(slm, savepath, h5plot=True, time=None, zeta_pos=N
             plt.gcf().subplots_adjust(left=0.18)
         else:
             plt.gcf().subplots_adjust(left=0.15)
-        saveas_eps_pdf(figsigma_gamma_per_gamma_zetapos, savepath, Xb_savename, h5plot=h5plot)    
+        saveas_eps_pdf(figsigma_gamma_per_gamma_zetapos, savepath, sg_per_g_zeta_savename, h5plot=h5plot)    
         plt.close(figsigma_gamma_per_gamma_zetapos)
 
 
