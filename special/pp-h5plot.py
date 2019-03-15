@@ -136,6 +136,22 @@ def h5plot_parser():
                           nargs=2,
                           type=float,
                           default=None)
+    parser.add_argument(  '--xticks',
+                          help='x-axis ticks.',
+                          action='store',
+                          dest="xticks",
+                          metavar='XTICKS',
+                          nargs='+',
+                          type=float,
+                          default=None)    
+    parser.add_argument(  '--yticks',
+                          help='y-axis ticks.',
+                          action='store',
+                          dest="yticks",
+                          metavar='YTICKS',
+                          nargs='+',
+                          type=float,
+                          default=None)        
     parser.add_argument(  '--fig-size',
                           help='Size of figure in inch.',
                           action='store',
@@ -333,6 +349,13 @@ def main():
         i += 1
 
     ax = plt.gca()
+
+
+    if args.xticks != None:
+        ax.set_xticks(args.xticks)
+
+    if args.yticks != None:
+        ax.set_yticks(args.yticks)
 
     if args.xlim != None:
         ax.set_xlim(args.xlim[0],args.xlim[1])
