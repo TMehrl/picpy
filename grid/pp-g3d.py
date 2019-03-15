@@ -248,7 +248,12 @@ def g3d_slice_subparser(subparsers, parent_parser):
                           default="pcolormesh",
                           dest="ptype",
                           choices=[ "pcolor", "pcolormesh", "imshow", "pcolorfast", "contourf"],
-                          help= "Plot color type (default: %(default)s).")                        
+                          help= "Plot color type (default: %(default)s).")
+    parser.add_argument(  "--savenumpy",
+                          dest = "savenumpy",
+                          action = "store_true",
+                          default=False,
+                          help = "Saves x and y array of plots to numpy file (default: %(default)s).")
     return parser
 
 
@@ -781,7 +786,7 @@ class G3d_plot_slice(G3d_plot):
         elif self.args.ptype == 'pcolorfast':    
             sys.stdout.write('ERROR: pcolorfast not implemented yet!\n')
             sys.stdout.flush()
-            sys.exit(1)     
+            sys.exit(1)
 
         cax.cmap = self.colormap
 
@@ -843,6 +848,10 @@ class G3d_plot_slice(G3d_plot):
         if self.args.verbose: 
             sys.stdout.write('Saved "%s" at: %s\n' % (savename,savepath))
             sys.stdout.flush()
+             
+        if self.args.savenumpy == True:
+            np.save(savepath + '/'+ savename, [[self.x_array, self.y_array], self.slice])
+
 
         if self.args.ifshow: plt.show()
         plt.close(fig)
