@@ -849,7 +849,7 @@ class G3d_plot_slice(G3d_plot):
             sys.stdout.write('Saved "%s" at: %s\n' % (savename,savepath))
             sys.stdout.flush()
              
-        if args.savenumpy == True:
+        if self.args.savenumpy == True:
             np.save(spath + '/'+ save_name, [self.x_array, self.y_array, self.slice])
 
 
