@@ -850,7 +850,7 @@ class G3d_plot_slice(G3d_plot):
             sys.stdout.flush()
              
         if self.args.savenumpy == True:
-            np.save(savepath + '/'+ save_name, [self.x_array, self.y_array, self.slice])
+            np.save(savepath + '/'+ savename, [self.x_array, self.y_array, self.slice])
 
 
         if self.args.ifshow: plt.show()
