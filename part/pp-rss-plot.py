@@ -825,9 +825,6 @@ def plot_save_slice_ene_spread(slm, savepath, h5plot=True, time=None, zeta_pos=N
         saveas_eps_pdf(fig_sig_gam_per_gam, savepath, sig_gam_per_gam_savename, h5plot=h5plot)
         plt.close(fig_sig_gam_per_gam)
 
-#    zeta_hseed = np.min(slm.get_zeta_array())
-#    idx_hseed = (np.abs(slm.get_zeta_array()-zeta_hseed)).argmin()
-
 
     figsigma_gamma_per_gamma = plt.figure()
     cax = plt.pcolormesh(   slm.get_zeta_array(),
@@ -837,7 +834,7 @@ def plot_save_slice_ene_spread(slm, savepath, h5plot=True, time=None, zeta_pos=N
                             vmin=np.amin(abs(sigma_gamma_per_gamma)), 
                             vmax=np.amax(abs(sigma_gamma_per_gamma)))
     cbar = figsigma_gamma_per_gamma.colorbar(cax)   
-    cbar.ax.set_ylabel('$\sigma_{\gamma} / \gamma$', fontsize=14)
+    cbar.ax.set_ylabel(r'$\sigma_{\gamma} / \gamma$', fontsize=14)
     ax = plt.gca()
     ax.set_xlabel(r'$k_p \zeta$', fontsize=14)
     ax.set_ylabel(xlabel_str, fontsize=14) 
@@ -862,7 +859,7 @@ def plot_save_slice_ene_spread(slm, savepath, h5plot=True, time=None, zeta_pos=N
 
     if zeta_pos != None:
         zetaidx = [(np.abs(slm.get_zeta_array() - zeta_pos)).argmin()]
-        Xb_savename = 'sigma_gamma_per_gamma_zeta_%0.2f' % zeta_pos
+        sg_per_g_zeta_savename = 'sigma_gamma_per_gamma_zeta_%0.2f' % zeta_pos
     # 
         figsigma_gamma_per_gamma_zetapos = plt.figure()
         plt.plot(slm.get_time_array(), sigma_gamma_per_gamma[:,zetaidx])
@@ -874,21 +871,8 @@ def plot_save_slice_ene_spread(slm, savepath, h5plot=True, time=None, zeta_pos=N
             plt.gcf().subplots_adjust(left=0.18)
         else:
             plt.gcf().subplots_adjust(left=0.15)
-        saveas_eps_pdf(figsigma_gamma_per_gamma_zetapos, savepath, Xb_savename, h5plot=h5plot)    
+        saveas_eps_pdf(figsigma_gamma_per_gamma_zetapos, savepath, sg_per_g_zeta_savename, h5plot=h5plot)    
         plt.close(figsigma_gamma_per_gamma_zetapos)
-    # 
-    # figYbtail = plt.figure()
-    # plt.plot(slm.get_time_array(), slm.get(y=1)[:,zetaidx])
-    # ax = plt.gca()
-    # ax.set_xlabel(xlabel_str, fontsize=14)
-    # ax.set_ylabel(r'$k_p Y_{b,\mathrm{tail}}$', fontsize=14)
-    # if magn_check(slm.get(y=1)[:,zetaidx]):    
-    #     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
-    #     plt.gcf().subplots_adjust(left=0.18)
-    # else:
-    #     plt.gcf().subplots_adjust(left=0.15)    
-    # saveas_eps_pdf(figYbtail, savepath, Yb_savename, h5plot=h5plot)   
-    # plt.close(figYbtail)  
 
 
 def plot_save_slice_ene(slm, savepath, time = None, h5plot=True, t_is_z=True):
