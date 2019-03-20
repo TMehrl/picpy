@@ -151,7 +151,25 @@ def h5plot_parser():
                           metavar='YTICKS',
                           nargs='+',
                           type=float,
-                          default=None)        
+                          default=None)
+    parser.add_argument(  '--xtickdir',
+                          action='store',
+                          choices=[ 'out',
+                                    'in',
+                                    'inout'],
+                          dest="xtickdir",
+                          metavar='XTICKDIR',
+                          default='out',
+                          help='x-axis tick direction (default: %(default)s).')
+    parser.add_argument(  '--ytickdir',
+                          action='store',
+                          choices=[ 'out',
+                                    'in',
+                                    'inout'],
+                          dest="ytickdir",
+                          metavar='YTICKDIR',
+                          default='out',
+                          help='y-axis tick direction (default: %(default)s).')                                                               
     parser.add_argument(  '--fig-size',
                           help='Size of figure in inch.',
                           action='store',
@@ -390,6 +408,14 @@ def main():
 
     ax.set_xlabel(xlab, fontsize=14)
     ax.set_ylabel(ylab, fontsize=14)
+
+    ax.tick_params(axis="x",direction=args.xtickdir)
+    ax.tick_params(axis="y",direction=args.ytickdir)
+
+    ## May be added as argparse option(s):
+    # plt.axhline(0, color='black',linewidth=0.5)
+    # plt.axvline(0, color='black',linewidth=0.5)
+
     handles, labels = ax.get_legend_handles_labels()
     if args.noleg != True:
         if args.flipleg == True:
